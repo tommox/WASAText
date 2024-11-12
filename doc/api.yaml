@@ -1,9 +1,19 @@
 openapi: 3.0.3 
+
 info:
   title: WASAText
   description: |-
     This OpenAPI document describes how WASAText works.
   version: "1"
+
+components:
+  securitySchemes:
+    bearerAuth: 
+      type: http
+      scheme: bearer
+security:
+  - bearerAuth: []
+
 paths: 
   /session:
     post:
@@ -570,7 +580,7 @@ paths:
       requestBody:
         description: add or update photo
         content:
-          multipart/form-data:
+          image/png:
             schema:
               type: object
               properties:
@@ -621,7 +631,7 @@ paths:
       requestBody:
         description: Group photo file upload
         content:
-          multipart/form-data:
+          image/png:
             schema:
               type: object
               properties:
