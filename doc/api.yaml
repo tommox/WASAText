@@ -833,7 +833,7 @@ paths:
       tags: ["group"]
       summary: Add a user to a group
       description: Assigns a specific user to a group.
-      operationId: addUserToGroup
+      operationId: addToGroup
       parameters:
         - name: groupId
           in: path

@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 
-	//"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/api/reqcontext"
 	//"github.com/Salvatore-1918339/wasa_project/service/api/reqcontext"
 	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/api/reqcontext"
 	"github.com/julienschmidt/httprouter"
@@ -21,10 +20,10 @@ func (rt *_router) loginHandler(w http.ResponseWriter, r *http.Request, ps httpr
 	var user User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest) // errore 400?? collegamento errori api
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	} else if !validIdentifier(user.Nickname) {
-		ctx.Logger.WithError(err).Error("session: Can't Create a User. User nickname not Valid")
+		ctx.Logger.WithError(err).Error("session: Can't Create a User. User nickname not Valid. <<")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
