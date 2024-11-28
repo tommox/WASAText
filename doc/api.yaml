@@ -88,9 +88,11 @@ paths:
           application/json: 
             schema:
               type: object 
+              required:
+                - userName
               description: Schema for user login details.
               properties:
-                name:
+                userName:
                   $ref: '#/components/schemas/Name'
         required: true 
       responses:
@@ -102,10 +104,15 @@ paths:
                 type: object 
                 description: Schema for a successful log-in response.
                 properties:
-                  identifier:
+                  userId: 
+                    type: integer
+                    description: "A unique identifier for the user"
+                    minimum: 1
+                    maximum: 100000
+                  userName:
                     type: string
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    description: "A unique identifier for the user"
+                    description: "The name of the user"
                     minLength: 3
                     maxLength: 1000
         '400':
@@ -113,15 +120,7 @@ paths:
           content:
             application/json:
               schema:
-                  type: object
-                  description: Schema for a bad request due to invalid username length.
-                  properties:
-                    error:
-                      type: string
-                      pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                      description: "A unique identifier for the user"
-                      minLength: 3
-                      maxLength: 1000
+                  $ref: '#/components/schemas/Error401'
         '500':
           description: Server error
           content:
@@ -129,7 +128,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
-  /username/{userId}:
+  /userName/{userId}:
     put: 
       tags: ["user"]
       summary: Set the name of the user
@@ -141,22 +140,23 @@ paths:
         required: true
         description: "The unique identifier of the user"
         schema:
-          type: string
+          type: integer
           description: "The unique identifier of the user whose username is being updated"
-          pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-          minLength: 3
-          maxLength: 1000
+          minimum: 1
+          maximum: 100000
       requestBody: 
-        description: update username 
+        required: true
+        description: "Update username"
         content:
           application/json:
             schema:
               type: object
+              required:
+                - newUserName
               description: Schema for updating the user's username.
               properties:
                 newUserName:
                   $ref: '#/components/schemas/Name'
-        required: true
       responses:
         '200':
           description: Username successfully updated
@@ -246,11 +246,10 @@ paths:
                         - status
                       properties:
                         conversationId:
-                          type: string
+                          type: integer
                           description: The unique identifier for the conversation.
-                          pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                          minLength: 3
-                          maxLength: 1000
+                          minimum: 1
+                          maximum: 100000
                         title:
                           type: string
                           description: The title or name of the conversation.
@@ -295,10 +294,10 @@ paths:
             This value is mandatory and must match an existing conversation ID
         required: true
         schema:
-          type: string
-          pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-          minLength: 3
-          maxLength: 1000
+          type: integer
+          description: "Schema for having a specific conversation"
+          minimum: 1
+          maximum: 100000
       responses:
         '200':
           description: Conversations successfully returned
@@ -315,11 +314,10 @@ paths:
                   - status
                 properties:
                   conversationId:
-                    type: string
+                    type: integer
                     description: The unique identifier for the conversation.
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
+                    minimum: 1
+                    maximum: 100000
                   title:
                     type: string
                     description: The title or name of the conversation.
@@ -382,12 +380,11 @@ paths:
                 - messageContent
               properties:
                 recipientId:
-                  type: string
+                  type: integer
                   description: |
                     The unique identifier of the recipient to whom the message will be sent.
-                  pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                  minLength: 3
-                  maxLength: 16
+                  minimum: 1
+                  maximum: 100000
                 messageContent:
                   type: string
                   description: |
@@ -417,11 +414,10 @@ paths:
                   - status
                 properties:
                   messageId:
-                    type: string
+                    type: integer
                     description: The unique identifier assigned to the message.
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 100000
+                    minimum: 1
+                    maximum: 100000
                   status:
                     type: string
                     description: |
@@ -468,11 +464,10 @@ paths:
           required: true
           description: "The code of the message"
           schema:
-            type: string
+            type: integer
             description: The unique identifier of the message to be forwarded.
-            pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-            minLength: 3
-            maxLength: 1000
+            minimum: 1
+            maximum: 100000
       requestBody:
         description: Details for forwarding the message.
         required: true
@@ -485,12 +480,11 @@ paths:
                 - recipientId
               properties:
                 recipientId:
-                  type: string
+                  type: integer
                   description: |
                     The unique identifier of the recipient to whom the message will be forwarded.
-                  pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                  minLength: 3
-                  maxLength: 16
+                  minimum: 1
+                  maximum: 100000
                 messageContent:
                   type: string
                   description: |
@@ -520,12 +514,11 @@ paths:
                   - status
                 properties:
                   messageId:
-                    type: string
+                    type: integer
+                    minimum: 1
+                    maximum: 100000
                     description: |
                       The unique identifier assigned to the forwarded message.
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
                   status:
                     type: string
                     description: |
@@ -586,11 +579,10 @@ paths:
           required: true
           description: "The code of the message"
           schema:
-            type: string
+            type: integer
+            minimum: 1
+            maximum: 100000
             description: The unique identifier of the message to which the reaction will be added.
-            pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-            minLength: 3
-            maxLength: 1000
       requestBody:
         description: Details of the reaction to add.
         required: true
@@ -606,7 +598,7 @@ paths:
                   type: string
                   description: The emoji or symbol representing the reaction.
                   pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                  minLength: 3
+                  minLength: 1
                   maxLength: 1000
       responses:
         '201':
@@ -621,11 +613,10 @@ paths:
                   - status
                 properties:
                   reactionId:
-                    type: string
+                    type: integer
                     description: The unique identifier of the added reaction.
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
+                    minimum: 1
+                    maximum: 100000
                   status:
                     $ref: '#/components/schemas/Status'
         '400':
@@ -679,11 +670,10 @@ paths:
           required: true
           description: "The code of the message"
           schema:
-            type: string
+            type: integer
+            minimum: 1
+            maximum: 100000
             description: The unique identifier of the message from which the reaction will be removed.
-            pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-            minLength: 3
-            maxLength: 1000
       requestBody:
         description: Details of the reaction to remove.
         required: true
@@ -699,7 +689,7 @@ paths:
                   type: string
                   description: The emoji or symbol of the reaction to be removed. If empty, all reactions are removed.
                   pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                  minLength: 3
+                  minLength: 1
                   maxLength: 1000
       responses:
         '200':
@@ -714,11 +704,10 @@ paths:
                   - status
                 properties:
                   reactionId:
-                    type: string
+                    type: integer
+                    minimum: 1
+                    maximum: 100000
                     description: The unique identifier of the removed reaction.
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
                   status:
                     $ref: '#/components/schemas/Status'
         '400':
@@ -769,11 +758,10 @@ paths:
           required: true
           description: "The code of the message"
           schema:
-            type: string
+            type: integer
+            minimum: 1
+            maximum: 100000
             description: The unique identifier of the message to be deleted.
-            pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-            minLength: 3
-            maxLength: 1000
       responses:
         '204':
           description: Message deleted successfully.
@@ -840,21 +828,19 @@ paths:
           required: true
           description: "The code of the group"
           schema:
-            type: string
+            type: integer
+            minimum: 1
+            maximum: 100000
             description: The unique identifier of the group where the user will be added.
-            pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-            minLength: 3
-            maxLength: 1000
         - name: userId
           in: path
           required: true
           description: "The code of the user"
           schema:
-            type: string
+            type: integer
+            minimum: 1
+            maximum: 100000
             description: The unique identifier of the user to be added to the group.
-            pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-            minLength: 3
-            maxLength: 1000
       requestBody:
         description: Details of the role assigned to the user in the group.
         content:
@@ -863,7 +849,7 @@ paths:
               type: object
               required:
                 - role
-              description: "The code of the role"
+              description: "The name of the role"
               properties:
                 role:
                   type: string
@@ -886,17 +872,15 @@ paths:
                   - role
                 properties:
                   groupId:
-                    type: string
+                    type: integer
                     description: The ID of the group to which the user was added.
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
+                    minimum: 1
+                    maximum: 100000
                   userId:
-                    type: string
+                    type: integer
                     description: The ID of the user who was added to the group.
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
+                    minimum: 1
+                    maximum: 100000
                   role:
                     type: string
                     description: The role assigned to the user in the group.
@@ -938,7 +922,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
-  /lGroup/{groupId}/members/{memberId}:
+  /lGroup/{groupId}/members/{userId}:
     delete:
       tags: ["group"]
       summary: Leave a group
@@ -951,21 +935,19 @@ paths:
           required: true
           description: "The code of the group"
           schema:
-            type: string
+            type: integer
             description: The unique identifier of the group the user is leaving.
-            pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-            minLength: 3
-            maxLength: 1000
-        - name: memberId
+            minimum: 1
+            maximum: 100000
+        - name: userId
           in: path
           required: true
           description: "The code of the member"
           schema:
-            type: string
+            type: integer
             description: The unique identifier of the member leaving the group.
-            pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-            minLength: 3
-            maxLength: 1000
+            minimum: 1
+            maximum: 100000
       responses:
         '200':
           description: User successfully removed from the group.
@@ -1037,11 +1019,10 @@ paths:
           required: true
           description: "The code of the group"
           schema:
-            type: string
+            type: integer
             description: The unique identifier of the group whose name is being updated.
-            pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-            minLength: 3
-            maxLength: 1000
+            minimum: 1
+            maximum: 100000
       requestBody:
         description: The new name for the group.
         required: true
@@ -1072,11 +1053,10 @@ paths:
                 description: "The schema of renaming a group"
                 properties:
                   groupId:
-                    type: string
+                    type: integer
                     description: The unique identifier of the group.
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
+                    minimum: 1
+                    maximum: 100000
                   groupName:
                     type: string
                     description: The updated name of the group.
@@ -1130,11 +1110,10 @@ paths:
           required: true
           description: "The code of the user"
           schema:
-            type: string
+            type: integer
             description: The unique identifier of the user.
-            pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-            minLength: 3
-            maxLength: 1000
+            minimum: 1
+            maximum: 100000
       requestBody:
         description: The photo to be uploaded or updated.
         required: true
@@ -1150,8 +1129,8 @@ paths:
                   type: string
                   format: binary
                   description: The image file to be uploaded as the user's profile photo.
-                  pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                  minLength: 3
+                  pattern: "^[01]+$"
+                  minLength: 1
                   maxLength: 1000
       responses:
         '200':
@@ -1221,11 +1200,10 @@ paths:
           required: true
           description: "The code of the group"
           schema:
-            type: string
+            type: integer
             description: The unique identifier of the group.
-            pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-            minLength: 3
-            maxLength: 1000
+            minimum: 1
+            maximum: 100000
       requestBody:
         description: Group photo file upload
         required: true
@@ -1241,8 +1219,8 @@ paths:
                   type: string
                   format: binary
                   description: The image file to be uploaded as the group photo.
-                  pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                  minLength: 3
+                  pattern: "^[01]+$"
+                  minLength: 1
                   maxLength: 1000
       responses:
         '201':
@@ -1317,13 +1295,12 @@ paths:
         - name: userId
           in: path
           required: true
-          description: "The code of the user"
+          description: "The unique identifier of the user"
           schema:
-            type: string
+            type: integer
             description: The unique identifier of the user.
-            pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-            minLength: 3
-            maxLength: 1000
+            minimum: 1
+            maximum: 100000
       requestBody:
         description: The action for which permission needs to be checked.
         required: true
