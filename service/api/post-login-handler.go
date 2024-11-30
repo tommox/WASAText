@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 
-	//"github.com/Salvatore-1918339/wasa_project/service/api/reqcontext"
-	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/api/reqcontext"
 	"github.com/julienschmidt/httprouter"
+	"github.com/tommox/WASAText/service/api/reqcontext"
 )
 
 func (rt *_router) loginHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
@@ -22,7 +20,7 @@ func (rt *_router) loginHandler(w http.ResponseWriter, r *http.Request, ps httpr
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
-	} else if !validIdentifier(user.Nickname) {
+	} else if !validIdentifier(user.userName) {
 		ctx.Logger.WithError(err).Error("session: Can't Create a User. User nickname not Valid. <<")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -35,9 +33,9 @@ func (rt *_router) loginHandler(w http.ResponseWriter, r *http.Request, ps httpr
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if temp_user.User_id != 0 { // ? Ho trovato l'user quindi assegno i valori
-		user.User_id = temp_user.User_id
-		user.Nickname = temp_user.Nickname
+	if temp_user.userId != 0 { // ? Ho trovato l'user quindi assegno i valori
+		user.userId = temp_user.userId
+		user.userName = temp_user.userName
 
 		w.WriteHeader(http.StatusOK)
 		err = json.NewEncoder(w).Encode(user)
@@ -65,16 +63,17 @@ func (rt *_router) loginHandler(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	user.User_id = id // Cambio l'ID dentro la variabile user
-
-	// ! Creo la cartella del nuovo Utente
-	CreateFolder(strconv.Itoa(id), ctx)
-
-	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(user)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		ctx.Logger.WithError(err).Error("session: can't create response json")
-		return
-	}
+	user.userId = id // Cambio l'ID dentro la variabile user
 }
+
+/* ! Creo la cartella del nuovo Utente
+CreateFolder(strconv.Itoa(id), ctx)
+
+w.WriteHeader(http.StatusCreated)
+err = json.NewEncoder(w).Encode(user)
+if err != nil {
+	w.WriteHeader(http.StatusInternalServerError)
+	ctx.Logger.WithError(err).Error("session: can't create response json")
+	return
+}
+*/

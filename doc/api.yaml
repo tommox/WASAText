@@ -5,6 +5,24 @@ info:
   description: |-
     This OpenAPI document describes how WASAText works.
   version: "1"
+  contact:
+    name: Tommaso Salvi
+    email: salvi.1960045@studenti.uniroma1.it
+
+tags:
+  - name: login
+    description: Handle login actions
+  - name: user
+    description: Handle user actions
+  - name: conversation
+    description: Handle conversation actions
+  - name: message
+    description: Handle message actions
+  - name: group
+    description: Handle group actions
+
+servers: 
+  - url: http://localhost:3000
 
 components:
   securitySchemes:
@@ -58,18 +76,6 @@ components:
   
 security:
   - bearerAuth: []
-
-tags:
-  - name: login
-    description: Handle login actions
-  - name: user
-    description: Handle user actions
-  - name: conversation
-    description: Handle conversation actions
-  - name: message
-    description: Handle message actions
-  - name: group
-    description: Handle group actions
 
 
 paths: 
@@ -152,10 +158,10 @@ paths:
             schema:
               type: object
               required:
-                - newUserName
+                - userName
               description: Schema for updating the user's username.
               properties:
-                newUserName:
+                userName:
                   $ref: '#/components/schemas/Name'
       responses:
         '200':

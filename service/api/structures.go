@@ -1,7 +1,11 @@
 package api
 
+import (
+	"github.com/tommox/WASAText/service/database"
+)
+
 // Username
-type userName struct {
+type UserName struct {
 	userName string `json:"userName"`
 }
 
@@ -9,4 +13,11 @@ type userName struct {
 type User struct {
 	userId   int    `json:"userId"`
 	userName string `json:"userName"`
+}
+
+func (u User) toDataBase() database.User {
+	return database.User{
+		UserId:   u.userId,
+		userName: u.userName,
+	}
 }

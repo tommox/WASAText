@@ -40,6 +40,11 @@ import (
 type AppDatabase interface {
 	GetName() (string, error)
 	SetName(name string) error
+	CreateUser(User) error
+	ChangeUserName(User, string) error
+
+	FindUserId(User) (int, error)
+	CheckUser(User) (User, error)
 
 	Ping() error
 }
@@ -59,10 +64,15 @@ func New(db *sql.DB) (AppDatabase, error) {
 	var tableName string
 	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='example_table';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
-		sqlStmt := `CREATE TABLE example_table (id INTEGER NOT NULL PRIMARY KEY, name TEXT);`
-		_, err = db.Exec(sqlStmt)
+
+		// Creating DB for Users if not existing
+		users := `CREATE TABLE IF NOT EXISTS Users 
+										(userId INTEGER NOT NULL, 
+										nickname VARCHAR(16) NOT NULL UNIQUE,
+										PRIMARY KEY("userId" AUTOINCREMENT));`
+		_, err = db.Exec(users)
 		if err != nil {
-			return nil, fmt.Errorf("error creating database structure: %w", err)
+			return nil, fmt.Errorf("error creating database structure: Users %w", err)
 		}
 	}
 
