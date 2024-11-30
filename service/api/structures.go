@@ -17,7 +17,7 @@ type User struct {
 
 func (u User) toDataBase() database.User {
 	return database.User{
-		UserId:   u.userId,
+		userId:   u.userId,
 		userName: u.userName,
 	}
 }
