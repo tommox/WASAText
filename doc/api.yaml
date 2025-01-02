@@ -12,13 +12,13 @@ info:
 tags:
   - name: login
     description: Handle login actions
-  - name: user
+  - name: users
     description: Handle user actions
-  - name: conversation
+  - name: conversations
     description: Handle conversation actions
-  - name: message
+  - name: messages
     description: Handle message actions
-  - name: group
+  - name: groups
     description: Handle group actions
 
 servers: 
@@ -77,8 +77,10 @@ components:
 security:
   - bearerAuth: []
 
-
 paths: 
+  # -------------------------------------------------------
+  # LOGIN
+  # -------------------------------------------------------
   /session:
     post:
       tags: ["login"]
@@ -87,9 +89,10 @@ paths:
         If the user does not exist, it will be created,
         and an identifier is returned.
         If the user exists, the user identifier is returned.
-      operationId: doLogin 
+      operationId: doLogin
       requestBody:
         description: User details 
+        required: true
         content:
           application/json: 
             schema:
@@ -100,7 +103,6 @@ paths:
               properties:
                 userName:
                   $ref: '#/components/schemas/Name'
-        required: true 
       responses:
         '201':
           description: User log-in action successful 
@@ -126,7 +128,7 @@ paths:
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/Error401'
+                $ref: '#/components/schemas/Error401'
         '500':
           description: Server error
           content:
@@ -134,22 +136,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
-  /userName/{userId}:
+
+  # -------------------------------------------------------
+  # USERS
+  # -------------------------------------------------------
+  /users/{userId}:
     put: 
-      tags: ["user"]
-      summary: Set the name of the user
+      tags: ["users"]
+      summary: Update the username
       description: Allows users to update their username.
       operationId: setMyUserName
       parameters:
-      - name: userId
-        in: path
-        required: true
-        description: "The unique identifier of the user"
-        schema:
-          type: integer
-          description: "The unique identifier of the user whose username is being updated"
-          minimum: 1
-          maximum: 100000
+        - name: userId
+          in: path
+          required: true
+          description: "The unique identifier of the user"
+          schema:
+            type: integer
+            description: "The unique identifier of the user whose username is being updated"
+            minimum: 1
+            maximum: 100000
       requestBody: 
         required: true
         description: "Update username"
@@ -207,11 +213,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error500'
-        
+
+
+  # -------------------------------------------------------
+  # CONVERSATIONS
+  # -------------------------------------------------------
   /conversations:
     get:
-      tags: ["conversation"]
-      summary: Get my conversations
+      tags: ["conversations"]
+      summary: Get all conversations
       description: Return all my conversations
       operationId: getMyConversations
       parameters:
@@ -283,30 +293,25 @@ paths:
                     minimum: 0
                     maximum: 100000
 
-
-
-  /conversation/{conversationId}:
+  /conversations/{conversationId}:
     get:
-      tags: ["conversation"]
+      tags: ["conversations"]
       summary: Get a conversation by its ID
-      description: |-
-        Return one specific conversation
+      description: Return one specific conversation
       operationId: getConversation
       parameters:
-      - name: conversationId
-        in: path
-        description: |
-            The unique identifier of the conversation to retrieve.
-            This value is mandatory and must match an existing conversation ID
-        required: true
-        schema:
-          type: integer
-          description: "Schema for having a specific conversation"
-          minimum: 1
-          maximum: 100000
+        - name: conversationId
+          in: path
+          description: The unique identifier of the conversation to retrieve.
+          required: true
+          schema:
+            type: integer
+            description: "Schema for having a specific conversation"
+            minimum: 1
+            maximum: 100000
       responses:
         '200':
-          description: Conversations successfully returned
+          description: Conversation successfully returned
           content:
             application/json:
               schema:
@@ -345,10 +350,7 @@ paths:
                     maxLength: 1000
                   status:
                     type: string
-                    description: |
-                      The status of the conversation. It can be either:
-                      - `read`: All messages in the conversation have been read.
-                      - `unread`: There are unread messages in the conversation.
+                    description: "The status of the conversation: 'read' or 'unread'."
                     enum: ["read", "unread"]
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
@@ -365,13 +367,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error500'
-              
-  /sMessage:
+
+
+  # -------------------------------------------------------
+  # MESSAGES
+  # -------------------------------------------------------
+  /messages:
     post:
-      tags: ["message"]
+      tags: ["messages"]
       summary: Send a message
-      description: |-
-        Allows to send a message to a specific recipient
+      description: Allows to send a message to a specific recipient
       operationId: sendMessage
       requestBody:
         description: Message details required to send a message.
@@ -387,23 +392,19 @@ paths:
               properties:
                 recipientId:
                   type: integer
-                  description: |
-                    The unique identifier of the recipient to whom the message will be sent.
+                  description: "The unique identifier of the recipient."
                   minimum: 1
                   maximum: 100000
                 messageContent:
                   type: string
-                  description: |
-                    The content of the message being sent. It must not exceed 500 characters.
+                  description: "The content of the message (<= 500 chars)."
                   pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                   minLength: 3
                   maxLength: 1000
                 timestamp:
                   type: string
                   format: date-time
-                  description: |
-                    The timestamp indicating when the message was created or sent. 
-                    If not provided, the server will assign the current time.
+                  description: "Optional timestamp. If omitted, server will set current time."
                   pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                   minLength: 3
                   maxLength: 1000
@@ -421,16 +422,12 @@ paths:
                 properties:
                   messageId:
                     type: integer
-                    description: The unique identifier assigned to the message.
+                    description: "The unique identifier assigned to the message."
                     minimum: 1
                     maximum: 100000
                   status:
                     type: string
-                    description: |
-                      The current status of the message. Possible values are:
-                      - `unsent`: The message is not sent yet.
-                      - `sent`: The message has been sent but not read.
-                      - `read`: The message has been read by the recipient.
+                    description: "The current status of the message (unsent, sent, read)."
                     enum: ["unsent", "sent", "read"]
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
@@ -457,21 +454,19 @@ paths:
                 $ref: '#/components/schemas/Error500'
 
 
-  /fMessage/{messageId}:
+  /messages/{messageId}/forwards:
     post:
-      tags: ["message"]
+      tags: ["messages"]
       summary: Forward a message
-      description: |-
-        Forward a message to a specific recipient
+      description: Forward a message to a specific recipient
       operationId: forwardMessage
       parameters:
         - name: messageId
           in: path
           required: true
-          description: "The code of the message"
+          description: "The unique ID of the original message"
           schema:
             type: integer
-            description: The unique identifier of the message to be forwarded.
             minimum: 1
             maximum: 100000
       requestBody:
@@ -487,23 +482,19 @@ paths:
               properties:
                 recipientId:
                   type: integer
-                  description: |
-                    The unique identifier of the recipient to whom the message will be forwarded.
+                  description: "The unique identifier of the recipient."
                   minimum: 1
                   maximum: 100000
                 messageContent:
                   type: string
-                  description: |
-                    The content of the forwarded message. If omitted, the original message content will be used.
+                  description: "Optional new content; if omitted, original content is used."
                   pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                   minLength: 3
                   maxLength: 1000
                 timestamp:
                   type: string
                   format: date-time
-                  description: |
-                    The timestamp indicating when the message was forwarded. 
-                    If not provided, the server will assign the current time.
+                  description: "When forwarded. If not provided, server sets current time."
                   pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                   minLength: 3
                   maxLength: 1000
@@ -523,15 +514,10 @@ paths:
                     type: integer
                     minimum: 1
                     maximum: 100000
-                    description: |
-                      The unique identifier assigned to the forwarded message.
+                    description: "The new forwarded message ID."
                   status:
                     type: string
-                    description: |
-                      The current status of the forwarded message. Possible values are:
-                      - `unsent`: The message is not sent yet.
-                      - `sent`: The message has been sent but not read.
-                      - `read`: The message has been read by the recipient.
+                    description: "Status of the forwarded message (unsent, sent, read)."
                     enum: ["unsent", "sent", "read"]
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
@@ -541,12 +527,12 @@ paths:
           content:
             application/json:
               schema:
-                type: object
                 description: Schema for validation errors.
+                type: object
                 properties:
                   error:
                     type: string
-                    description: Description of the validation error.
+                    description: "Validation error details."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
@@ -560,8 +546,7 @@ paths:
                 properties:
                   error:
                     type: string
-                    description: |
-                      A message indicating that the specified message ID does not exist.
+                    description: "Original message ID not found."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
@@ -573,22 +558,22 @@ paths:
                 $ref: '#/components/schemas/Error500'
 
 
-  /cMessage/{messageId}:
+  # Reactions come sottorisorsa
+  /messages/{messageId}/reactions:
     post:
-      tags: ["message"]
-      summary: Add a reaction to a message
+      tags: ["messages"]
+      summary: Add a reaction
       description: Adds a reaction to a specific message.
-      operationId: commentMessage
+      operationId: addReaction
       parameters:
         - name: messageId
           in: path
           required: true
-          description: "The code of the message"
+          description: "ID of the message to which the reaction will be added."
           schema:
             type: integer
             minimum: 1
             maximum: 100000
-            description: The unique identifier of the message to which the reaction will be added.
       requestBody:
         description: Details of the reaction to add.
         required: true
@@ -602,7 +587,7 @@ paths:
               properties:
                 emoji:
                   type: string
-                  description: The emoji or symbol representing the reaction.
+                  description: "The emoji or symbol representing the reaction."
                   pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                   minLength: 1
                   maxLength: 1000
@@ -612,15 +597,15 @@ paths:
           content:
             application/json:
               schema:
-                type: object
                 description: Response structure for a successful reaction addition.
+                type: object
                 required:
                   - reactionId
                   - status
                 properties:
                   reactionId:
                     type: integer
-                    description: The unique identifier of the added reaction.
+                    description: "Unique identifier of the added reaction."
                     minimum: 1
                     maximum: 100000
                   status:
@@ -635,9 +620,7 @@ paths:
                 properties:
                   error:
                     type: string
-                    description: |
-                      A message indicating the specific validation error encountered, 
-                      such as an invalid emoji format.
+                    description: "Validation error details (e.g. invalid emoji)."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
@@ -651,8 +634,7 @@ paths:
                 properties:
                   error:
                     type: string
-                    description: |
-                      A message indicating that the specified message ID does not exist.
+                    description: "The specified message ID does not exist."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
@@ -663,40 +645,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
-
-  /uMessage/{messageId}:
-    post:
-      tags: ["message"]
-      summary: Remove a reaction from a message
-      description: Removes a reaction to a specific message.
-      operationId: uncommentMessage
+    delete:
+      tags: ["messages"]
+      summary: Remove a reaction (or all reactions)
+      description: Removes a reaction from a specific message. If the request body is empty or not provided, remove all reactions.
+      operationId: removeReaction
       parameters:
         - name: messageId
           in: path
           required: true
-          description: "The code of the message"
+          description: "ID of the message from which the reaction will be removed."
           schema:
             type: integer
             minimum: 1
             maximum: 100000
-            description: The unique identifier of the message from which the reaction will be removed.
-      requestBody:
-        description: Details of the reaction to remove.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              description: Schema for remove a reaction to a message.
-              required:
-                - emoji
-              properties:
-                emoji:
-                  type: string
-                  description: The emoji or symbol of the reaction to be removed. If empty, all reactions are removed.
-                  pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                  minLength: 1
-                  maxLength: 1000
       responses:
         '200':
           description: Reaction removed successfully.
@@ -713,7 +675,7 @@ paths:
                     type: integer
                     minimum: 1
                     maximum: 100000
-                    description: The unique identifier of the removed reaction.
+                    description: "The unique identifier of the removed reaction."
                   status:
                     $ref: '#/components/schemas/Status'
         '400':
@@ -722,11 +684,11 @@ paths:
             application/json:
               schema:
                 type: object
-                description: Schema for validation errors.
+                description: Response for an error caused by invalid data.
                 properties:
                   error:
                     type: string
-                    description: A message indicating the specific validation error encountered.
+                    description: "Validation error details."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
@@ -736,12 +698,11 @@ paths:
             application/json:
               schema:
                 type: object
-                description: Schema for resource not found errors.
+                description: Response for an error caused by message not found.
                 properties:
                   error:
                     type: string
-                    description: |
-                      A message indicating that the specified message ID or reaction does not exist.
+                    description: "Specified message or reaction does not exist."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
@@ -752,9 +713,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
-  /dMessage/{messageId}:
+
+  /messages/{messageId}:
     delete:
-      tags: ["message"]
+      tags: ["messages"]
       summary: Delete a message
       description: Delete a specific message
       operationId: deleteMessage
@@ -762,12 +724,11 @@ paths:
         - name: messageId
           in: path
           required: true
-          description: "The code of the message"
+          description: "The unique identifier of the message to be deleted."
           schema:
             type: integer
             minimum: 1
             maximum: 100000
-            description: The unique identifier of the message to be deleted.
       responses:
         '204':
           description: Message deleted successfully.
@@ -779,10 +740,10 @@ paths:
                 properties:
                   success:
                     type: boolean
-                    description: Indicates that the operation was successful.
+                    description: "Indicates that the operation was successful."
                   message:
                     type: string
-                    description: Descriptive confirmation of the deletion.
+                    description: "Descriptive confirmation of the deletion."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
@@ -792,78 +753,78 @@ paths:
             application/json:
               schema:
                 type: object
-                description: Error response for invalid data.
+                description: Rejection of deleting a message.
                 properties:
                   error:
                     type: string
-                    description: The error message explaining what went wrong.
+                    description: "Error message explaining the invalid data."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
         '404':
-          description: Message not found. The specified `messageId` does not exist.
+          description: Message not found.
           content:
             application/json:
               schema:
                 type: object
-                description: Error response for resource not found.
+                description: Rejection of deleting a message caused by not found
                 properties:
                   error:
                     type: string
-                    description: A message indicating that the message could not be found.
+                    description: "The specified messageId does not exist."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
         '500':
-          description: Server error. An internal issue occurred while trying to delete the message.
+          description: Server error.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error500'
 
-  
-  /aGroup/{groupId}/users/{userId}:
+
+  # -------------------------------------------------------
+  # GROUPS
+  # -------------------------------------------------------
+  /groups/{groupId}/users:
     post:
-      tags: ["group"]
+      tags: ["groups"]
       summary: Add a user to a group
-      description: Assigns a specific user to a group.
+      description: Assigns a user to a specific group.
       operationId: addToGroup
       parameters:
         - name: groupId
+          description: The integer that describes the groupId.
           in: path
           required: true
-          description: "The code of the group"
           schema:
             type: integer
             minimum: 1
             maximum: 100000
-            description: The unique identifier of the group where the user will be added.
-        - name: userId
-          in: path
-          required: true
-          description: "The code of the user"
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100000
-            description: The unique identifier of the user to be added to the group.
+            description: "The ID of the group"
       requestBody:
-        description: Details of the role assigned to the user in the group.
+        description: Details of the user to add, including role.
+        required: true
         content:
           application/json:
             schema:
               type: object
+              description: Response structured with details of userId and role
               required:
+                - userId
                 - role
-              description: "The name of the role"
               properties:
+                userId:
+                  type: integer
+                  description: "ID of the user to add to the group"
+                  minimum: 1
+                  maximum: 100000
                 role:
                   type: string
-                  description: The role assigned to the user in the group (e.g., member, admin).
+                  description: "The role assigned to the user (e.g., 'member', 'admin')."
                   pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                   minLength: 3
                   maxLength: 1000
-        required: true
       responses:
         '201':
           description: User successfully added to the group.
@@ -871,7 +832,7 @@ paths:
             application/json:
               schema:
                 type: object
-                description: "The schema of adding a member to a group"
+                description: Schema for positive response
                 required:
                   - groupId
                   - userId
@@ -879,79 +840,78 @@ paths:
                 properties:
                   groupId:
                     type: integer
-                    description: The ID of the group to which the user was added.
+                    description: "The ID of the group."
                     minimum: 1
                     maximum: 100000
                   userId:
                     type: integer
-                    description: The ID of the user who was added to the group.
+                    description: "The ID of the user added."
                     minimum: 1
                     maximum: 100000
                   role:
                     type: string
-                    description: The role assigned to the user in the group.
+                    description: "The role assigned to the user."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
         '400':
-          description: Invalid data. The provided groupId, userId, or role is invalid.
+          description: Invalid data (groupId, userId, or role).
           content:
             application/json:
               schema:
                 type: object
-                description: "The schema of the error 400"
+                description: Negative response at the request.
                 properties:
                   error:
                     type: string
-                    description: A message describing the issue with the request.
+                    description: "Details of the invalid request."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
         '404':
-          description: Group or user not found. The specified groupId or userId does not exist.
+          description: Group or user not found.
           content:
             application/json:
               schema:
                 type: object
-                description: "The schema of the error 404"
+                description: Negative response caused by not found
                 properties:
                   error:
                     type: string
-                    description: A message indicating that the group or user was not found.
+                    description: "The specified group or user does not exist."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
         '500':
-          description: Server error. An internal error occurred while adding the user to the group.
+          description: Server error.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error500'
 
-  /lGroup/{groupId}/members/{userId}:
+  /groups/{groupId}/users/{userId}:
     delete:
-      tags: ["group"]
-      summary: Leave a group
-      description: |-
-        Allows a specific user to leave a group.
+      tags: ["groups"]
+      summary: Remove a user from a group
+      description: Allows a specific user to leave (be removed from) a group.
       operationId: leaveGroup
       parameters:
         - name: groupId
+          description: Integer that represent the groupId
           in: path
           required: true
-          description: "The code of the group"
           schema:
             type: integer
-            description: The unique identifier of the group the user is leaving.
+            description: "The ID of the group."
             minimum: 1
             maximum: 100000
         - name: userId
+          description: Integer that represent the userId
           in: path
           required: true
-          description: "The code of the member"
           schema:
             type: integer
-            description: The unique identifier of the member leaving the group.
+            description: "The ID of the user to remove."
             minimum: 1
             maximum: 100000
       responses:
@@ -961,72 +921,71 @@ paths:
             application/json:
               schema:
                 type: object
-                description: "The schema of removing a member from a group"
+                description: Schema for positive removal of a user.
                 required:
                   - success
                   - message
                 properties:
                   success:
                     type: boolean
-                    description: Indicates the operation was successful.
+                    description: "Indicates the operation was successful."
                     example: true
                   message:
                     type: string
-                    description: A message confirming the user was removed from the group.
+                    description: "A confirmation message."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
         '400':
-          description: Invalid data. The provided groupId or memberId is not valid.
+          description: Invalid data (groupId or userId).
           content:
             application/json:
               schema:
                 type: object
-                description: "The schema of the error 400"
+                description: Schema for invalid data.
                 properties:
                   error:
                     type: string
-                    description: A message describing the issue with the request.
+                    description: "Details of the error."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
         '404':
-          description: Group or member not found. The specified groupId or memberId does not exist.
+          description: Group or user not found.
           content:
             application/json:
               schema:
                 type: object
-                description: "The schema of the error 404"
+                description: Schema for error caused by not found.
                 properties:
                   error:
                     type: string
-                    description: A message indicating that the group or member was not found.
+                    description: "Group or user not found."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
         '500':
-          description: Server error. An internal error occurred while removing the user from the group.
+          description: Server error.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error500'
 
-  
-  /sGroupName/{groupId}:
+
+  /groups/{groupId}:
     patch:
-      tags: ["group"]
-      summary: Update the group name
-      description: |-
-        Users can update the name of a specific group.
+      tags: ["groups"]
+      summary: Update group details
+      description: Allows updating certain group fields (like the group name).
       operationId: setGroupName
       parameters:
         - name: groupId
           in: path
+          description: Integer that represents groupId
           required: true
-          description: "The code of the group"
           schema:
             type: integer
-            description: The unique identifier of the group whose name is being updated.
+            description: "The unique ID of the group."
             minimum: 1
             maximum: 100000
       requestBody:
@@ -1038,11 +997,11 @@ paths:
               type: object
               required:
                 - groupName
-              description: "The schema of renaming a group"
+              description: "Schema for renaming a group"
               properties:
                 groupName:
                   type: string
-                  description: The new name for the group.
+                  description: "New group name."
                   pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                   minLength: 3
                   maxLength: 1000
@@ -1053,19 +1012,19 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema for positive name update.
                 required:
                   - groupId
                   - groupName
-                description: "The schema of renaming a group"
                 properties:
                   groupId:
                     type: integer
-                    description: The unique identifier of the group.
+                    description: "The unique ID of the group."
                     minimum: 1
                     maximum: 100000
                   groupName:
                     type: string
-                    description: The updated name of the group.
+                    description: "The updated name of the group."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
@@ -1075,11 +1034,11 @@ paths:
             application/json:
               schema:
                 type: object
-                description: "The schema of the error 400"
+                description: Schema for negative response caused by invalid groupId
                 properties:
                   error:
                     type: string
-                    description: A message indicating the group name or ID is invalid.
+                    description: "Error details."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
@@ -1089,35 +1048,39 @@ paths:
             application/json:
               schema:
                 type: object
-                description: "The schema of the error 404"
+                description: Schema for error caused by not found.
                 properties:
                   error:
                     type: string
-                    description: A message indicating the specified group does not exist.
+                    description: "The specified group does not exist."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
         '500':
-          description: Internal server error occurred while updating the group name.
+          description: Internal server error occurred.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error500'
 
-  /sMyPhoto/{userId}:
-    post:
-      tags: ["user"]
-      summary: Update or set user photo
-      description: Allows the user to update or set their profile photo.
+
+  # -------------------------------------------------------
+  # PHOTOS (USERS)
+  # -------------------------------------------------------
+  /photos/{userId}:
+    put:
+      tags: ["users"]
+      summary: Create or update the user's profile photo
+      description: Upsert a single profile photo for the user.
       operationId: setMyPhoto
       parameters:
         - name: userId
+          description: Integer that represents userId.
           in: path
           required: true
-          description: "The code of the user"
           schema:
             type: integer
-            description: The unique identifier of the user.
+            description: "The unique ID of the user."
             minimum: 1
             maximum: 100000
       requestBody:
@@ -1127,14 +1090,13 @@ paths:
           multipart/form-data:
             schema:
               type: object
-              required:
-                - photo
-              description: "The schema of uploading or updating a photo"
+              description: Schema for positive photo update or upload.
+              required: [photo]
               properties:
                 photo:
                   type: string
                   format: binary
-                  description: The image file to be uploaded as the user's profile photo.
+                  description: "The image file for the user's profile photo."
                   pattern: "^[01]+$"
                   minLength: 1
                   maxLength: 1000
@@ -1145,16 +1107,35 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema for positive photo update
                 required:
                   - status
                   - photoUrl
-                description: "The schema of updating a photo"
                 properties:
                   status:
                     $ref: '#/components/schemas/Status'
                   photoUrl:
                     type: string
-                    description: The URL or path of the updated photo.
+                    description: "URL or path of the updated photo."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '201':
+          description: Profile photo created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for positive photo creation.
+                required:
+                  - status
+                  - photoUrl
+                properties:
+                  status:
+                    $ref: '#/components/schemas/Status'
+                  photoUrl:
+                    type: string
+                    description: "URL or path of the created photo."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
@@ -1164,11 +1145,11 @@ paths:
             application/json:
               schema:
                 type: object
-                description: "The schema of the error 400"
+                description: Schema for negative response caused by invalid file
                 properties:
                   error:
                     type: string
-                    description: A message indicating what went wrong with the file upload.
+                    description: "What went wrong with the file upload."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
@@ -1178,11 +1159,11 @@ paths:
             application/json:
               schema:
                 type: object
-                description: "The schema of the error 415"
+                description: Schema for error caused by unsupported media type
                 properties:
                   error:
                     type: string
-                    description: A message indicating the uploaded file type is not supported.
+                    description: "The uploaded file type is not supported."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
@@ -1193,21 +1174,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
-  /sGroupPhoto/{groupId}:
-    post:
-      tags: ["group"]
-      summary: Upload or update the group photo
-      description: |-
-        Allows the group admin to upload or update the photo for a specific group.
+
+  # -------------------------------------------------------
+  # GROUP PHOTO
+  # -------------------------------------------------------
+  /groups/{groupId}/photo:
+    put:
+      tags: ["groups"]
+      summary: Create or update the group photo
+      description: Allows the group admin to upload or update the photo for a specific group.
       operationId: setGroupPhoto
       parameters:
         - name: groupId
+          description: Integer that represents groupId
           in: path
           required: true
-          description: "The code of the group"
           schema:
             type: integer
-            description: The unique identifier of the group.
+            description: "The unique ID of the group."
             minimum: 1
             maximum: 100000
       requestBody:
@@ -1217,34 +1201,52 @@ paths:
           multipart/form-data:
             schema:
               type: object
-              required:
-                - photo
-              description: "The schema of group photo updating"
+              description: Schema that takes photo.
+              required: [ photo ]
               properties:
                 photo:
                   type: string
                   format: binary
-                  description: The image file to be uploaded as the group photo.
+                  description: "The image file to be uploaded as the group photo."
                   pattern: "^[01]+$"
                   minLength: 1
                   maxLength: 1000
       responses:
-        '201':
-          description: Group photo uploaded successfully.
+        '200':
+          description: Group photo updated successfully.
           content:
             application/json:
               schema:
                 type: object
+                description: Schema for positive photo updated.
                 required:
                   - status
                   - photoUrl
-                description: "The schema of the group photo uploaded"
                 properties:
                   status:
                     $ref: '#/components/schemas/Status'
                   photoUrl:
                     type: string
-                    description: The URL or path to the uploaded photo.
+                    description: "The URL or path to the updated photo."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '201':
+          description: Group photo created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for positive photo created.
+                required:
+                  - status
+                  - photoUrl
+                properties:
+                  status:
+                    $ref: '#/components/schemas/Status'
+                  photoUrl:
+                    type: string
+                    description: "The URL or path to the newly uploaded photo."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
@@ -1254,16 +1256,16 @@ paths:
             application/json:
               schema:
                 type: object
-                description: "The schema of the error 400"
+                description: Schema for error caused by invalid file 
                 properties:
                   error:
                     type: string
-                    description: An error message describing the issue with the upload.
+                    description: "Error details for the file upload."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
         '403':
-          description: Unauthorized - User does not have permission to update the group photo.
+          description: Unauthorized - user lacks permission.
           content:
             application/json:
               schema:
@@ -1274,11 +1276,11 @@ paths:
             application/json:
               schema:
                 type: object
-                description: "The schema of the error 415"
+                description: Schema for error caused by unsupported media type.
                 properties:
                   error:
                     type: string
-                    description: A message indicating the uploaded file type is not supported.
+                    description: "The uploaded file type is not supported."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
@@ -1290,21 +1292,23 @@ paths:
                 $ref: '#/components/schemas/Error500'
 
 
-  /permissions/user/{userId}:
+  # -------------------------------------------------------
+  # PERMISSIONS
+  # -------------------------------------------------------
+  /permissions/users/{userId}:
     post:
-      tags: ["user"]
+      tags: ["users"]
       summary: Check user permissions
-      description: |-
-        Verifies if a user has the necessary permissions to perform a specific action.
+      description: Verifies if a user has the necessary permissions to perform a specific action.
       operationId: checkUserPermissions
       parameters:
         - name: userId
+          description: Integer that represents userId
           in: path
           required: true
-          description: "The unique identifier of the user"
           schema:
             type: integer
-            description: The unique identifier of the user.
+            description: "The unique ID of the user."
             minimum: 1
             maximum: 100000
       requestBody:
@@ -1314,13 +1318,13 @@ paths:
           application/json:
             schema:
               type: object
+              description: Schema for positive response of authorization
               required:
                 - action
-              description: "The schema of the permission check"
               properties:
                 action:
                   type: string
-                  description: The action to be verified (e.g., "setGroupPhoto").
+                  description: "Action to verify (e.g., 'setGroupPhoto')."
                   pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                   minLength: 3
                   maxLength: 1000
@@ -1331,18 +1335,18 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema for positive status verification
                 required:
                   - allowed
                   - message
-                description: "The schema of permission authorized"
                 properties:
                   allowed:
                     type: boolean
-                    description: Indicates if the user is authorized to perform the action.
+                    description: "If true, user is authorized to perform the action."
                     example: true
                   message:
                     type: string
-                    description: A message providing additional details about the permission status.
+                    description: "Additional info about the permission status."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
@@ -1358,11 +1362,11 @@ paths:
             application/json:
               schema:
                 type: object
-                description: "The schema of the error 400"
+                description: Schema for negative response caused by invalid input data
                 properties:
                   error:
                     type: string
-                    description: Details about the invalid request data.
+                    description: "Details about invalid request data."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
