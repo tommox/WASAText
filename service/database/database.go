@@ -41,7 +41,7 @@ type AppDatabase interface {
 	GetName() (string, error)
 	SetName(name string) error
 	CreateUser(User) error
-	ChangeUserName(User, string) error
+	ChangeNickname(User, string) error
 
 	FindUserId(User) (int, error)
 	CheckUser(User) (User, error)
@@ -67,9 +67,9 @@ func New(db *sql.DB) (AppDatabase, error) {
 
 		// Creating DB for Users if not existing
 		users := `CREATE TABLE IF NOT EXISTS Users 
-										(userId INTEGER NOT NULL, 
-										nickname VARCHAR(16) NOT NULL UNIQUE,
-										PRIMARY KEY("userId" AUTOINCREMENT));`
+										(User_id INTEGER NOT NULL, 
+										Nickname VARCHAR(16) NOT NULL UNIQUE,
+										PRIMARY KEY("User_id" AUTOINCREMENT));`
 		_, err = db.Exec(users)
 		if err != nil {
 			return nil, fmt.Errorf("error creating database structure: Users %w", err)

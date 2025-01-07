@@ -20,7 +20,7 @@ func (rt *_router) loginHandler(w http.ResponseWriter, r *http.Request, ps httpr
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
-	} else if !validIdentifier(user.userName) {
+	} else if !validIdentifier(user.Nickname) {
 		ctx.Logger.WithError(err).Error("session: Can't Create a User. User nickname not Valid. <<")
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -33,9 +33,9 @@ func (rt *_router) loginHandler(w http.ResponseWriter, r *http.Request, ps httpr
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if temp_user.userId != 0 { // ? Ho trovato l'user quindi assegno i valori
-		user.userId = temp_user.userId
-		user.userName = temp_user.userName
+	if temp_user.User_id != 0 { // ? Ho trovato l'user quindi assegno i valori
+		user.User_id = temp_user.User_id
+		user.Nickname = temp_user.Nickname
 
 		w.WriteHeader(http.StatusOK)
 		err = json.NewEncoder(w).Encode(user)
@@ -58,12 +58,12 @@ func (rt *_router) loginHandler(w http.ResponseWriter, r *http.Request, ps httpr
 	// ! prendo l'ID Salvato nel DB
 	id, err_fu := rt.db.FindUserId(user.toDataBase())
 	if err_fu != nil {
-		ctx.Logger.WithError(err_fu).Error("session: Error in FindUserId()")
+		ctx.Logger.WithError(err_fu).Error("session: Error in FindUser_id()")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	user.userId = id // Cambio l'ID dentro la variabile user
+	user.User_id = id // Cambio l'ID dentro la variabile user
 }
 
 /* ! Creo la cartella del nuovo Utente

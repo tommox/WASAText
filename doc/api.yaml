@@ -98,7 +98,7 @@ paths:
             schema:
               type: object 
               required:
-                - userName
+                - Nickname
               description: Schema for user login details.
               properties:
                 userName:
@@ -112,7 +112,7 @@ paths:
                 type: object 
                 description: Schema for a successful log-in response.
                 properties:
-                  userId: 
+                  User_id: 
                     type: integer
                     description: "A unique identifier for the user"
                     minimum: 1
@@ -124,7 +124,7 @@ paths:
                     minLength: 3
                     maxLength: 1000
         '400':
-          description: Invalid username length
+          description: Invalid nickname length
           content:
             application/json:
               schema:
@@ -140,32 +140,32 @@ paths:
   # -------------------------------------------------------
   # USERS
   # -------------------------------------------------------
-  /users/{userId}:
+  /users/{User_id}:
     put: 
       tags: ["users"]
-      summary: Update the username
-      description: Allows users to update their username.
-      operationId: setMyUserName
+      summary: Update the nickname
+      description: Allows users to update their nickname
+      operationId: setMyNickname
       parameters:
-        - name: userId
+        - name: User_id
           in: path
           required: true
           description: "The unique identifier of the user"
           schema:
             type: integer
-            description: "The unique identifier of the user whose username is being updated"
+            description: "The unique identifier of the user whose nickname is being updated"
             minimum: 1
             maximum: 100000
       requestBody: 
         required: true
-        description: "Update username"
+        description: "Update Nickname"
         content:
           application/json:
             schema:
               type: object
               required:
-                - userName
-              description: Schema for updating the user's username.
+                - Nickname
+              description: Schema for updating the user's nickname.
               properties:
                 userName:
                   $ref: '#/components/schemas/Name'
@@ -176,11 +176,11 @@ paths:
             application/json:
               schema:
                 type: object
-                description: Schema for a successful username update response.
+                description: Schema for a successful nickname update response.
                 properties:
                   success:
                     type: boolean
-                    description: "The username is successfully updated if boolean = true"
+                    description: "The Nickname is successfully updated if boolean = true"
                   message: 
                     type: string
                     description: "The message which confirm the update"
@@ -188,12 +188,12 @@ paths:
                     minLength: 3
                     maxLength: 1000
         '400':
-          description: Invalid username format or length
+          description: Invalid Nickname format or length
           content:
             application/json:
               schema:
                 type: object
-                description: Schema for a bad request due to invalid username details.
+                description: Schema for a bad request due to invalid Nickname details.
                 properties:
                   error:
                     type: string
@@ -255,13 +255,13 @@ paths:
                       type: object
                       description: Schema for an individual conversation object.
                       required:
-                        - conversationId
+                        - Conversation_id
                         - title
                         - lastMessage
                         - updatedAt
                         - status
                       properties:
-                        conversationId:
+                        Conversation_id:
                           type: integer
                           description: The unique identifier for the conversation.
                           minimum: 1
@@ -293,14 +293,14 @@ paths:
                     minimum: 0
                     maximum: 100000
 
-  /conversations/{conversationId}:
+  /conversations/{Conversation_id}:
     get:
       tags: ["conversations"]
       summary: Get a conversation by its ID
       description: Return one specific conversation
       operationId: getConversation
       parameters:
-        - name: conversationId
+        - name: Conversation_id
           in: path
           description: The unique identifier of the conversation to retrieve.
           required: true
@@ -318,13 +318,13 @@ paths:
                 type: object
                 description: The schema for the conversation details response.
                 required:
-                  - conversationId
+                  - Conversation_id
                   - title
                   - lastMessage
                   - updatedAt
                   - status
                 properties:
-                  conversationId:
+                  Conversation_id:
                     type: integer
                     description: The unique identifier for the conversation.
                     minimum: 1
@@ -387,10 +387,10 @@ paths:
               type: object
               description: Schema for the request to send a message.
               required:
-                - recipientId
+                - Recipient_id
                 - messageContent
               properties:
-                recipientId:
+                Recipient_id:
                   type: integer
                   description: "The unique identifier of the recipient."
                   minimum: 1
@@ -417,10 +417,10 @@ paths:
                 type: object
                 description: Response structure for a successfully sent message.
                 required:
-                  - messageId
+                  - Message_id
                   - status
                 properties:
-                  messageId:
+                  Message_id:
                     type: integer
                     description: "The unique identifier assigned to the message."
                     minimum: 1
@@ -454,14 +454,14 @@ paths:
                 $ref: '#/components/schemas/Error500'
 
 
-  /messages/{messageId}/forwards:
+  /messages/{Message_id}/forwards:
     post:
       tags: ["messages"]
       summary: Forward a message
       description: Forward a message to a specific recipient
       operationId: forwardMessage
       parameters:
-        - name: messageId
+        - name: Message_id
           in: path
           required: true
           description: "The unique ID of the original message"
@@ -478,9 +478,9 @@ paths:
               type: object
               description: Schema for the request to forward a message.
               required:
-                - recipientId
+                - Recipient_id
               properties:
-                recipientId:
+                Recipient_id:
                   type: integer
                   description: "The unique identifier of the recipient."
                   minimum: 1
@@ -507,10 +507,10 @@ paths:
                 type: object
                 description: Response structure for a successfully forwarded message.
                 required:
-                  - messageId
+                  - Message_id
                   - status
                 properties:
-                  messageId:
+                  Message_id:
                     type: integer
                     minimum: 1
                     maximum: 100000
@@ -559,14 +559,14 @@ paths:
 
 
   # Reactions come sottorisorsa
-  /messages/{messageId}/reactions:
+  /messages/{Message_id}/reactions:
     post:
       tags: ["messages"]
       summary: Add a reaction
       description: Adds a reaction to a specific message.
       operationId: addReaction
       parameters:
-        - name: messageId
+        - name: Message_id
           in: path
           required: true
           description: "ID of the message to which the reaction will be added."
@@ -600,10 +600,10 @@ paths:
                 description: Response structure for a successful reaction addition.
                 type: object
                 required:
-                  - reactionId
+                  - Reaction_id
                   - status
                 properties:
-                  reactionId:
+                  Reaction_id:
                     type: integer
                     description: "Unique identifier of the added reaction."
                     minimum: 1
@@ -651,7 +651,7 @@ paths:
       description: Removes a reaction from a specific message. If the request body is empty or not provided, remove all reactions.
       operationId: removeReaction
       parameters:
-        - name: messageId
+        - name: Message_id
           in: path
           required: true
           description: "ID of the message from which the reaction will be removed."
@@ -668,10 +668,10 @@ paths:
                 type: object
                 description: Response structure for a successful reaction removal.
                 required:
-                  - reactionId
+                  - Reaction_id
                   - status
                 properties:
-                  reactionId:
+                  Reaction_id:
                     type: integer
                     minimum: 1
                     maximum: 100000
@@ -714,14 +714,14 @@ paths:
                 $ref: '#/components/schemas/Error500'
 
 
-  /messages/{messageId}:
+  /messages/{Message_id}:
     delete:
       tags: ["messages"]
       summary: Delete a message
       description: Delete a specific message
       operationId: deleteMessage
       parameters:
-        - name: messageId
+        - name: Message_id
           in: path
           required: true
           description: "The unique identifier of the message to be deleted."
@@ -748,7 +748,7 @@ paths:
                     minLength: 3
                     maxLength: 1000
         '400':
-          description: Invalid request. The provided `messageId` is malformed or missing.
+          description: Invalid request. The provided `Message_id` is malformed or missing.
           content:
             application/json:
               schema:
@@ -771,7 +771,7 @@ paths:
                 properties:
                   error:
                     type: string
-                    description: "The specified messageId does not exist."
+                    description: "The specified Message_id does not exist."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
@@ -786,15 +786,15 @@ paths:
   # -------------------------------------------------------
   # GROUPS
   # -------------------------------------------------------
-  /groups/{groupId}/users:
+  /groups/{Group_id}/users:
     post:
       tags: ["groups"]
       summary: Add a user to a group
       description: Assigns a user to a specific group.
       operationId: addToGroup
       parameters:
-        - name: groupId
-          description: The integer that describes the groupId.
+        - name: Group_id
+          description: The integer that describes the Group_id.
           in: path
           required: true
           schema:
@@ -809,12 +809,12 @@ paths:
           application/json:
             schema:
               type: object
-              description: Response structured with details of userId and role
+              description: Response structured with details of User_id and role
               required:
-                - userId
+                - User_id
                 - role
               properties:
-                userId:
+                User_id:
                   type: integer
                   description: "ID of the user to add to the group"
                   minimum: 1
@@ -834,16 +834,16 @@ paths:
                 type: object
                 description: Schema for positive response
                 required:
-                  - groupId
-                  - userId
+                  - Group_id
+                  - User_id
                   - role
                 properties:
-                  groupId:
+                  Group_id:
                     type: integer
                     description: "The ID of the group."
                     minimum: 1
                     maximum: 100000
-                  userId:
+                  User_id:
                     type: integer
                     description: "The ID of the user added."
                     minimum: 1
@@ -855,7 +855,7 @@ paths:
                     minLength: 3
                     maxLength: 1000
         '400':
-          description: Invalid data (groupId, userId, or role).
+          description: Invalid data (Group_id, User_id, or role).
           content:
             application/json:
               schema:
@@ -889,15 +889,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
-  /groups/{groupId}/users/{userId}:
+  /groups/{Group_id}/users/{User_id}:
     delete:
       tags: ["groups"]
       summary: Remove a user from a group
       description: Allows a specific user to leave (be removed from) a group.
       operationId: leaveGroup
       parameters:
-        - name: groupId
-          description: Integer that represent the groupId
+        - name: Group_id
+          description: Integer that represent the Group_id
           in: path
           required: true
           schema:
@@ -905,8 +905,8 @@ paths:
             description: "The ID of the group."
             minimum: 1
             maximum: 100000
-        - name: userId
-          description: Integer that represent the userId
+        - name: User_id
+          description: Integer that represent the User_id
           in: path
           required: true
           schema:
@@ -937,7 +937,7 @@ paths:
                     minLength: 3
                     maxLength: 1000
         '400':
-          description: Invalid data (groupId or userId).
+          description: Invalid data (Group_id or User_id).
           content:
             application/json:
               schema:
@@ -972,16 +972,16 @@ paths:
                 $ref: '#/components/schemas/Error500'
 
 
-  /groups/{groupId}:
+  /groups/{Group_id}:
     patch:
       tags: ["groups"]
       summary: Update group details
       description: Allows updating certain group fields (like the group name).
       operationId: setGroupName
       parameters:
-        - name: groupId
+        - name: Group_id
           in: path
-          description: Integer that represents groupId
+          description: Integer that represents Group_id
           required: true
           schema:
             type: integer
@@ -1014,10 +1014,10 @@ paths:
                 type: object
                 description: Schema for positive name update.
                 required:
-                  - groupId
+                  - Group_id
                   - groupName
                 properties:
-                  groupId:
+                  Group_id:
                     type: integer
                     description: "The unique ID of the group."
                     minimum: 1
@@ -1029,12 +1029,12 @@ paths:
                     minLength: 3
                     maxLength: 1000
         '400':
-          description: Invalid group name or groupId provided.
+          description: Invalid group name or Group_id provided.
           content:
             application/json:
               schema:
                 type: object
-                description: Schema for negative response caused by invalid groupId
+                description: Schema for negative response caused by invalid Group_id
                 properties:
                   error:
                     type: string
@@ -1067,15 +1067,15 @@ paths:
   # -------------------------------------------------------
   # PHOTOS (USERS)
   # -------------------------------------------------------
-  /photos/{userId}:
+  /photos/{User_id}:
     put:
       tags: ["users"]
       summary: Create or update the user's profile photo
       description: Upsert a single profile photo for the user.
       operationId: setMyPhoto
       parameters:
-        - name: userId
-          description: Integer that represents userId.
+        - name: User_id
+          description: Integer that represents User_id.
           in: path
           required: true
           schema:
@@ -1178,15 +1178,15 @@ paths:
   # -------------------------------------------------------
   # GROUP PHOTO
   # -------------------------------------------------------
-  /groups/{groupId}/photo:
+  /groups/{Group_id}/photo:
     put:
       tags: ["groups"]
       summary: Create or update the group photo
       description: Allows the group admin to upload or update the photo for a specific group.
       operationId: setGroupPhoto
       parameters:
-        - name: groupId
-          description: Integer that represents groupId
+        - name: Group_id
+          description: Integer that represents Group_id
           in: path
           required: true
           schema:
@@ -1295,15 +1295,15 @@ paths:
   # -------------------------------------------------------
   # PERMISSIONS
   # -------------------------------------------------------
-  /permissions/users/{userId}:
+  /permissions/users/{User_id}:
     post:
       tags: ["users"]
       summary: Check user permissions
       description: Verifies if a user has the necessary permissions to perform a specific action.
       operationId: checkUserPermissions
       parameters:
-        - name: userId
-          description: Integer that represents userId
+        - name: User_id
+          description: Integer that represents User_id
           in: path
           required: true
           schema:

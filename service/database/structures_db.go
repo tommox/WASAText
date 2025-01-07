@@ -1,12 +1,7 @@
 package database
 
-// Username
-type UserId struct {
-	userId string `json:"userId"`
-}
-
 // User structure
 type User struct {
-	userId   int    `json:"userId"`
-	userName string `json:"userName"`
+	User_id  int    `json:"User_id"`
+	Nickname string `json:"nickname"`
 }
