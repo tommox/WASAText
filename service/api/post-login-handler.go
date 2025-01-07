@@ -14,7 +14,7 @@ func (rt *_router) loginHandler(w http.ResponseWriter, r *http.Request, ps httpr
 
 	w.Header().Set("Content-Type", "application/json")
 
-	// Takes user r
+	// Prende user r
 	var user User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {

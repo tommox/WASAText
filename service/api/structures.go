@@ -4,20 +4,20 @@ import (
 	"github.com/tommox/WASAText/service/database"
 )
 
-// Username
-type UserName struct {
-	userName string `json:"userName"`
+// Nickname
+type Nickname struct {
+	Nickname string `json:"nickname"`
 }
 
-// User structure
+// Struttura User
 type User struct {
-	userId   int    `json:"userId"`
-	userName string `json:"userName"`
+	User_id  int    `json:"user_id"`
+	Nickname string `json:"nickname"`
 }
 
 func (u User) toDataBase() database.User {
 	return database.User{
-		userId:   u.userId,
-		userName: u.userName,
+		User_id:  u.User_id,
+		Nickname: u.Nickname,
 	}
 }
