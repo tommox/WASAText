@@ -26,7 +26,7 @@ func (rt *_router) loginHandler(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	// Check if user exists
+	// Controllo se user esiste
 	temp_user, err := rt.db.CheckUser(user.toDataBase())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		ctx.Logger.WithError(err).Error("session: Error in CheckUser")

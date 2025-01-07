@@ -15,7 +15,7 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.POST("/session", rt.wrap(rt.loginHandler))
 
 	// USERS
-	rt.router.PUT("/users/:User_id", rt.wrap(rt.updateUserNameHandler))
+	rt.router.PUT("/users/:User_id", rt.wrap(rt.updateNicknameHandler))
 	rt.router.PUT("/photos/:User_id", rt.wrap(rt.updateUserPhotoHandler))
 
 	// CONVERSATIONS
