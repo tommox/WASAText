@@ -12,11 +12,11 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.GET("/liveness", rt.liveness)
 
 	// LOGIN
-	rt.router.POST("/session", rt.wrap(rt.loginHandler))
+	rt.router.POST("/session", rt.wrap(rt.doLoginHandler))
 
 	// USERS
-	rt.router.PUT("/users/:User_id", rt.wrap(rt.updateNicknameHandler))
-	rt.router.PUT("/photos/:User_id", rt.wrap(rt.updateUserPhotoHandler))
+	rt.router.PUT("/users/:User_id", rt.wrap(rt.setMyUserNameHandler))
+	rt.router.PUT("/photos/:User_id", rt.wrap(rt.setMyPhotoHandler))
 
 	// CONVERSATIONS
 	rt.router.GET("/conversations", rt.wrap(rt.getConversationsHandler))

@@ -10,11 +10,11 @@ import (
 	"github.com/tommox/WASAText/service/api/reqcontext"
 )
 
-func (rt *_router) loginHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+func (rt *_router) doLoginHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	// Prende user r
+	// Takes user r
 	var user User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -26,14 +26,14 @@ func (rt *_router) loginHandler(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	// Controllo se user esiste
+	// Check if user exists
 	temp_user, err := rt.db.CheckUser(user.toDataBase())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		ctx.Logger.WithError(err).Error("session: Error in CheckUser")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if temp_user.User_id != 0 { // ? Ho trovato l'user quindi assegno i valori
+	if temp_user.User_id != 0 { // assignment of user values
 		user.User_id = temp_user.User_id
 		user.Nickname = temp_user.Nickname
 
@@ -47,17 +47,17 @@ func (rt *_router) loginHandler(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	// Controlla se l'utente è già presebnte nel DB
+	// Check if user is in DB
 	err = rt.db.CreateUser(user.toDataBase())
 	if err != nil {
-		w.WriteHeader(http.StatusConflict) // L'utente esisteva già nel DB
+		w.WriteHeader(http.StatusConflict) // User already existing in DB
 		_ = json.NewEncoder(w).Encode(map[string]string{
 			"Error": "Nickname already in use",
 		})
 		return
 	}
 
-	// Prendo l'ID Salvato nel DB
+	// Takes the ID saved in DB
 	id, err_fu := rt.db.FindUserId(user.toDataBase())
 	if err_fu != nil {
 		ctx.Logger.WithError(err_fu).Error("session: Error in FindUser_id()")
@@ -65,7 +65,7 @@ func (rt *_router) loginHandler(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	user.User_id = id // Cambio l'ID dentro la variabile user
+	user.User_id = id // Change the ID inside of the user variable
 
 	//! Creo la cartella del nuovo Utente
 	//CreateFolder(strconv.Itoa(id), ctx)

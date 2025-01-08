@@ -10,7 +10,7 @@ import (
 	"github.com/tommox/WASAText/service/api/reqcontext"
 )
 
-func (rt *_router) updateNicknameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+func (rt *_router) setMyUserNameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 
 	user_id, err := strconv.Atoi(ps.ByName("id"))
 	if err != nil {
@@ -39,7 +39,7 @@ func (rt *_router) updateNicknameHandler(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	// Prendo il Body
+	// Takes the body
 	var newNickname Nickname
 	err = json.NewDecoder(r.Body).Decode(&newNickname)
 	if err != nil {
@@ -51,7 +51,7 @@ func (rt *_router) updateNicknameHandler(w http.ResponseWriter, r *http.Request,
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	// ! Controllo che il nickname sia libero
+	// Check if nickname is free
 	exist, err := rt.db.SearchNickname(newNickname.Nickname)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("put-nickname: Error executing query")
@@ -59,12 +59,12 @@ func (rt *_router) updateNicknameHandler(w http.ResponseWriter, r *http.Request,
 		return
 	}
 	if exist {
-		// ? L'utente esiste già
+		// User already existing
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	// ! richiamo changeNickname del DB
+	// call ChangeNickname in DB
 	err = rt.db.ChangeNickname(User{User_id: user_id}.toDataBase(), newNickname.Nickname)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("put-nickname: Error executing query")

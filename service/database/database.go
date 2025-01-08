@@ -38,6 +38,8 @@ import (
 
 // AppDatabase is the high level interface for the DB
 type AppDatabase interface {
+
+	// Users
 	GetName() (string, error)
 	SetName(name string) error
 	CreateUser(User) error
@@ -45,6 +47,9 @@ type AppDatabase interface {
 
 	FindUserId(User) (int, error)
 	CheckUser(User) (User, error)
+	SearchNickname(string) (bool, error)
+
+	// Photos
 
 	Ping() error
 }

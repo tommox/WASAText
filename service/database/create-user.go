@@ -1,12 +1,12 @@
 package database
 
-// Metodo per aggiungere un utente nel DB
+// Method to add a user in DB
 func (db *appdbimpl) CreateUser(u User) error {
 
-	// Eseguiamo una INSERT nel DB
+	// INSERT into DB
 	_, err := db.c.Exec("INSERT INTO Users(Nickname) VALUES (?)", u.Nickname)
 
-	// Gestione degli errori
+	// Error management
 	if err != nil {
 		return err
 	}
