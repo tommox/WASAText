@@ -47,15 +47,17 @@ func (rt *_router) loginHandler(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	// ! Controlla se l'utente è già presebnte nel DB
+	// Controlla se l'utente è già presebnte nel DB
 	err = rt.db.CreateUser(user.toDataBase())
 	if err != nil {
-		w.WriteHeader(http.StatusOK) // L'utente esisteva già nel DB
-		_ = json.NewEncoder(w).Encode(user)
+		w.WriteHeader(http.StatusConflict) // L'utente esisteva già nel DB
+		_ = json.NewEncoder(w).Encode(map[string]string{
+			"Error": "Nickname already in use",
+		})
 		return
 	}
 
-	// ! prendo l'ID Salvato nel DB
+	// Prendo l'ID Salvato nel DB
 	id, err_fu := rt.db.FindUserId(user.toDataBase())
 	if err_fu != nil {
 		ctx.Logger.WithError(err_fu).Error("session: Error in FindUser_id()")
@@ -64,16 +66,15 @@ func (rt *_router) loginHandler(w http.ResponseWriter, r *http.Request, ps httpr
 	}
 
 	user.User_id = id // Cambio l'ID dentro la variabile user
-}
 
-/* ! Creo la cartella del nuovo Utente
-CreateFolder(strconv.Itoa(id), ctx)
+	//! Creo la cartella del nuovo Utente
+	//CreateFolder(strconv.Itoa(id), ctx)
 
-w.WriteHeader(http.StatusCreated)
-err = json.NewEncoder(w).Encode(user)
-if err != nil {
-	w.WriteHeader(http.StatusInternalServerError)
-	ctx.Logger.WithError(err).Error("session: can't create response json")
-	return
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(user)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		ctx.Logger.WithError(err).Error("session: can't create response json")
+		return
+	}
 }
-*/
