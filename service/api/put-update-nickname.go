@@ -10,7 +10,7 @@ import (
 	"github.com/tommox/WASAText/service/api/reqcontext"
 )
 
-func (rt *_router) setMyUserNameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+func (rt *_router) setMyNicknameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 
 	user_id, err := strconv.Atoi(ps.ByName("id"))
 	if err != nil {

@@ -101,7 +101,7 @@ paths:
                 - Nickname
               description: Schema for user login details.
               properties:
-                userName:
+                Nickname:
                   $ref: '#/components/schemas/Name'
       responses:
         '201':
@@ -117,7 +117,7 @@ paths:
                     description: "A unique identifier for the user"
                     minimum: 1
                     maximum: 100000
-                  userName:
+                  Nickname:
                     type: string
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     description: "The name of the user"
@@ -145,7 +145,7 @@ paths:
       tags: ["users"]
       summary: Update the nickname
       description: Allows users to update their nickname
-      operationId: setMyNickname
+      operationId: setMyUserName
       parameters:
         - name: User_id
           in: path
@@ -167,11 +167,11 @@ paths:
                 - Nickname
               description: Schema for updating the user's nickname.
               properties:
-                userName:
+                Nickname:
                   $ref: '#/components/schemas/Name'
       responses:
         '200':
-          description: Username successfully updated
+          description: Nickname successfully updated
           content:
             application/json:
               schema:
@@ -564,7 +564,7 @@ paths:
       tags: ["messages"]
       summary: Add a reaction
       description: Adds a reaction to a specific message.
-      operationId: addReaction
+      operationId: commentMessage
       parameters:
         - name: Message_id
           in: path
@@ -649,7 +649,7 @@ paths:
       tags: ["messages"]
       summary: Remove a reaction (or all reactions)
       description: Removes a reaction from a specific message. If the request body is empty or not provided, remove all reactions.
-      operationId: removeReaction
+      operationId: uncommentMessage
       parameters:
         - name: Message_id
           in: path
