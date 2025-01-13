@@ -34,6 +34,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 )
 
 // AppDatabase is the high level interface for the DB
@@ -50,6 +51,8 @@ type AppDatabase interface {
 	SearchNickname(string) (bool, error)
 
 	// Photos
+	CreatePhoto(int, time.Time) (int, error)
+	FindPhoto(int) (Complete_Photo, error)
 
 	Ping() error
 }

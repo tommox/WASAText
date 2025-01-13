@@ -12,7 +12,7 @@ import (
 
 func (rt *_router) setMyNicknameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 
-	user_id, err := strconv.Atoi(ps.ByName("id"))
+	user_id, err := strconv.Atoi(ps.ByName("User_id"))
 	if err != nil {
 		ctx.Logger.WithError(err).Error("put-nickname: error converting id")
 		w.WriteHeader(http.StatusBadRequest)

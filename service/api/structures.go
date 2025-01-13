@@ -1,6 +1,8 @@
 package api
 
 import (
+	"time"
+
 	"github.com/tommox/WASAText/service/database"
 )
 
@@ -13,6 +15,13 @@ type Nickname struct {
 type User struct {
 	User_id  int    `json:"user_id"`
 	Nickname string `json:"nickname"`
+}
+
+// Struttura Photo
+type Complete_Photo struct {
+	Photo_id  int       `json:"photo_id"`
+	Owner     User      `json:"owner"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
 func (u User) toDataBase() database.User {
