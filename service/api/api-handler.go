@@ -18,6 +18,7 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.PUT("/users/:User_id", rt.wrap(rt.setMyNicknameHandler))
 	rt.router.PUT("/photos/:User_id", rt.wrap(rt.setMyPhotoHandler))
 
+	/*
 	// CONVERSATIONS
 	rt.router.GET("/conversations", rt.wrap(rt.getConversationsHandler))
 	rt.router.GET("/conversations/:Conversation_id", rt.wrap(rt.getConversationByIDHandler))
@@ -37,6 +38,6 @@ func (rt *_router) Handler() http.Handler {
 
 	// PERMISSIONS
 	rt.router.POST("/permissions/users/:User_id", rt.wrap(rt.checkUserPermissionsHandler))
-
+	*/
 	return rt.router
 }
