@@ -5,9 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strconv"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/tommox/WASAText/service/api/reqcontext"
@@ -68,38 +65,13 @@ func (rt *_router) doLoginHandler(w http.ResponseWriter, r *http.Request, ps htt
 		return
 	}
 
-	user.User_id = id                   // Change the ID inside of the user variable
-	CreateFolder(strconv.Itoa(id), ctx) // Create the user folder
+	user.User_id = id // Change the ID inside of the user variable
 
 	w.WriteHeader(http.StatusCreated)
 	err = json.NewEncoder(w).Encode(user)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		ctx.Logger.WithError(err).Error("session: can't create response json")
-		return
-	}
-}
-
-func CreateFolder(id string, ctx reqcontext.RequestContext) {
-	err := os.Mkdir("/tmp/media", os.ModePerm)
-	if err != nil && !os.IsExist(err) {
-		ctx.Logger.WithError(err).Error("Session : Error creating /tmp/media")
-		return
-	}
-	path := filepath.Join("/tmp/media", id)
-	err = os.Mkdir(path, os.ModePerm)
-	if err != nil && os.IsExist(err) {
-		ctx.Logger.WithError(err).Error("Session : /tmp/media/{id} it already exists")
-	} else if err != nil {
-		ctx.Logger.WithError(err).Error("Session : Error creating /tmp/media/{id}")
-		return
-	}
-	path = filepath.Join(path, "photos")
-	err = os.Mkdir(path, os.ModePerm)
-	if err != nil && os.IsExist(err) {
-		ctx.Logger.WithError(err).Error("Session : /tmp/media/{id}/photo/ it already exists")
-	} else if err != nil {
-		ctx.Logger.WithError(err).Error("Session : Error creating /tmp/media/{id}/photo/")
 		return
 	}
 }

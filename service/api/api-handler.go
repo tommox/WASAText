@@ -16,7 +16,7 @@ func (rt *_router) Handler() http.Handler {
 
 	// USERS
 	rt.router.PUT("/users/:User_id", rt.wrap(rt.setMyNicknameHandler))
-	rt.router.PUT("/photos/:User_id", rt.wrap(rt.setMyPhotoHandler))
+	rt.router.PUT("/users/:User_id/photo", rt.wrap(rt.setMyPhotoHandler))
 
 	/*
 	// CONVERSATIONS

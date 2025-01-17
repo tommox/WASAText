@@ -34,7 +34,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 )
 
 // AppDatabase is the high level interface for the DB
@@ -49,10 +48,7 @@ type AppDatabase interface {
 	FindUserId(User) (int, error)
 	CheckUser(User) (User, error)
 	SearchNickname(string) (bool, error)
-
-	// Photos
-	CreatePhoto(int, time.Time) (int, error)
-	FindPhoto(int) (Complete_Photo, error)
+	UpdateUserPhoto(userID int, photoData []byte) error
 
 	Ping() error
 }
@@ -75,15 +71,15 @@ func New(db *sql.DB) (AppDatabase, error) {
 
 		// Creating DB for Users if not existing
 		users := `CREATE TABLE IF NOT EXISTS Users 
-										(User_id INTEGER NOT NULL, 
+									   (User_id INTEGER NOT NULL, 
 										Nickname VARCHAR(16) NOT NULL UNIQUE,
+										Photo    BLOB,
 										PRIMARY KEY("User_id" AUTOINCREMENT));`
 		_, err = db.Exec(users)
 		if err != nil {
 			return nil, fmt.Errorf("error creating database structure: Users %w", err)
 		}
 	}
-
 	return &appdbimpl{
 		c: db,
 	}, nil
