@@ -79,15 +79,6 @@ func New(db *sql.DB) (AppDatabase, error) {
 			return nil, fmt.Errorf("error creating database structure: Users %w", err)
 		}
 
-		conversations := `CREATE TABLE IF NOT EXISTS Conversations
-									   (Conversation_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-										title           TEXT,
-										updated_at      DATETIME NOT NULL DEFAULT (DATETIME('now')));`
-		_, err = db.Exec(conversations)
-		if err != nil {
-			return nil, fmt.Errorf("error creating database structure: Conversations %w", err)
-		}
-
 	}
 	return &appdbimpl{
 		c: db,
