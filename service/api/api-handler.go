@@ -18,13 +18,9 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.PUT("/users/:User_id", rt.wrap(rt.setMyNicknameHandler))
 	rt.router.PUT("/users/:User_id/photo", rt.wrap(rt.setMyPhotoHandler))
 
-	/*
-	// CONVERSATIONS
-	rt.router.GET("/conversations", rt.wrap(rt.getConversationsHandler))
-	rt.router.GET("/conversations/:Conversation_id", rt.wrap(rt.getConversationByIDHandler))
-
 	// MESSAGES
 	rt.router.POST("/messages", rt.wrap(rt.sendMessageHandler))
+	/*
 	rt.router.POST("/messages/:Message_id/forwards", rt.wrap(rt.forwardMessageHandler))
 	rt.router.POST("/messages/:Message_id/reactions", rt.wrap(rt.addReactionHandler))
 	rt.router.DELETE("/messages/:Message_id/reactions", rt.wrap(rt.removeReactionHandler))
@@ -35,6 +31,10 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.DELETE("/groups/:Group_id/users/:User_id", rt.wrap(rt.removeUserFromGroupHandler))
 	rt.router.PATCH("/groups/:Group_id", rt.wrap(rt.updateGroupNameHandler))
 	rt.router.PUT("/groups/:Group_id/photo", rt.wrap(rt.updateGroupPhotoHandler))
+
+	// CONVERSATIONS
+	rt.router.GET("/conversations", rt.wrap(rt.getConversationsHandler))
+	rt.router.GET("/conversations/:Conversation_id", rt.wrap(rt.getConversationByIDHandler))
 
 	// PERMISSIONS
 	rt.router.POST("/permissions/users/:User_id", rt.wrap(rt.checkUserPermissionsHandler))

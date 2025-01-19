@@ -34,6 +34,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 )
 
 // AppDatabase is the high level interface for the DB
@@ -49,6 +50,9 @@ type AppDatabase interface {
 	CheckUser(User) (User, error)
 	SearchNickname(string) (bool, error)
 	UpdateUserPhoto(userID int, photoData []byte) error
+
+	// Messages
+	CreateMessage(senderId int, recipientId int, messageContent string, timestamp time.Time) (int, error)
 
 	Ping() error
 }
@@ -79,6 +83,18 @@ func New(db *sql.DB) (AppDatabase, error) {
 			return nil, fmt.Errorf("error creating database structure: Users %w", err)
 		}
 
+		// Creating DB for Messages if not existing
+		messages := `CREATE TABLE IF NOT EXISTS Messages
+									   (Message_id       INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+									    Sender_id 		 INTEGER NOT NULL,
+										Recipient_id     INTEGER NOT NULL, 
+										messageContent   VARCHAR(1000) NOT NULL,
+										timestamp        DATETIME NOT NULL);`
+		_, err = db.Exec(messages)
+		if err != nil {
+			return nil, fmt.Errorf("error creating database structure: Messages %w", err)
+
+		}
 	}
 	return &appdbimpl{
 		c: db,
