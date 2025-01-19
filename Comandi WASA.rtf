@@ -1,21 +1,47 @@
 {\rtf1\ansi\ansicpg1252\cocoartf2761
-\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
-{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
-{\*\expandedcolortbl;;\csgray\c0;}
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;\f1\fnil\fcharset0 .AppleSystemUIFontMonospaced-Regular;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red155\green162\blue177;}
+{\*\expandedcolortbl;;\csgray\c0;\cssrgb\c67059\c69804\c74902;}
 \paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\f0\fs22 \cf2 \CocoaLigature0 Nickname: curl -i -X PUT \\\
+\f0\fs22 \cf2 \CocoaLigature0 \
+NICKNAME: curl -i -X PUT \\\
     -H "Content-Type: application/json" \\\
     -H "Authorization: Bearer 1" \\\
     -d '\{"Nickname":"Boo"\}' \\\
     http://localhost:3000/users/1 \
 \
-Login: curl -i -X POST -H "Content-Type: application/json" \\\
+\
+LOGIN: curl -i -X POST -H "Content-Type: application/json" \\\
      -d '\{"Nickname":"Filips Turets"\}' \\\
      http://localhost:3000/session\
 \
-Photo: curl -X PUT \\               \
+\
+PHOTO: curl -X PUT \\               \
      -H "Authorization: Bearer 1" \\\
      --data-binary "@/Users/tommi/Desktop/uni/WASA/WASAText/gesu.png" \\\
-     http://localhost:3000/users/1/photo}
+     http://localhost:3000/users/1/photo\
+\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+SENDMESSAGE: curl -i -X POST \\\
+     -H "Authorization: Bearer 1" \\\
+     -H "Content-Type: application/json" \\\
+     -d '\{"Recipient_id": 2, "messageContent": "ciao"\}' \\\
+     http://localhost:3000/messages\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\
+\
+GETMESSAGE: curl -i -X GET \\\
+  -H "Authorization: Bearer 3" \\\
+  http://localhost:3000/messages/1\
+\
+\
+FORWARDMESSAGE: curl -i -X POST \\\
+  -H "Authorization: Bearer 2" \\\
+  -H "Content-Type: application/json" \\\
+  -d '\{"Recipient_id": 3\}' \\\
+  http://localhost:3000/messages/1/forwards
+\f1\fs26 \cf3 \CocoaLigature1 \
+}

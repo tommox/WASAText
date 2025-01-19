@@ -14,3 +14,12 @@ type Complete_Photo struct {
 	Owner     User      `json:"owner"`
 	Timestamp time.Time `json:"timestamp"`
 }
+
+// Message structure
+type Message struct {
+	Message_id     int       `json:"message_id"`
+	Sender_id      int       `json:"sender_id"`
+	Recipient_id   int       `json:"recipient_id"`
+	MessageContent string    `json:"message_content"`
+	Timestamp      time.Time `json:"timestamp"`
+}

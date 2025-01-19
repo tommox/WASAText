@@ -53,6 +53,10 @@ type AppDatabase interface {
 
 	// Messages
 	CreateMessage(senderId int, recipientId int, messageContent string, timestamp time.Time) (int, error)
+	GetMessage(messageId int) (Message, error)
+
+	// Authorization
+	CheckUserPermission(userId, messageId int) (bool, error)
 
 	Ping() error
 }
