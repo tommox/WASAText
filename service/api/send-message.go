@@ -1,13 +1,16 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/tommox/WASAText/service/api/reqcontext"
+	"github.com/tommox/WASAText/service/database"
 )
 
 func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
@@ -43,6 +46,28 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 		json.NewEncoder(w).Encode(map[string]string{
 			"error": "Invalid message format or length",
 		})
+		return
+	}
+
+	recipient := database.User{
+		User_id: body.Recipient_id,
+	}
+
+	// Controlla se il destinatario esiste nel database
+	_, err = rt.db.CheckUser(recipient)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// Destinatario non trovato
+			ctx.Logger.WithError(err).Error("sendMessage: recipient does not exist")
+			w.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(w).Encode(map[string]string{
+				"error": "Recipient does not exist",
+			})
+			return
+		}
+		// Altro errore
+		ctx.Logger.WithError(err).Error("sendMessage: error checking recipient existence")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 

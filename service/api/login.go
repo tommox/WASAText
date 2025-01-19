@@ -21,7 +21,7 @@ func (rt *_router) doLoginHandler(w http.ResponseWriter, r *http.Request, ps htt
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	} else if !validIdentifier(user.Nickname) {
-		ctx.Logger.WithError(err).Error("session: Can't Create a User. User nickname not Valid. <<")
+		ctx.Logger.WithError(err).Error("session: Can't Create a User. Invalid nickname lenght")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -47,10 +47,10 @@ func (rt *_router) doLoginHandler(w http.ResponseWriter, r *http.Request, ps htt
 		return
 	}
 
-	// Check if user is in DB
+	// Check if user is already in DB
 	err = rt.db.CreateUser(user.toDataBase())
 	if err != nil {
-		w.WriteHeader(http.StatusConflict) // User already existing in DB
+		w.WriteHeader(http.StatusConflict)
 		_ = json.NewEncoder(w).Encode(map[string]string{
 			"Error": "Nickname already in use",
 		})

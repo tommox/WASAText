@@ -72,5 +72,10 @@ func (rt *_router) setMyNicknameHandler(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	response := map[string]interface{}{
+		"success": true,
+		"message": "Nickname successfully updated",
+	}
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(response)
 }
