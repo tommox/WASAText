@@ -41,8 +41,6 @@ import (
 type AppDatabase interface {
 
 	// Users
-	GetName() (string, error)
-	SetName(name string) error
 	CreateUser(User) error
 	ChangeNickname(User, string) error
 
@@ -54,7 +52,6 @@ type AppDatabase interface {
 	// Messages
 	CreateMessage(senderId int, recipientId int, messageContent string, timestamp time.Time) (int, error)
 	GetMessage(messageId int) (Message, error)
-	UpdateMessageReaction(messageId int, emoji string, add bool) error
 
 	// Authorization
 	CheckUserPermission(userId, messageId int) (bool, error)
@@ -94,12 +91,26 @@ func New(db *sql.DB) (AppDatabase, error) {
 									    Sender_id 		 INTEGER NOT NULL,
 										Recipient_id     INTEGER NOT NULL, 
 										messageContent   VARCHAR(1000) NOT NULL,
-										Reactions        VARCHAR(1000) NOT NULL,
 										timestamp        DATETIME NOT NULL);`
 
 		_, err = db.Exec(messages)
 		if err != nil {
 			return nil, fmt.Errorf("error creating database structure: Messages %w", err)
+
+		}
+
+		// Creating DB for Reactions if not existing
+		reactions := `CREATE TABLE IF NOT EXISTS Reactions 
+								   (Reaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
+									Message_id INTEGER NOT NULL,                  
+									User_id INTEGER NOT NULL,                     
+									Emoji TEXT NOT NULL,                         
+									Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, 
+									FOREIGN KEY (Message_id) REFERENCES Messages (Message_id) ON DELETE CASCADE,
+									FOREIGN KEY (User_id) REFERENCES Users (User_id) ON DELETE CASCADE);`
+		_, err = db.Exec(reactions)
+		if err != nil {
+			return nil, fmt.Errorf("error creating database structure: Reactions %w", err)
 
 		}
 	}

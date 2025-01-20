@@ -1,17 +1,13 @@
 package database
 
-import (
-	"database/sql"
-	"encoding/json"
-	"fmt"
-)
+import "fmt"
 
 func (db *appdbimpl) GetMessage(messageId int) (Message, error) {
 	var msg Message
-	var reactionsJSON sql.NullString // Variabile temporanea per la colonna JSON
 
+	// Recupera i dettagli principali del messaggio
 	query := `
-        SELECT Message_id, Sender_id, Recipient_id, MessageContent, Timestamp, Reactions
+        SELECT Message_id, Sender_id, Recipient_id, MessageContent, Timestamp
         FROM Messages
         WHERE Message_id = ?;
     `
@@ -21,21 +17,9 @@ func (db *appdbimpl) GetMessage(messageId int) (Message, error) {
 		&msg.Recipient_id,
 		&msg.MessageContent,
 		&msg.Timestamp,
-		&reactionsJSON,
 	)
 	if err != nil {
 		return msg, fmt.Errorf("GetMessage: error retrieving message: %w", err)
 	}
-
-	// Decodifica JSON delle reazioni, se esiste
-	if reactionsJSON.Valid && reactionsJSON.String != "" {
-		err = json.Unmarshal([]byte(reactionsJSON.String), &msg.Reactions)
-		if err != nil {
-			return msg, fmt.Errorf("GetMessage: error unmarshaling reactions: %w", err)
-		}
-	} else {
-		msg.Reactions = make(map[string][]int) // Inizializza come mappa vuota
-	}
-
 	return msg, nil
 }

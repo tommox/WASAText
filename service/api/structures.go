@@ -26,12 +26,11 @@ type Complete_Photo struct {
 
 // Message rappresenta la struttura di un messaggio inviata al client
 type Message struct {
-	Message_id     int              `json:"message_id"`
-	Sender_id      int              `json:"sender_id"`
-	Recipient_id   int              `json:"recipient_id"`
-	MessageContent string           `json:"message_content"`
-	Timestamp      time.Time        `json:"timestamp"`
-	Reactions      map[string][]int `json:"reactions"`
+	Message_id     int       `json:"message_id"`
+	Sender_id      int       `json:"sender_id"`
+	Recipient_id   int       `json:"recipient_id"`
+	MessageContent string    `json:"message_content"`
+	Timestamp      time.Time `json:"timestamp"`
 }
 
 func (u User) toDataBase() database.User {
