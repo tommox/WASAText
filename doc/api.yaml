@@ -517,49 +517,75 @@ paths:
                   Sender_id:
                     type: integer
                     description: "The ID of the user who sent the message."
+                    minimum: 1
+                    maximum: 100000
                   Recipient_id:
                     type: integer
                     description: "The ID of the user who received the message."
+                    minimum: 1
+                    maximum: 100000
                   MessageContent:
                     type: string
                     description: "The content of the message."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
                   Timestamp:
                     type: string
                     format: date-time
                     description: "The timestamp when the message was sent."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
                   Reactions:
                     type: string
                     description: "A string containing the reactions for the message."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
         '400':
           description: Invalid Message ID format or missing ID.
           content:
             application/json:
               schema:
                 type: object
+                description: The schema for the error of invalid or missing Id.
                 properties:
                   error:
                     type: string
                     description: "Details about the error."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
         '403':
           description: User does not have permission to access this message.
           content:
             application/json:
               schema:
                 type: object
+                description: The schema for the error of invalid permission
                 properties:
                   error:
                     type: string
                     description: "Permission denied."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
         '404':
           description: Message not found.
           content:
             application/json:
               schema:
                 type: object
+                description: The schema for the error of message not found
                 properties:
                   error:
                     type: string
                     description: "The message ID does not exist."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+                    
         '500':
           description: Server error.
           content:
@@ -592,13 +618,14 @@ paths:
               description: Schema for the request to forward a message.
               required:
                 - Recipient_id
+                - Timestamp
               properties:
                 Recipient_id:
                   type: integer
                   description: "The unique identifier of the recipient."
                   minimum: 1
                   maximum: 100000
-                timestamp:
+                Timestamp:
                   type: string
                   format: date-time
                   description: "When forwarded. If not provided, server sets current time."
