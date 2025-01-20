@@ -16,11 +16,11 @@ NICKNAME: curl -i -X PUT \\\
 LOGIN: curl -i -X POST -H "Content-Type: application/json" \\\
      -d '\{"Nickname":"Filips Turets"\}' \\\
      http://localhost:3000/session\
-\
-\
-PHOTO: curl -i -X PUT \\\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
-     -H "Authorization: Bearer 3" \\           \
+\
+\
+PHOTO: curl -i -X PUT \\            \
+     -H "Authorization: Bearer 3" \\\
      --data-binary "@/Users/tommi/Desktop/uni/WASA/WASAText/images.jpeg" \\\
      http://localhost:3000/users/3/photo\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
@@ -44,6 +44,19 @@ FORWARDMESSAGE: curl -i -X POST \\\
   -H "Authorization: Bearer 2" \\\
   -H "Content-Type: application/json" \\\
   -d '\{"Recipient_id": 3\}' \\\
-  http://localhost:3000/messages/1/forwards
+  http://localhost:3000/messages/1/forwards\
+\
+\
+PUTEMOJI: curl -i -X POST \\\
+     -H "Authorization: Bearer 1" \\\
+     -H "Content-Type: application/json" \\\
+     -d '\{"emoji": "\uc0\u55357 \u56832 ", "add": true\}\'92 \\\
+     http://localhost:3000/messages/123/reactions\
+\
+REMOVEEMOJI: curl -i -X POST \\\
+     -H "Authorization: Bearer 1" \\\
+     -H "Content-Type: application/json" \\\
+     -d '\{"emoji": "\uc0\u55357 \u56832 ", "add": false\}\'92 \\\
+     http://localhost:3000/messages/123/reactions
 \f1\fs26 \cf3 \CocoaLigature1 \
 }

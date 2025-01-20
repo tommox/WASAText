@@ -54,6 +54,7 @@ type AppDatabase interface {
 	// Messages
 	CreateMessage(senderId int, recipientId int, messageContent string, timestamp time.Time) (int, error)
 	GetMessage(messageId int) (Message, error)
+	UpdateMessageReaction(messageId int, emoji string, add bool) error
 
 	// Authorization
 	CheckUserPermission(userId, messageId int) (bool, error)
@@ -93,7 +94,9 @@ func New(db *sql.DB) (AppDatabase, error) {
 									    Sender_id 		 INTEGER NOT NULL,
 										Recipient_id     INTEGER NOT NULL, 
 										messageContent   VARCHAR(1000) NOT NULL,
+										Reactions        VARCHAR(1000) NOT NULL,
 										timestamp        DATETIME NOT NULL);`
+
 		_, err = db.Exec(messages)
 		if err != nil {
 			return nil, fmt.Errorf("error creating database structure: Messages %w", err)

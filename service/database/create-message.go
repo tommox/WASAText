@@ -6,7 +6,7 @@ import (
 )
 
 func (db *appdbimpl) CreateMessage(senderId int, recipientId int, messageContent string, timestamp time.Time) (int, error) {
-	query := `INSERT INTO Messages (Sender_id, Recipient_id, messageContent, timestamp) VALUES (?, ?, ?, ?)`
+	query := `INSERT INTO Messages (Sender_id, Recipient_id, messageContent, timestamp, Reactions) VALUES (?, ?, ?, ?, '')`
 	result, err := db.c.Exec(query, senderId, recipientId, messageContent, timestamp)
 	if err != nil {
 		return 0, fmt.Errorf("CreateMessage: %w", err)
