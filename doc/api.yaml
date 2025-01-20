@@ -478,6 +478,94 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
+  /messages/{Message_id}/details:
+    get:
+      tags: ["messages"]
+      summary: Get a message
+      description: Retrieve the details of a specific message by its unique ID.
+      operationId: getMessage
+      parameters:
+        - name: Message_id
+          in: path
+          required: true
+          description: "The unique ID of the message to retrieve."
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100000
+      responses:
+        '200':
+          description: Message retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for the retrieved message.
+                required:
+                  - Message_id
+                  - Sender_id
+                  - Recipient_id
+                  - MessageContent
+                  - Timestamp
+                  - Reactions
+                properties:
+                  Message_id:
+                    type: integer
+                    description: "The unique identifier of the message."
+                    minimum: 1
+                    maximum: 100000
+                  Sender_id:
+                    type: integer
+                    description: "The ID of the user who sent the message."
+                  Recipient_id:
+                    type: integer
+                    description: "The ID of the user who received the message."
+                  MessageContent:
+                    type: string
+                    description: "The content of the message."
+                  Timestamp:
+                    type: string
+                    format: date-time
+                    description: "The timestamp when the message was sent."
+                  Reactions:
+                    type: string
+                    description: "A string containing the reactions for the message."
+        '400':
+          description: Invalid Message ID format or missing ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: "Details about the error."
+        '403':
+          description: User does not have permission to access this message.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: "Permission denied."
+        '404':
+          description: Message not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: "The message ID does not exist."
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error500'
 
   /messages/{Message_id}/forwards:
     post:
