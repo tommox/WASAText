@@ -52,6 +52,10 @@ type AppDatabase interface {
 	// Messages
 	CreateMessage(senderId int, recipientId int, messageContent string, timestamp time.Time) (int, error)
 	GetMessage(messageId int) (Message, error)
+	DeleteMessage(messageId int) error
+	// Reactions
+	AddReaction(messageId int, userId int, emoji string) error
+	RemoveReaction(messageId int, userId int) error
 
 	// Authorization
 	CheckUserPermission(userId, messageId int) (bool, error)
@@ -104,10 +108,10 @@ func New(db *sql.DB) (AppDatabase, error) {
 								   (Reaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
 									Message_id INTEGER NOT NULL,                  
 									User_id INTEGER NOT NULL,                     
-									Emoji TEXT NOT NULL,                         
-									Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, 
+									Emoji TEXT NOT NULL,
+									UNIQUE(Message_id, User_id),
 									FOREIGN KEY (Message_id) REFERENCES Messages (Message_id) ON DELETE CASCADE,
-									FOREIGN KEY (User_id) REFERENCES Users (User_id) ON DELETE CASCADE);`
+									FOREIGN KEY (User_id) REFERENCES Users (User_id));`
 		_, err = db.Exec(reactions)
 		if err != nil {
 			return nil, fmt.Errorf("error creating database structure: Reactions %w", err)
