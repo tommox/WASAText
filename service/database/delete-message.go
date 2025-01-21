@@ -2,11 +2,18 @@ package database
 
 import "fmt"
 
-// DeleteMessage rimuove un messaggio dal database e resetta il contatore degli ID.
+// DeleteMessage rimuove un messaggio dal database, insieme alle reazioni associate.
 func (db *appdbimpl) DeleteMessage(messageId int) error {
+	// Elimina tutte le reazioni associate al messaggio
+	deleteReactionsQuery := `DELETE FROM Reactions WHERE Message_id = ?`
+	_, err := db.c.Exec(deleteReactionsQuery, messageId)
+	if err != nil {
+		return fmt.Errorf("DeleteMessage: error deleting associated reactions: %w", err)
+	}
+
 	// Elimina il messaggio specifico
-	query := `DELETE FROM Messages WHERE Message_id = ?`
-	result, err := db.c.Exec(query, messageId)
+	deleteMessageQuery := `DELETE FROM Messages WHERE Message_id = ?`
+	result, err := db.c.Exec(deleteMessageQuery, messageId)
 	if err != nil {
 		return fmt.Errorf("DeleteMessage: %w", err)
 	}
@@ -15,12 +22,6 @@ func (db *appdbimpl) DeleteMessage(messageId int) error {
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
 		return ErrMessageNotFound
-	}
-
-	// Resetta l'incremento automatico degli ID per la tabella Messages
-	_, err = db.c.Exec(`DELETE FROM sqlite_sequence WHERE name='Messages';`)
-	if err != nil {
-		return fmt.Errorf("DeleteMessage: error resetting auto-increment: %w", err)
 	}
 
 	return nil
