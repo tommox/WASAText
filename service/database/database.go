@@ -57,6 +57,16 @@ type AppDatabase interface {
 	AddReaction(messageId int, userId int, emoji string) error
 	RemoveReaction(messageId int, userId int) error
 
+	// Groups
+	CreateGroup(name string, creatorId int) (int, error)
+	AddUserToGroup(groupId int, userId int, role string) error
+	RemoveUserFromGroup(groupId int, userId int) error
+	PromoteToAdmin(groupId int, userId int) error
+	GetGroupById(groupId int) (Group, error)
+	GetGroupMembers(groupId int) ([]GroupMember, error)
+	IsGroupAdmin(groupId int, userId int) (bool, error)
+	DeleteGroup(groupId int) error
+
 	// Authorization
 	CheckUserPermission(userId, messageId int) (bool, error)
 
@@ -115,7 +125,36 @@ func New(db *sql.DB) (AppDatabase, error) {
 		_, err = db.Exec(reactions)
 		if err != nil {
 			return nil, fmt.Errorf("error creating database structure: Reactions %w", err)
+		}
 
+		// Creating DB for Groups if not existing
+		groups := `CREATE TABLE IF NOT EXISTS Groups (
+									Group_id INTEGER PRIMARY KEY AUTOINCREMENT,
+									Group_name TEXT NOT NULL,
+									Creator_id INTEGER NOT NULL,
+									Created_at DATETIME NOT NULL,
+									FOREIGN KEY (Creator_id) REFERENCES Users (User_id) ON DELETE CASCADE
+								);`
+
+		_, err = db.Exec(groups)
+		if err != nil {
+			return nil, fmt.Errorf("error creating Groups structure: %w", err)
+		}
+
+		// Creating DB for GroupMembers if not existing
+		groupMembers := ` CREATE TABLE IF NOT EXISTS GroupMembers (
+									GroupMember_id INTEGER PRIMARY KEY AUTOINCREMENT,
+									Group_id INTEGER NOT NULL,
+									User_id INTEGER NOT NULL,
+									Role TEXT NOT NULL CHECK (Role IN ('member', 'admin')),
+									UNIQUE(Group_id, User_id),
+									FOREIGN KEY (Group_id) REFERENCES Groups (Group_id) ON DELETE CASCADE,
+									FOREIGN KEY (User_id) REFERENCES Users (User_id) ON DELETE CASCADE
+								);`
+
+		_, err = db.Exec(groupMembers)
+		if err != nil {
+			return nil, fmt.Errorf("error creating GroupMembers structure: %w", err)
 		}
 	}
 	return &appdbimpl{

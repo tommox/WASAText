@@ -23,3 +23,19 @@ type Message struct {
 	MessageContent string    `json:"message_content"`
 	Timestamp      time.Time `json:"timestamp"`
 }
+
+// Group rappresenta un gruppo nel sistema.
+type Group struct {
+	Group_id   int       `json:"group_id"`
+	Group_name string    `json:"group_name"`
+	Creator_id int       `json:"creator_id"`
+	Created_at time.Time `json:"created_at"`
+}
+
+// GroupMember rappresenta un membro di un gruppo.
+type GroupMember struct {
+	GroupMember_id int    `json:"group_member_id"`
+	Group_id       int    `json:"group_id"`
+	User_id        int    `json:"user_id"`
+	Role           string `json:"role"`
+}

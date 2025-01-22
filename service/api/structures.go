@@ -33,6 +33,22 @@ type Message struct {
 	Timestamp      time.Time `json:"timestamp"`
 }
 
+// Group rappresenta un gruppo nel sistema.
+type Group struct {
+	Group_id   int       `json:"group_id"`
+	Group_name string    `json:"group_name"`
+	Creator_id int       `json:"creator_id"`
+	Created_at time.Time `json:"created_at"`
+}
+
+// GroupMember rappresenta un membro di un gruppo.
+type GroupMember struct {
+	GroupMember_id int    `json:"group_member_id"`
+	Group_id       int    `json:"group_id"`
+	User_id        int    `json:"user_id"`
+	Role           string `json:"role"` // Esempio: "member", "admin"
+}
+
 func (u User) toDataBase() database.User {
 	return database.User{
 		User_id:  u.User_id,
@@ -49,3 +65,14 @@ func toDatabaseMessage(dbMsg database.Message) Message {
 		Timestamp:      dbMsg.Timestamp,
 	}
 }
+
+/*
+func (g Group) toDatabase() database.Group {
+	return database.Group{
+		Group_id:   g.Group_id,
+		Group_name: g.Group_name,
+		Creator_id: g.Creator_id,
+		Created_at: g.Created_at,
+	}
+}
+*/

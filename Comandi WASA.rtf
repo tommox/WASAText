@@ -46,6 +46,30 @@ FORWARDMESSAGE: curl -i -X POST \\\
   -d '\{"Recipient_id": 3\}' \\\
   http://localhost:3000/messages/1/forwards\
 \
+ADDREACTION: curl -i -X POST \\           \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+  -H "Authorization: Bearer 2" \\   \
+  -H "Content-Type: application/json" \\\
+  -d '\{"emoji": "\uc0\u55357 \u56834 ", "add": true\}' \\\
+  http://localhost:3000/messages/1/reactions\
+\
+REMOVEREACTION: curl -i -X POST \\           \
+  -H "Authorization: Bearer 2" \\   \
+  -H "Content-Type: application/json" \\\
+  -d '\{"emoji": "\uc0\u55357 \u56834 ", "add": false\}\'92 \\\
+  http://localhost:3000/messages/1/reactions\
+\
+DELETEMESSAGE: curl -i -X DELETE \\                        \
+     -H "Authorization: Bearer 1" \\\
+     http://localhost:3000/messages/1\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\
+CREATEGROUP: curl -i -X POST \\           \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+  -H "Authorization: Bearer 1" \\\
+  -H "Content-Type: application/json" \\\
+  -d '\{"group_name": "StudioTeam"\}' \\\
+  http://localhost:3000/groups\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
 \f1\fs26 \cf3 \CocoaLigature1 \

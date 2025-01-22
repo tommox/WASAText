@@ -948,12 +948,12 @@ paths:
   # -------------------------------------------------------
   # GROUPS
   # -------------------------------------------------------
-  /groups/{Group_id}/users:
+  /groups/{Group_id}/users/{User_id}:
     post:
       tags: ["groups"]
-      summary: Add a user to a group
-      description: Assigns a user to a specific group.
-      operationId: addToGroup
+      summary: Add, remove or promote a user in a group
+      description: Adds, removes or promotes a user in a specific group.
+      operationId: manageGroupUsers
       parameters:
         - name: Group_id
           description: The integer that describes the Group_id.
@@ -963,127 +963,42 @@ paths:
             type: integer
             minimum: 1
             maximum: 100000
-            description: "The ID of the group"
+            description: "The ID of the group."
       requestBody:
-        description: Details of the user to add, including role.
+        description: Details of the user to add remove or promote
         required: true
         content:
           application/json:
             schema:
               type: object
-              description: Response structured with details of User_id and role
+              description: Request body for managing group users.
               required:
                 - User_id
-                - role
+                - action
               properties:
                 User_id:
                   type: integer
-                  description: "ID of the user to add to the group"
+                  description: "ID of the user to add or remove."
                   minimum: 1
                   maximum: 100000
+                action:
+                  type: string
+                  description: "Action to perform: 'add', 'remove' or 'promote'."
+                  enum: ["add", "remove", "promote"]
                 role:
                   type: string
-                  description: "The role assigned to the user (e.g., 'member', 'admin')."
+                  description: "The role assigned to the user when adding (e.g., 'member', 'admin')."
                   pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                   minLength: 3
                   maxLength: 1000
       responses:
         '201':
-          description: User successfully added to the group.
+          description: User successfully managed in the group.
           content:
             application/json:
               schema:
                 type: object
-                description: Schema for positive response
-                required:
-                  - Group_id
-                  - User_id
-                  - role
-                properties:
-                  Group_id:
-                    type: integer
-                    description: "The ID of the group."
-                    minimum: 1
-                    maximum: 100000
-                  User_id:
-                    type: integer
-                    description: "The ID of the user added."
-                    minimum: 1
-                    maximum: 100000
-                  role:
-                    type: string
-                    description: "The role assigned to the user."
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
-        '400':
-          description: Invalid data (Group_id, User_id, or role).
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Negative response at the request.
-                properties:
-                  error:
-                    type: string
-                    description: "Details of the invalid request."
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
-        '404':
-          description: Group or user not found.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Negative response caused by not found
-                properties:
-                  error:
-                    type: string
-                    description: "The specified group or user does not exist."
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
-        '500':
-          description: Server error.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error500'
-
-  /groups/{Group_id}/users/{User_id}:
-    delete:
-      tags: ["groups"]
-      summary: Remove a user from a group
-      description: Allows a specific user to leave (be removed from) a group.
-      operationId: leaveGroup
-      parameters:
-        - name: Group_id
-          description: Integer that represent the Group_id
-          in: path
-          required: true
-          schema:
-            type: integer
-            description: "The ID of the group."
-            minimum: 1
-            maximum: 100000
-        - name: User_id
-          description: Integer that represent the User_id
-          in: path
-          required: true
-          schema:
-            type: integer
-            description: "The ID of the user to remove."
-            minimum: 1
-            maximum: 100000
-      responses:
-        '200':
-          description: User successfully removed from the group.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Schema for positive removal of a user.
+                description: Schema for a successful response.
                 required:
                   - success
                   - message
@@ -1099,7 +1014,7 @@ paths:
                     minLength: 3
                     maxLength: 1000
         '400':
-          description: Invalid data (Group_id or User_id).
+          description: Invalid data (Group_id, User_id, or action).
           content:
             application/json:
               schema:
@@ -1137,7 +1052,7 @@ paths:
   /groups/{Group_id}:
     patch:
       tags: ["groups"]
-      summary: Update group details
+      summary: Update group name
       description: Allows updating certain group fields (like the group name).
       operationId: setGroupName
       parameters:
