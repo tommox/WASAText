@@ -27,14 +27,14 @@ func (rt *_router) manageGroupUsersHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Estrai l'admin ID dal token Bearer
-	adminIdStr, err := extractBearerToken(r, w)
+	requestingUserIdStr, err := extractBearerToken(r, w)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
 		ctx.Logger.WithError(err).Error("manageGroupUsers: unauthorized user")
 		return
 	}
 
-	adminId, err := strconv.Atoi(adminIdStr)
+	requestingUserId, err := strconv.Atoi(requestingUserIdStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		ctx.Logger.WithError(err).Error("manageGroupUsers: invalid admin ID")
@@ -49,14 +49,32 @@ func (rt *_router) manageGroupUsersHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Controlla i permessi dell'admin
-	isAdmin, err := rt.db.IsGroupAdmin(groupId, adminId)
+	// Autorizzazione per l'operazione
+	if state == "remove" && requestingUserId == userId {
+		// Se l'utente sta rimuovendo sé stesso, bypassa il controllo admin
+		err = rt.db.RemoveUserFromGroup(groupId, userId)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			ctx.Logger.WithError(err).Error("manageGroupUsers: error removing user from group")
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": true,
+			"message": "User removed themselves from the group successfully",
+		})
+		return
+	}
+
+	// Controlla i permessi dell'admin per tutte le altre operazioni
+	isAdmin, err := rt.db.IsGroupAdmin(groupId, requestingUserId)
 	if err != nil || !isAdmin {
 		w.WriteHeader(http.StatusForbidden)
 		ctx.Logger.WithError(err).Error("manageGroupUsers: user is not an admin")
 		return
 	}
 
+	// Gestisci le diverse operazioni
 	if state == "promote" {
 		// Promuovi l'utente al ruolo di admin
 		err = rt.db.PromoteToAdmin(groupId, userId)
@@ -72,10 +90,7 @@ func (rt *_router) manageGroupUsersHandler(w http.ResponseWriter, r *http.Reques
 			"role":     "admin",
 			"message":  "User promoted to admin successfully",
 		})
-		return
-	}
-
-	if state == "add" {
+	} else if state == "add" {
 		// Decodifica il corpo della richiesta per ottenere il ruolo
 		var body struct {
 			Role string `json:"role"`
