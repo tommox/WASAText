@@ -11,7 +11,7 @@ func (db *appdbimpl) IsGroupAdmin(groupId int, userId int) (bool, error) {
 	query := `
         SELECT 1 
         FROM GroupMembers 
-        WHERE Group_id = ? AND User_id = ? AND Role = 'admin';
+        WHERE Group_id = ? AND User_id = ? AND Role = "admin";
     `
 	err := db.c.QueryRow(query, groupId, userId).Scan(&exists)
 	if err != nil {

@@ -225,6 +225,123 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
+  /users/{User_id}/photo:
+    put:
+      tags: ["users"]
+      summary: Create or update the user's profile photo
+      description: Upsert a single profile photo for the user.
+      operationId: setMyPhoto
+      parameters:
+        - name: User_id
+          description: Integer that represents User_id.
+          in: path
+          required: true
+          schema:
+            type: integer
+            description: "The unique ID of the user."
+            minimum: 1
+            maximum: 100000
+      requestBody:
+        description: The photo to be uploaded or updated.
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              description: Schema for positive photo update or upload.
+              required: [photo]
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                  description: "The image file for the user's profile photo."
+                  pattern: "^[01]+$"
+                  minLength: 1
+                  maxLength: 1000
+      responses:
+        '200':
+          description: Profile photo updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for positive photo update
+                required:
+                  - status
+                  - photoUrl
+                properties:
+                  status:
+                    type: string
+                    description: "Indicates the operation was successful."
+                    enum: ["success"]
+                  photoUrl:
+                    type: string
+                    description: "URL or path of the updated photo."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '400':
+          description: Invalid input or bad request.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for negative response caused by invalid input.
+                properties:
+                  error:
+                    type: string
+                    description: "Error details, e.g., invalid User_id or invalid body."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '401':
+          description: Unauthorized access due to mismatched User_id.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for unauthorized access.
+                properties:
+                  error:
+                    type: string
+                    description: "Details of unauthorized access."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '403':
+          description: Forbidden access due to missing or invalid token.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for forbidden access.
+                properties:
+                  error:
+                    type: string
+                    description: "Details of the missing or invalid token."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '415':
+          description: Unsupported media type.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for unsupported media type errors.
+                properties:
+                  error:
+                    type: string
+                    description: "The uploaded file type is not supported."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '500':
+          description: Internal server error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error500'
 
   # -------------------------------------------------------
   # CONVERSATIONS
@@ -948,6 +1065,151 @@ paths:
   # -------------------------------------------------------
   # GROUPS
   # -------------------------------------------------------
+
+  /groups:
+    post:
+      tags: ["groups"]
+      summary: Create a new group
+      description: Allows creating a group by a user.
+      operationId: createGroup
+      requestBody:
+        description: Details of the group to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - group_name
+              description: Schema for creating a group.
+              properties:
+                group_name:
+                  type: string
+                  description: "The name of the group."
+                  pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                  minLength: 3
+                  maxLength: 100
+      responses:
+        '201':
+          description: Group created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for a positive response.
+                required:
+                  - group_id
+                  - group_name
+                  - creator_id
+                properties:
+                  group_id:
+                    type: integer
+                    description: "The unique ID of the created group."
+                    minimum: 1
+                    maximum: 100000
+                  group_name:
+                    type: string
+                    description: "The name of the created group."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 100
+                  creator_id:
+                    type: integer
+                    description: "The ID of the group creator."
+                    minimum: 1
+                    maximum: 100000
+        '400':
+          description: Invalid data for group creation.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for invalid input response.
+                properties:
+                  error:
+                    type: string
+                    description: "Error details."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '500':
+          description: Internal server error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error500'
+
+    delete:
+      tags: ["groups"]
+      summary: Delete a group
+      description: Allows the deletion of a group. Only the creator or an admin can delete the group.
+      operationId: deleteGroup
+      parameters:
+        - name: Group_id
+          in: path
+          required: true
+          description: "The unique ID of the group to delete."
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100000
+      responses:
+        '200':
+          description: Group deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for successful deletion response.
+                required:
+                  - success
+                  - message
+                properties:
+                  success:
+                    type: boolean
+                    description: "Indicates if the deletion was successful."
+                    example: true
+                  message:
+                    type: string
+                    description: "A confirmation message."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '403':
+          description: User not authorized to delete the group.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for unauthorized response.
+                properties:
+                  error:
+                    type: string
+                    description: "Error details."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '404':
+          description: Group not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for group not found response.
+                properties:
+                  error:
+                    type: string
+                    description: "The specified group does not exist."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '500':
+          description: Internal server error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error500'
+
   /groups/{Group_id}/users/{User_id}:
     post:
       tags: ["groups"]
@@ -1048,7 +1310,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
-
+  
   /groups/{Group_id}:
     patch:
       tags: ["groups"]
@@ -1139,211 +1401,103 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error500'
-
-
-  # -------------------------------------------------------
-  # PHOTOS (USERS)
-  # -------------------------------------------------------
-  /photos/{User_id}:
-    put:
-      tags: ["users"]
-      summary: Create or update the user's profile photo
-      description: Upsert a single profile photo for the user.
-      operationId: setMyPhoto
-      parameters:
-        - name: User_id
-          description: Integer that represents User_id.
-          in: path
-          required: true
-          schema:
-            type: integer
-            description: "The unique ID of the user."
-            minimum: 1
-            maximum: 100000
-      requestBody:
-        description: The photo to be uploaded or updated.
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              description: Schema for positive photo update or upload.
-              required: [photo]
-              properties:
-                photo:
-                  type: string
-                  format: binary
-                  description: "The image file for the user's profile photo."
-                  pattern: "^[01]+$"
-                  minLength: 1
-                  maxLength: 1000
-      responses:
-        '200':
-          description: Profile photo updated successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Schema for positive photo update
-                required:
-                  - status
-                  - photoUrl
-                properties:
-                  status:
-                    $ref: '#/components/schemas/Status'
-                  photoUrl:
-                    type: string
-                    description: "URL or path of the updated photo."
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
-        '400':
-          description: Invalid file upload or unsupported format.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Schema for negative response caused by invalid file
-                properties:
-                  error:
-                    type: string
-                    description: "What went wrong with the file upload."
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
-        '415':
-          description: Unsupported media type.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Schema for error caused by unsupported media type
-                properties:
-                  error:
-                    type: string
-                    description: "The uploaded file type is not supported."
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
-        '500':
-          description: Internal server error.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error500'
-
-
-  # -------------------------------------------------------
-  # GROUP PHOTO
-  # -------------------------------------------------------
-  /groups/{Group_id}/photo:
+              
+  /groups/{Group_id}/photo: 
     put:
       tags: ["groups"]
-      summary: Create or update the group photo
-      description: Allows the group admin to upload or update the photo for a specific group.
-      operationId: setGroupPhoto
+      summary: Add or update a group photo
+      description: Allows an admin or the creator to upload or update a group's profile photo.
+      operationId: addGroupPhoto
       parameters:
         - name: Group_id
-          description: Integer that represents Group_id
           in: path
           required: true
+          description: "The unique ID of the group."
           schema:
             type: integer
-            description: "The unique ID of the group."
             minimum: 1
             maximum: 100000
       requestBody:
-        description: Group photo file upload
+        description: The group photo to upload.
         required: true
         content:
           multipart/form-data:
             schema:
               type: object
-              description: Schema that takes photo.
-              required: [ photo ]
+              required:
+                - photo
+              description: Schema for uploading a photo.
               properties:
                 photo:
                   type: string
                   format: binary
-                  description: "The image file to be uploaded as the group photo."
-                  pattern: "^[01]+$"
-                  minLength: 1
-                  maxLength: 1000
+                  description: "The image file to upload."
       responses:
         '200':
-          description: Group photo updated successfully.
+          description: Group photo uploaded successfully.
           content:
             application/json:
               schema:
                 type: object
-                description: Schema for positive photo updated.
+                description: Schema for successful upload response.
                 required:
-                  - status
-                  - photoUrl
+                  - success
+                  - message
                 properties:
-                  status:
-                    $ref: '#/components/schemas/Status'
-                  photoUrl:
+                  success:
+                    type: boolean
+                    description: "Indicates if the upload was successful."
+                    example: true
+                  message:
                     type: string
-                    description: "The URL or path to the updated photo."
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
-        '201':
-          description: Group photo created successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Schema for positive photo created.
-                required:
-                  - status
-                  - photoUrl
-                properties:
-                  status:
-                    $ref: '#/components/schemas/Status'
-                  photoUrl:
-                    type: string
-                    description: "The URL or path to the newly uploaded photo."
+                    description: "A confirmation message."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
         '400':
-          description: Invalid file upload or unsupported format.
+          description: Invalid file upload or bad request.
           content:
             application/json:
               schema:
                 type: object
-                description: Schema for error caused by invalid file 
+                description: Schema for invalid upload response.
                 properties:
                   error:
                     type: string
-                    description: "Error details for the file upload."
+                    description: "Error details."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
         '403':
-          description: Unauthorized - user lacks permission.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error403'
-        '415':
-          description: Unsupported media type.
+          description: User not authorized to upload a photo.
           content:
             application/json:
               schema:
                 type: object
-                description: Schema for error caused by unsupported media type.
+                description: Schema for unauthorized response.
                 properties:
                   error:
                     type: string
-                    description: "The uploaded file type is not supported."
+                    description: "Error details."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '404':
+          description: Group not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for group not found response.
+                properties:
+                  error:
+                    type: string
+                    description: "The specified group does not exist."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000
         '500':
-          description: Internal server error.
+          description: Internal server error occurred.
           content:
             application/json:
               schema:

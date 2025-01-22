@@ -2,11 +2,12 @@ package database
 
 import (
 	"fmt"
+	"time"
 )
 
-func (db *appdbimpl) CreateGroup(name string, creatorId int) (int, error) {
-	query := `INSERT INTO Groups (Group_name, Creator_id) VALUES (?, ?)`
-	result, err := db.c.Exec(query, name, creatorId)
+func (db *appdbimpl) CreateGroup(name string, creatorId int, createdAt time.Time) (int, error) {
+	query := `INSERT INTO Groups (Group_name, Creator_id, Created_at) VALUES (?, ?, ?)`
+	result, err := db.c.Exec(query, name, creatorId, createdAt)
 	if err != nil {
 		return 0, fmt.Errorf("CreateGroup: %w", err)
 	}

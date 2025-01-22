@@ -38,7 +38,7 @@ func (rt *_router) createGroupHandler(w http.ResponseWriter, r *http.Request, _ 
 	}
 
 	// Crea il gruppo nel database
-	groupId, err := rt.db.CreateGroup(body.GroupName, creatorId)
+	groupId, err := rt.db.CreateGroup(body.GroupName, creatorId, time.Now())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		ctx.Logger.WithError(err).Error("createGroup: error creating group")

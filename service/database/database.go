@@ -58,7 +58,7 @@ type AppDatabase interface {
 	RemoveReaction(messageId int, userId int) error
 
 	// Groups
-	CreateGroup(name string, creatorId int) (int, error)
+	CreateGroup(groupName string, creatorId int, createdAt time.Time) (int, error)
 	AddUserToGroup(groupId int, userId int, role string) error
 	RemoveUserFromGroup(groupId int, userId int) error
 	PromoteToAdmin(groupId int, userId int) error
@@ -66,6 +66,8 @@ type AppDatabase interface {
 	GetGroupMembers(groupId int) ([]GroupMember, error)
 	IsGroupAdmin(groupId int, userId int) (bool, error)
 	DeleteGroup(groupId int) error
+	ChangeGroupName(groupId int, newGroupName string) error
+	UpdateGroupPhoto(groupId int, photoData []byte) error
 
 	// Authorization
 	CheckUserPermission(userId, messageId int) (bool, error)
@@ -133,8 +135,8 @@ func New(db *sql.DB) (AppDatabase, error) {
 									Group_name TEXT NOT NULL,
 									Creator_id INTEGER NOT NULL,
 									Created_at DATETIME NOT NULL,
-									FOREIGN KEY (Creator_id) REFERENCES Users (User_id) ON DELETE CASCADE
-								);`
+									Photo      BLOB,
+									FOREIGN KEY (Creator_id) REFERENCES Users (User_id) ON DELETE CASCADE);`
 
 		_, err = db.Exec(groups)
 		if err != nil {
@@ -142,15 +144,14 @@ func New(db *sql.DB) (AppDatabase, error) {
 		}
 
 		// Creating DB for GroupMembers if not existing
-		groupMembers := ` CREATE TABLE IF NOT EXISTS GroupMembers (
+		groupMembers := ` CREATE TABLE GroupMembers (
 									GroupMember_id INTEGER PRIMARY KEY AUTOINCREMENT,
 									Group_id INTEGER NOT NULL,
 									User_id INTEGER NOT NULL,
 									Role TEXT NOT NULL CHECK (Role IN ('member', 'admin')),
 									UNIQUE(Group_id, User_id),
 									FOREIGN KEY (Group_id) REFERENCES Groups (Group_id) ON DELETE CASCADE,
-									FOREIGN KEY (User_id) REFERENCES Users (User_id) ON DELETE CASCADE
-								);`
+									FOREIGN KEY (User_id) REFERENCES Users (User_id));`
 
 		_, err = db.Exec(groupMembers)
 		if err != nil {
