@@ -130,8 +130,8 @@ func New(db *sql.DB) (AppDatabase, error) {
 		}
 
 		// Creating DB for Groups if not existing
-		groups := `CREATE TABLE IF NOT EXISTS Groups (
-									Group_id INTEGER PRIMARY KEY AUTOINCREMENT,
+		groups := `CREATE TABLE IF NOT EXISTS Groups 
+								   (Group_id INTEGER PRIMARY KEY AUTOINCREMENT,
 									Group_name TEXT NOT NULL,
 									Creator_id INTEGER NOT NULL,
 									Created_at DATETIME NOT NULL,
@@ -144,8 +144,8 @@ func New(db *sql.DB) (AppDatabase, error) {
 		}
 
 		// Creating DB for GroupMembers if not existing
-		groupMembers := ` CREATE TABLE  IF NOT EXISTS GroupMembers (
-									GroupMember_id INTEGER PRIMARY KEY AUTOINCREMENT,
+		groupMembers := ` CREATE TABLE IF NOT EXISTS GroupMembers
+								   (GroupMember_id INTEGER PRIMARY KEY AUTOINCREMENT,
 									Group_id INTEGER NOT NULL,
 									User_id INTEGER NOT NULL,
 									Role TEXT NOT NULL CHECK (Role IN ('member', 'admin')),
