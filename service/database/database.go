@@ -144,7 +144,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 		}
 
 		// Creating DB for GroupMembers if not existing
-		groupMembers := ` CREATE TABLE GroupMembers (
+		groupMembers := ` CREATE TABLE  IF NOT EXISTS GroupMembers (
 									GroupMember_id INTEGER PRIMARY KEY AUTOINCREMENT,
 									Group_id INTEGER NOT NULL,
 									User_id INTEGER NOT NULL,
