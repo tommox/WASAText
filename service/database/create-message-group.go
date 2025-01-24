@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"time"
 )
 
 // CreateGroupMessage salva un messaggio di gruppo nel database.
@@ -21,6 +22,12 @@ func (db *appdbimpl) CreateGroupMessage(groupId int, senderId int, messageConten
 	messageId, err := result.LastInsertId()
 	if err != nil {
 		return 0, fmt.Errorf("CreateGroupMessage: failed to retrieve message ID: %w", err)
+	}
+
+	// Aggiorna la conversazione di gruppo
+	err = db.updateOrCreateGroupConversation(groupId, senderId, int(messageId), time.Now())
+	if err != nil {
+		return 0, fmt.Errorf("CreateGroupMessage: failed to update group conversation: %w", err)
 	}
 
 	return int(messageId), nil

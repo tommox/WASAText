@@ -72,9 +72,9 @@ type AppDatabase interface {
 	CreateGroupMessage(groupId int, senderId int, messageContent string) (int, error)
 
 	// Conversations
-	GetAllMessages() ([]Message, error)
-	GetAllGroupMessages() ([]GroupMessage, error)
-
+	CheckConversationAccess(userId, conversationId int) (bool, error)
+	GetConversationMessages(conversationId int) ([]Message, error)
+	GetUserConversations(userId int) ([]interface{}, error)
 	// Authorization
 	CheckUserPermission(userId, messageId int) (bool, error)
 
@@ -150,7 +150,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 		}
 
 		// Creating DB for GroupMembers if not existing
-		groupMembers := ` CREATE TABLE IF NOT EXISTS GroupMembers
+		groupMembers := `CREATE TABLE IF NOT EXISTS GroupMembers
 								   (GroupMember_id INTEGER PRIMARY KEY AUTOINCREMENT,
 									Group_id INTEGER NOT NULL,
 									User_id INTEGER NOT NULL,
@@ -165,18 +165,49 @@ func New(db *sql.DB) (AppDatabase, error) {
 		}
 
 		// Creating DB for GroupMessages if not existing
-		groupMessages := ` CREATE TABLE IF NOT EXISTS GroupMessages
+		groupMessages := `CREATE TABLE IF NOT EXISTS GroupMessages
 								   (GroupMessage_id INTEGER PRIMARY KEY AUTOINCREMENT,
 									Group_id INTEGER NOT NULL,
 									Sender_id INTEGER NOT NULL,
 									MessageContent TEXT NOT NULL,
 									Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
 									FOREIGN KEY (Group_id) REFERENCES Groups (Group_id) ON DELETE CASCADE,
-									FOREIGN KEY (Sender_id) REFERENCES Users (User_id) ON DELETE CASCADE
-								);`
+									FOREIGN KEY (Sender_id) REFERENCES Users (User_id) ON DELETE CASCADE);`
 		_, err = db.Exec(groupMessages)
 		if err != nil {
 			return nil, fmt.Errorf("error creating GroupMessages structure: %w", err)
+		}
+
+		// Creating DB for Conversations if not existing
+		conversations := `CREATE TABLE IF NOT EXISTS Conversations
+								   (Conversation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+								    Sender_id INTEGER NOT NULL,
+									Recipient_id INTEGER NOT NULL,
+									LastMessage_id INTEGER DEFAULT NULL,
+									LastMessageTimestamp DATETIME DEFAULT NULL,
+									FOREIGN KEY (Sender_id) REFERENCES Users (User_id) ON DELETE CASCADE,
+									FOREIGN KEY (Recipient_id) REFERENCES Users (User_id) ON DELETE CASCADE,
+									FOREIGN KEY (LastMessage_id) REFERENCES Messages (Message_id) ON DELETE SET NULL,
+									UNIQUE(Sender_id, Recipient_id));`
+		_, err = db.Exec(conversations)
+		if err != nil {
+			return nil, fmt.Errorf("error creating Conversations structure: %w", err)
+		}
+
+		// Creating DB for GroupConversation if not existing
+		groupConversations := `CREATE TABLE IF NOT EXISTS GroupConversations
+								   (GroupConversation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+								    Group_id INTEGER NOT NULL,
+									Sender_id INTEGER NOT NULL,
+									LastMessage_id INTEGER DEFAULT NULL,
+									LastMessageTimestamp DATETIME DEFAULT NULL,
+									FOREIGN KEY (Group_id) REFERENCES Groups (Group_id) ON DELETE CASCADE,
+									FOREIGN KEY (Sender_id) REFERENCES Users (User_id) ON DELETE SET NULL,
+									FOREIGN KEY (LastMessage_id) REFERENCES GroupMessages (GroupMessage_id) ON DELETE SET NULL,
+									UNIQUE(Group_id));`
+		_, err = db.Exec(groupConversations)
+		if err != nil {
+			return nil, fmt.Errorf("error creating GroupConversations structure: %w", err)
 		}
 	}
 	return &appdbimpl{

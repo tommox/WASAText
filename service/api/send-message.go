@@ -1,9 +1,7 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,64 +12,42 @@ import (
 )
 
 func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
-
-	// Recupera user_id dal token (mittente)
+	// Estrai `Sender_id` dal token
 	senderIdStr, err := extractBearerToken(r, w)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
 		ctx.Logger.WithError(err).Error("sendMessage: no valid token")
 		return
 	}
+
 	senderId, err := strconv.Atoi(senderIdStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		ctx.Logger.WithError(err).Error("sendMessage: converting senderId")
+		ctx.Logger.WithError(err).Error("sendMessage: invalid sender ID")
 		return
 	}
 
-	// Legge i dati dal body (JSON)
+	// Decodifica il corpo della richiesta
 	var body struct {
-		Recipient_id   int    `json:"Recipient_id"`
-		MessageContent string `json:"messageContent"`
-		Timestamp      string `json:"timestamp,omitempty"`
+		Recipient_id   int    `json:"recipient_id"`
+		MessageContent string `json:"message_content"`
+		Timestamp      string `json:"timestamp,omitempty"` // Timestamp opzionale
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.MessageContent == "" {
 		w.WriteHeader(http.StatusBadRequest)
+		ctx.Logger.WithError(err).Error("sendMessage: invalid request body")
 		return
 	}
 
-	// Validare lunghezza e pattern di `MessageContent`.
-	if !validMessage(body.MessageContent) {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{
-			"error": "Invalid message format or length",
-		})
-		return
-	}
-
-	recipient := database.User{
-		User_id: body.Recipient_id,
-	}
-
-	// Controlla se il destinatario esiste nel database
-	_, err = rt.db.CheckUser(recipient)
+	// Controlla se il destinatario esiste
+	_, err = rt.db.CheckUser(database.User{User_id: body.Recipient_id})
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			// Destinatario non trovato
-			ctx.Logger.WithError(err).Error("sendMessage: recipient does not exist")
-			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(map[string]string{
-				"error": "Recipient does not exist",
-			})
-			return
-		}
-		// Altro errore
-		ctx.Logger.WithError(err).Error("sendMessage: error checking recipient existence")
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
+		ctx.Logger.WithError(err).Error("sendMessage: recipient does not exist")
 		return
 	}
 
-	// Convertire il timestamp, o se manca imposti "now"
+	// Convertire il timestamp, o usare quello corrente
 	var msgTime time.Time
 	if body.Timestamp == "" {
 		msgTime = time.Now()
@@ -84,18 +60,19 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 		}
 	}
 
-	// Salva il messaggio nel DB
+	// Salva il messaggio
 	messageId, err := rt.db.CreateMessage(senderId, body.Recipient_id, body.MessageContent, msgTime)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		ctx.Logger.WithError(err).Error("sendMessage: error creating message")
+		ctx.Logger.WithError(err).Error("sendMessage: failed to create message")
 		return
 	}
 
-	// Rispondi con 201, e il messageId e status
+	// Risposta con successo
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
-		"Message_id": messageId,
+		"message_id": messageId,
 		"status":     "sent",
+		"timestamp":  msgTime, // Aggiunto nella risposta
 	})
 }

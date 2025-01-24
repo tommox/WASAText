@@ -58,6 +58,24 @@ type GroupMember struct {
 	Role           string `json:"role"`
 }
 
+// Conversation rappresenta una conversazione di un utente con un altro.
+type Conversation struct {
+	Conversation_id      int       `json:"conversation_id"`
+	Sender_id            int       `json:"sender_id"`
+	Recipient_id         int       `json:"recipient_id"`
+	LastMessage_id       int       `json:"last_message_id"`
+	LastMessageTimestamp time.Time `json:"last_message_timestamp"`
+}
+
+// Conversation rappresenta una conversazione di un utente in un gruppo.
+type GroupConversation struct {
+	GroupConversation_id int       `json:"group_conversation_id"`
+	Group_id             int       `json:"group_id"`
+	Sender_id            int       `json:"sender_id"`
+	LastMessage_id       int       `json:"last_message_id"`
+	LastMessageTimestamp time.Time `json:"last_message_timestamp"`
+}
+
 func (u User) toDataBase() database.User {
 	return database.User{
 		User_id:  u.User_id,
@@ -72,15 +90,5 @@ func toDatabaseMessage(dbMsg database.Message) Message {
 		Recipient_id:   dbMsg.Recipient_id,
 		MessageContent: dbMsg.MessageContent,
 		Timestamp:      dbMsg.Timestamp,
-	}
-}
-
-func toDatabaseGroupMessage(dbMsg database.GroupMessage) GroupMessage {
-	return GroupMessage{
-		GroupMessage_id: dbMsg.GroupMessage_id,
-		Sender_id:       dbMsg.Sender_id,
-		Group_id:        dbMsg.Group_id,
-		MessageContent:  dbMsg.MessageContent,
-		Timestamp:       dbMsg.Timestamp,
 	}
 }

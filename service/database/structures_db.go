@@ -48,3 +48,21 @@ type GroupMember struct {
 	User_id        int    `json:"user_id"`
 	Role           string `json:"role"`
 }
+
+// Conversation rappresenta una conversazione di un utente con un altro.
+type Conversation struct {
+	Conversation_id      int       `json:"conversation_id"`
+	Sender_id            int       `json:"sender_id"`
+	Recipient_id         int       `json:"recipient_id"`
+	LastMessage_id       int       `json:"last_message_id"`
+	LastMessageTimestamp time.Time `json:"last_message_timestamp"`
+}
+
+// Conversation rappresenta una conversazione di un utente in un gruppo.
+type GroupConversation struct {
+	GroupConversation_id int       `json:"group_conversation_id"`
+	Group_id             int       `json:"group_id"`
+	Sender_id            int       `json:"sender_id"`
+	LastMessage_id       int       `json:"last_message_id"`
+	LastMessageTimestamp time.Time `json:"last_message_timestamp"`
+}

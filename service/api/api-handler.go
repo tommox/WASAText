@@ -30,10 +30,7 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.POST("/groups/:Group_id/messages", rt.wrap(rt.sendMessageToGroupHandler))
 
 	// CONVERSATIONS
-	rt.router.GET("/conversations", rt.wrap(rt.getConversationsHandler))
-	/*
-
-		rt.router.GET("/conversations/:Conversation_id", rt.wrap(rt.getConversationByIDHandler))
-	*/
+	rt.router.GET("/conversations", rt.wrap(rt.getMyConversationsHandler))
+	rt.router.GET("/conversations/:Conversation_id", rt.wrap(rt.getConversationHandler))
 	return rt.router
 }

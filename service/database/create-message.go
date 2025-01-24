@@ -15,5 +15,10 @@ func (db *appdbimpl) CreateMessage(senderId int, recipientId int, messageContent
 	if err != nil {
 		return 0, fmt.Errorf("CreateMessage: failed to retrieve message ID: %w", err)
 	}
+	// Aggiorna la conversazione normale
+	err = db.updateOrCreateConversation(senderId, recipientId, int(messageId), timestamp)
+	if err != nil {
+		return 0, fmt.Errorf("CreateMessage: failed to update conversation: %w", err)
+	}
 	return int(messageId), nil
 }
