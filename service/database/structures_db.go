@@ -24,6 +24,15 @@ type Message struct {
 	Timestamp      time.Time `json:"timestamp"`
 }
 
+// GroupMessage rappresenta la struttura di un messaggio inviata a un gruppo
+type GroupMessage struct {
+	GroupMessage_id int       `json:"message_id"`
+	Sender_id       int       `json:"sender_id"`
+	Group_id        int       `json:"group_id"`
+	MessageContent  string    `json:"message_content"`
+	Timestamp       time.Time `json:"timestamp"`
+}
+
 // Group rappresenta un gruppo nel sistema.
 type Group struct {
 	Group_id   int       `json:"group_id"`

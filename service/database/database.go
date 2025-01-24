@@ -71,6 +71,10 @@ type AppDatabase interface {
 	UpdateGroupPhoto(groupId int, photoData []byte) error
 	CreateGroupMessage(groupId int, senderId int, messageContent string) (int, error)
 
+	// Conversations
+	GetAllMessages() ([]Message, error)
+	GetAllGroupMessages() ([]GroupMessage, error)
+
 	// Authorization
 	CheckUserPermission(userId, messageId int) (bool, error)
 

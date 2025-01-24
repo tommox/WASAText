@@ -33,6 +33,15 @@ type Message struct {
 	Timestamp      time.Time `json:"timestamp"`
 }
 
+// GroupMessage rappresenta la struttura di un messaggio inviata a un gruppo
+type GroupMessage struct {
+	GroupMessage_id int       `json:"message_id"`
+	Sender_id       int       `json:"sender_id"`
+	Group_id        int       `json:"group_id"`
+	MessageContent  string    `json:"message_content"`
+	Timestamp       time.Time `json:"timestamp"`
+}
+
 // Group rappresenta un gruppo nel sistema.
 type Group struct {
 	Group_id   int       `json:"group_id"`
@@ -63,5 +72,15 @@ func toDatabaseMessage(dbMsg database.Message) Message {
 		Recipient_id:   dbMsg.Recipient_id,
 		MessageContent: dbMsg.MessageContent,
 		Timestamp:      dbMsg.Timestamp,
+	}
+}
+
+func toDatabaseGroupMessage(dbMsg database.GroupMessage) GroupMessage {
+	return GroupMessage{
+		GroupMessage_id: dbMsg.GroupMessage_id,
+		Sender_id:       dbMsg.Sender_id,
+		Group_id:        dbMsg.Group_id,
+		MessageContent:  dbMsg.MessageContent,
+		Timestamp:       dbMsg.Timestamp,
 	}
 }
