@@ -2,12 +2,16 @@ package database
 
 import "fmt"
 
+// GetConversationMessages recupera tutti i messaggi associati a una conversazione tra due utenti
 func (db *appdbimpl) GetConversationMessages(conversationId int) ([]Message, error) {
 	query := `
-		SELECT Message_id, Sender_id, Recipient_id, MessageContent, Timestamp
-		FROM Messages
-		WHERE Conversation_id = ?
-		ORDER BY Timestamp ASC;
+		SELECT m.Message_id, m.Sender_id, m.Recipient_id, m.MessageContent, m.Timestamp
+		FROM Messages m
+		JOIN Conversations c ON 
+			((m.Sender_id = c.Sender_id AND m.Recipient_id = c.Recipient_id)
+			OR (m.Sender_id = c.Recipient_id AND m.Recipient_id = c.Sender_id))
+		WHERE c.Conversation_id = ?
+		ORDER BY m.Timestamp ASC;
 	`
 
 	rows, err := db.c.Query(query, conversationId)

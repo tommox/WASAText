@@ -1,0 +1,41 @@
+package database
+
+import "fmt"
+
+// GetGroupConversationMessages recupera tutti i messaggi associati a una conversazione di gruppo
+func (db *appdbimpl) GetGroupConversationMessages(groupConversationId int) ([]GroupMessage, error) {
+	query := `
+		SELECT gm.GroupMessage_id, gm.Sender_id, gm.Group_id, gm.MessageContent, gm.Timestamp
+		FROM GroupMessages gm
+		WHERE gm.Group_id = (
+			SELECT Group_id
+			FROM GroupConversations
+			WHERE GroupConversation_id = ?
+		)
+		ORDER BY gm.Timestamp ASC;
+	`
+
+	rows, err := db.c.Query(query, groupConversationId)
+	if err != nil {
+		return nil, fmt.Errorf("GetGroupConversationMessages: %w", err)
+	}
+	defer rows.Close()
+
+	var groupMessages []GroupMessage
+	for rows.Next() {
+		var msg GroupMessage
+		err := rows.Scan(
+			&msg.GroupMessage_id,
+			&msg.Sender_id,
+			&msg.Group_id,
+			&msg.MessageContent,
+			&msg.Timestamp,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("GetGroupConversationMessages: %w", err)
+		}
+		groupMessages = append(groupMessages, msg)
+	}
+
+	return groupMessages, nil
+}

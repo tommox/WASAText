@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -34,22 +35,32 @@ func (rt *_router) getConversationHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Verifica i permessi dell'utente
-	hasAccess, err := rt.db.CheckConversationAccess(userId, conversationId)
-	if err != nil || !hasAccess {
+	hasAccess, isGroup, err := rt.db.CheckConversationAccess(userId, conversationId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		ctx.Logger.WithError(err).Error("getConversation: error checking access")
+		return
+	}
+	if !hasAccess {
 		w.WriteHeader(http.StatusForbidden)
-		ctx.Logger.WithError(err).Error("getConversation: user has no access to this conversation")
+		ctx.Logger.WithError(errors.New("user has no access")).Error("getConversation: user has no access to this conversation")
 		return
 	}
 
 	// Recupera i messaggi della conversazione
-	messages, err := rt.db.GetConversationMessages(conversationId)
+	var messages interface{}
+	if isGroup {
+		messages, err = rt.db.GetGroupConversationMessages(conversationId)
+	} else {
+		messages, err = rt.db.GetConversationMessages(conversationId)
+	}
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		ctx.Logger.WithError(err).Error("getConversation: failed to retrieve messages")
 		return
 	}
 
-	// Risposta con successo
+	// Rispondi con i messaggi
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(messages)
 }
