@@ -1503,6 +1503,100 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
+  /groups/{Group_id}/messages:
+    post:
+      tags: ["groups"]
+      summary: Send a message to a group
+      description: Sends a message to the specified group if the sender is a member of the group.
+      operationId: SendMessageToGroup
+      parameters:
+        - name: Group_id
+          in: path
+          description: The unique ID of the group to send the message to. Must be an integer between 1 and 100000.
+          required: true
+          schema:
+            type: integer
+            description: The unique group identifier.
+            minimum: 1
+            maximum: 100000
+      requestBody:
+        description: The message content to send to the group.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: The schema for the content of a message
+              properties:
+                message_content:
+                  type: string
+                  description: The content of the message. Must be between 1 and 1000 characters.
+                  minLength: 1
+                  maxLength: 1000
+                  pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                timestamp:
+                  type: string
+                  format: date-time
+                  description: "Optional timestamp. If omitted, server will set current time."
+                  pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                  minLength: 3
+                  maxLength: 1000
+      responses:
+        '201':
+          description: Message sent successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: The schema for a successfully sent message
+                properties:
+                  message_id:
+                    type: integer
+                    description: The ID of the newly created message.
+                    minimum: 1
+                    example: 100000
+                  status:
+                    type: string
+                    description: "The current status of the message (unsent, sent, read)."
+                    enum: ["unsent", "sent", "read"]
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 10
+        '400':
+          description: Invalid request parameters or payload.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: The schema for an invalid request parameters
+                properties:
+                  error:
+                    type: string
+                    description: A description of the error.
+                    minLength: 1
+                    maxLength: 1000
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    
+        '403':
+          description: User is not authorized to send a message to the group.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: The schema of an unauthorized user to send message
+                properties:
+                  error:
+                    type: string
+                    description: A description of the authorization error.
+                    minLength: 1
+                    maxLength: 1000
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+        '500':
+          description: Internal server error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error500'
 
   # -------------------------------------------------------
   # PERMISSIONS
