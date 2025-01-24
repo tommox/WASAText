@@ -65,9 +65,11 @@ type AppDatabase interface {
 	GetGroupById(groupId int) (Group, error)
 	GetGroupMembers(groupId int) ([]GroupMember, error)
 	IsGroupAdmin(groupId int, userId int) (bool, error)
+	IsGroupMember(groupId int, userId int) (bool, error)
 	DeleteGroup(groupId int) error
 	ChangeGroupName(groupId int, newGroupName string) error
 	UpdateGroupPhoto(groupId int, photoData []byte) error
+	CreateGroupMessage(groupId int, senderId int, messageContent string) (int, error)
 
 	// Authorization
 	CheckUserPermission(userId, messageId int) (bool, error)
@@ -106,8 +108,8 @@ func New(db *sql.DB) (AppDatabase, error) {
 									   (Message_id       INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 									    Sender_id 		 INTEGER NOT NULL,
 										Recipient_id     INTEGER NOT NULL, 
-										messageContent   VARCHAR(1000) NOT NULL,
-										timestamp        DATETIME NOT NULL);`
+										MessageContent   VARCHAR(1000) NOT NULL,
+										Timestamp        DATETIME NOT NULL);`
 
 		_, err = db.Exec(messages)
 		if err != nil {
@@ -156,6 +158,21 @@ func New(db *sql.DB) (AppDatabase, error) {
 		_, err = db.Exec(groupMembers)
 		if err != nil {
 			return nil, fmt.Errorf("error creating GroupMembers structure: %w", err)
+		}
+
+		// Creating DB for GroupMessages if not existing
+		groupMessages := ` CREATE TABLE IF NOT EXISTS GroupMessages
+								   (GroupMessage_id INTEGER PRIMARY KEY AUTOINCREMENT,
+									Group_id INTEGER NOT NULL,
+									Sender_id INTEGER NOT NULL,
+									MessageContent TEXT NOT NULL,
+									Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+									FOREIGN KEY (Group_id) REFERENCES Groups (Group_id) ON DELETE CASCADE,
+									FOREIGN KEY (Sender_id) REFERENCES Users (User_id) ON DELETE CASCADE
+								);`
+		_, err = db.Exec(groupMessages)
+		if err != nil {
+			return nil, fmt.Errorf("error creating GroupMessages structure: %w", err)
 		}
 	}
 	return &appdbimpl{

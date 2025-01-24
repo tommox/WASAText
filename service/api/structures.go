@@ -46,7 +46,7 @@ type GroupMember struct {
 	GroupMember_id int    `json:"group_member_id"`
 	Group_id       int    `json:"group_id"`
 	User_id        int    `json:"user_id"`
-	Role           string `json:"role"` // Esempio: "member", "admin"
+	Role           string `json:"role"`
 }
 
 func (u User) toDataBase() database.User {
@@ -65,14 +65,3 @@ func toDatabaseMessage(dbMsg database.Message) Message {
 		Timestamp:      dbMsg.Timestamp,
 	}
 }
-
-/*
-func (g Group) toDatabase() database.Group {
-	return database.Group{
-		Group_id:   g.Group_id,
-		Group_name: g.Group_name,
-		Creator_id: g.Creator_id,
-		Created_at: g.Created_at,
-	}
-}
-*/
