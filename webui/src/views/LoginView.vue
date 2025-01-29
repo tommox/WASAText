@@ -45,7 +45,7 @@ export default {
 	
 	<div class="container-fluid h-100 w-100 d-flex justify-content-center m-0 p-0 login">
 	  <div class="login-card p-5 text-center">
-		<img src="../assets/images/WASAText.png" ass="mb-4" alt="WASAText logo" style="width: 420px; height: 150px;"><img>
+		<img src="../assets/images/WASAText.png" ass="mb-4" alt="WASAText logo" style="width: 520px; height: 200px;"><img>
 		<form @submit.prevent="login">
 		  <div class="form-group">
 			<input type="text" class="form-control" v-model="nickname" placeholder="Nickname">
