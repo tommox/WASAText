@@ -28,9 +28,6 @@ export default {
 		},
 	},
 	mounted(){
-		localStorage.removeItem('token')
-      	localStorage.removeItem('nickname')
-		
 		if (localStorage.getItem('token')){
 			this.$router.replace("/home")
 		}
