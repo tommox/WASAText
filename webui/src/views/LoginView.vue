@@ -1,23 +1,3 @@
-<template>
-	<div class="login-background">
-	  <div class="login-container">
-		<div class="logo-container">
-		  <!-- Esempio di immagine logo -->
-		  <img src="../assets/images/sfondo.jpeg" alt="Logo" class="logo" />
-		</div>
-  
-		<div class="form-container">
-		  <input 
-			v-model="nickname"
-			type="text"
-			placeholder="Inserisci il tuo Nickname"
-		  />
-		  <button @click="login">Accedi</button>
-		</div>
-	  </div>
-	</div>
-  </template>
-  
   <script>
   export default {
 	name: 'LoginView',
@@ -36,68 +16,90 @@
   }
   </script>
   
-  <style scoped>
-  /* Copriamo tutta la finestra con un'immagine di sfondo */
-  .login-background {
-	background: url('../assets/images/sfondo.jpg') no-repeat center center fixed;
-	background-size: cover; /* Adattiamo la grandezza dell'immagine allo schermo */
-	height: 100vh;          /* Occupiamo l'intera altezza del viewport */
-	width: 100%;
-	display: flex;
-	justify-content: center; /* Centra orizzontalmente il contenitore login */
-	align-items: center;     /* Centra verticalmente il contenitore login */
-	margin: 0;
-	padding: 0;
+  <template>
+	
+	<div class="container-fluid h-100 w-100 d-flex justify-content-center m-0 p-0 login">
+	  <div class="login-card p-5 text-center">
+		<img src="../assets/images/WASAText.png" ass="mb-4" alt="WasaPhoto logo" style="width: 520px; height: 180px;"><img>
+		<form @submit.prevent="login">
+		  <div class="form-group">
+			<input type="text" class="form-control" v-model="nickname" placeholder="Nickname">
+		  </div>
+		  <button class="btn btn-primary" :disabled="nickname.length < 3 || nickname.length > 16">Accedi</button>
+		</form>
+	  </div>
+	</div>
+  </template>
+  
+  <style>
+
+  .text-primary {
+	color: rgba(0,0,200,255) !important;
   }
   
-  /* Contenitore della form di login (fondo chiaro, leggermente trasparente ecc.) */
-  .login-container {
-	background-color: rgba(255, 255, 255, 0.9);
-	border-radius: 8px;
-	padding: 30px 20px;
-	width: 300px; /* Larghezza fissa per la form */
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-  }
-  
-  /* Sezione per il logo */
-  .logo-container {
-	margin-bottom: 20px;
-  }
-  
-  .logo {
-	max-width: 120px; /* Riduci/ingrandisci se serve */
-  }
-  
-  /* Contenitore del form (input + bottone) */
-  .form-container {
-	width: 100%;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-  }
-  
-  .form-container input {
-	width: 100%;
-	padding: 10px;
-	margin-bottom: 15px;
-	border: 1px solid #ccc;
-	border-radius: 4px;
-  }
-  
-  .form-container button {
-	width: 100%;
-	padding: 10px;
-	background-color: #00bfa5;
+  .login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image: url("../assets/images/sfondo.jpeg");
+  background-size: cover;
+  background-position: center;
+  height: 100vh;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.login-card {
+	background-color: rgba(241, 241, 241, 0.35);
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  	border-radius: 25px;
+  	display: flex;
+  	flex-direction: column;
+  	align-items: center;
+  	justify-content: center;
+  	padding: 2rem;
+  	text-align: center;
+	width: 350px;
+	height: 400px;
+}
+
+.login-card img {
+	width: auto;
+  	height: auto;
+  	text-align: center;
+  	margin-bottom: 10px;
+}
+
+.btn-primary {
+	margin-top: 30px;
+	margin-left: auto;
+	margin-right: auto;
+	display: block;
+	background-color: #0000c8 !important;
 	color: white;
-	border: none;
-	border-radius: 4px;
-	font-size: 16px;
-	cursor: pointer;
+	border-radius: 50px;
+	padding: 15px 25px;
+	font-weight: bold;
+	font-size: 18px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+	transition: all 0.3s ease;
   }
   
-  .form-container button:hover {
-	background-color: #009d87;
+.btn-primary:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 10px rgba(0, 0, 0, 0.1);
   }
+  
+.btn-primary:active {
+	transform: translateY(0);
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+.form-control{
+	width: 300px !important;
+}
+
+  
   </style>
