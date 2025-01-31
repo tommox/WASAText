@@ -4,7 +4,8 @@ export default {
   data() {
     return {
       nickname: '',
-      errorMessage: ''
+      errorMessage: null,
+	  disabled: true,
     }
   },
   methods: {
@@ -34,16 +35,7 @@ export default {
         }
       }
     }
-  },
-
-  mounted(){
-		localStorage.removeItem('token')
-      	localStorage.removeItem('nickname')
-		
-		if (localStorage.getItem('token')){
-			this.$router.replace("/home")
-		}
-	},
+  }
 }
 </script>
 
