@@ -9,30 +9,16 @@ export default {
   },
   methods: {
     async login() {
-      // Validazione minima sul nickname
-      if (this.nickname.length < 3 || this.nickname.length > 16) {
-        this.errorMessage = 'Il nickname deve essere tra 3 e 16 caratteri!';
-        return;
-      }
-
       try {
-        // Chiamata POST al tuo endpoint /session
-        // Il backend richiede un JSON con chiave "Nickname"
-        const response = await this.$axios.post('/session', {
-          Nickname: this.nickname
+    	let response = await this.$axios.post('/session', {
+        	nickname: this.nickname.trim()
         });
-        
-        // Se lo status è 200 o 201, la creazione o il recupero dell'utente è andato a buon fine
-        if (response.status === 200 || response.status === 201) {
-          // Salviamo l'User_id in localStorage
-          localStorage.setItem('User_id', response.data.User_id);
-          // Se vuoi, salva anche il Nickname:
-          // localStorage.setItem('Nickname', response.data.Nickname);
 
-          // Reindirizziamo l'utente alla Home
+		  localStorage.setItem('token',response.data.user_id);
+		  localStorage.setItem('nickname', this.nickname)
+		  this.$axios.defaults.headers.common['Authorization']= 'Bearer ' + response.data.user_id
           this.$router.push('/home');
-        }
-      } catch (error) {
+        } catch (error) {
         if (error.response) {
           if (error.response.status === 400) {
             this.errorMessage = 'Nickname non valido (3-16 caratteri).';
