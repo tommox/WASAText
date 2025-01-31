@@ -3,14 +3,14 @@
 	  <div class="login-container">
 		<div class="logo-container">
 		  <!-- Esempio di immagine logo -->
-		  <img src="@/assets/images/logo.png" alt="Logo" class="logo" />
+		  <img src="../assets/images/sfondo.jpeg" alt="Logo" class="logo" />
 		</div>
   
 		<div class="form-container">
 		  <input 
 			v-model="nickname"
 			type="text"
-			placeholder="Inserisci il tuo nickname"
+			placeholder="Inserisci il tuo Nickname"
 		  />
 		  <button @click="login">Accedi</button>
 		</div>
@@ -39,7 +39,7 @@
   <style scoped>
   /* Copriamo tutta la finestra con un'immagine di sfondo */
   .login-background {
-	background: url('@/assets/images/sfondo.jpg') no-repeat center center fixed;
+	background: url('../assets/images/sfondo.jpg') no-repeat center center fixed;
 	background-size: cover; /* Adattiamo la grandezza dell'immagine allo schermo */
 	height: 100vh;          /* Occupiamo l'intera altezza del viewport */
 	width: 100%;
