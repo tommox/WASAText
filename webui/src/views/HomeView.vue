@@ -1,3 +1,33 @@
+<script>
+
+export default {
+	data: function () {
+		return {
+			errormsg: null,
+		}
+	},
+
+	methods: {
+		
+		async loadStream() {
+			try {
+				this.errormsg = null
+				let response = await this.$axios.get("/Users/" + localStorage.getItem('token') + "/home")
+			} catch (e) {
+				console.log(e.toString())
+				this.errormsg = e.toString()
+			}
+		}
+	},
+
+	async mounted() {
+		await this.loadStream()
+	}
+
+}
+</script>
+
+
 <template>
 	<div class="h-screen flex flex-col bg-gray-100">
 	  <!-- Barra di ricerca -->
@@ -21,13 +51,7 @@
 	  </div>
 	</div>
   </template>
-  
-  <script>
-  export default {
-	name: "HomeView",
-  };
-  </script>
-  
+ 
   <style scoped>
   </style>
   

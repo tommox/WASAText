@@ -28,6 +28,9 @@ export default {
 		},
 	},
 	mounted(){
+		localStorage.removeItem('token')
+      	localStorage.removeItem('nickname')
+		
 		if (localStorage.getItem('token')){
 			this.$router.replace("/home")
 		}
@@ -42,7 +45,7 @@ export default {
 	
 	<div class="container-fluid h-100 w-100 d-flex justify-content-center m-0 p-0 login">
 	  <div class="login-card p-5 text-center">
-		<img src="../assets/images/WASAText.png" ass="mb-4" alt="WASAText logo" style="width: 520px; height: 200px;"><img>
+		<img src="../assets/images/InstaSnapText1.png" ass="mb-4" alt="WasaPhoto logo" style="width: 320px; height: 100px;"><img>
 		<form @submit.prevent="login">
 		  <div class="form-group">
 			<input type="text" class="form-control" v-model="nickname" placeholder="Nickname">
@@ -63,7 +66,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: url("../assets/images/sfondo.jpeg");
+  background-image: url("../assets/images/sfondo.png");
   background-size: cover;
   background-position: center;
   height: 100vh;
@@ -99,7 +102,7 @@ export default {
 	margin-left: auto;
 	margin-right: auto;
 	display: block;
-	background-color: #0b7b3a !important;
+	background-color: #0000c8 !important;
 	color: white;
 	border-radius: 50px;
 	padding: 15px 25px;
