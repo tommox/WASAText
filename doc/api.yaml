@@ -1139,6 +1139,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
+  /groups/{Group_id}:
     delete:
       tags: ["groups"]
       summary: Delete a group
@@ -1226,6 +1227,15 @@ paths:
             minimum: 1
             maximum: 100000
             description: "The ID of the group."
+        - name: User_id
+          description: The integer that describes the User_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100000
+            description: "The ID of the user."
       requestBody:
         description: Details of the user to add remove or promote
         required: true
