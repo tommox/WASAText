@@ -1,7 +1,7 @@
 <template>
   <div class="chat-list-container">
-    <!-- Barra di ricerca -->
-    <div class="p-3 flex items-center border-b bg-gray-100">
+    <!-- Barra di ricerca (più in alto) -->
+    <div class="search-bar-container p-2 flex items-center border-b bg-gray-100">
       <input 
         v-model="search" 
         type="text" 
@@ -9,16 +9,16 @@
         class="flex-grow px-3 py-2 border rounded-lg"
       />
     </div>
+  </div>
 
-    <!-- Lista Chat con comportamento dinamico -->
-    <div class="chat-list">
-      <ChatItem 
-        v-for="chat in filteredChats" 
-        :key="chat.id" 
-        :chat="chat" 
-        @selectChat="$emit('chatSelected', chat)"
-      />
-    </div>
+  <!-- Lista Chat con comportamento dinamico -->
+  <div class="chat-list">
+    <ChatItem 
+      v-for="chat in filteredChats" 
+      :key="chat.id" 
+      :chat="chat" 
+      @selectChat="$emit('chatSelected', chat)"
+    />
   </div>
 </template>
 
@@ -75,6 +75,11 @@ export default {
   flex-grow: 1; /* Occupa lo spazio disponibile */
   min-height: 0; /* Necessario per gestire il flexbox con overflow */
   overflow-y: auto; /* Scorrimento verticale solo quando necessario */
+}
+
+.search-bar-container {
+  padding-top: 5px; /* Ridotto rispetto al default */
+  padding-bottom: 10px;
 }
 
 /* Stile per la barra di ricerca */

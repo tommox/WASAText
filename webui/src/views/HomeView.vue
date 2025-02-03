@@ -60,7 +60,7 @@
   /* Sezione sinistra (chat list) */
   .left-panel {
 	width: 30%;
-	background: #f8f9fa;
+	background: #ffffff;
 	padding: 20px;
 	border-right: 1px solid #ddd;
 	height: 100vh;
@@ -71,7 +71,7 @@
   .right-panel {
 	width: 70%;
 	padding: 20px;
-	background: #ffffff;
+	background: #eeecec;
 	height: 100vh;
 	overflow-y: auto;
   }
