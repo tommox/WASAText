@@ -50,10 +50,8 @@ func (rt *_router) doLoginHandler(w http.ResponseWriter, r *http.Request, ps htt
 	// Check if user is already in DB
 	err = rt.db.CreateUser(user.toDataBase())
 	if err != nil {
-		w.WriteHeader(http.StatusConflict)
-		_ = json.NewEncoder(w).Encode(map[string]string{
-			"Error": "Nickname already in use",
-		})
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(user)
 		return
 	}
 

@@ -13,8 +13,8 @@ export default {
 			this.errormsg = null;
 			try {
 				let response = await this.$axios.post("/session", {
-                    nickname: this.nickname.trim()
-                });
+          nickname: this.nickname.trim()
+        });
 
 				localStorage.setItem('token',response.data.user_id);
 				localStorage.setItem('nickname', this.nickname)
