@@ -1,12 +1,12 @@
 <template>
   <div class="chat-list-container">
     <!-- Barra di ricerca + Pulsante "Nuova Conversazione" -->
-    <div class="search-bar-container flex items-center border-b bg-gray-100">
+    <div class="search-bar-container flex items-center border-b bg-gray-100 p-2">
       <input 
         v-model="search" 
         type="text" 
         placeholder="Cerca chat" 
-        class="flex-grow px-3 py-2 border rounded-lg"
+        class="search-input flex-grow px-4 py-2 border rounded-lg"
       />
       <button @click="fetchUsers" class="new-chat-btn">
         ➕
@@ -116,32 +116,34 @@ export default {
   overflow: hidden;
 }
 
-/* Pulsante nuova conversazione */
-.new-chat-container {
+/* Barra di ricerca */
+.search-input {
+  flex-grow: 1;
+  width: 80%;
   padding: 10px;
-  text-align: center;
+  font-size: 16px;
 }
 
-/* Pulsante nuovo chat (piccolo quadrato accanto alla barra di ricerca) */
+/* Pulsante nuova chat */
 .new-chat-btn {
-  width: 40px;
-  height: 40px;
-  background-color: #007bff;
+  width: 36px;
+  height: 36px;
+  background-color: #ebe9e9;
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 50%;
   font-size: 20px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 10px;
+  margin-left: 300px;
+  margin-top: -38px;
 }
 
 .new-chat-btn:hover {
-  background-color: #0056b3;
+  background-color: #d6d6d6;
 }
-
 
 /* Lista chat */
 .chat-list {
