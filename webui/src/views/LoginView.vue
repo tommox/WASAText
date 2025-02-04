@@ -1,44 +1,40 @@
 <script>
 export default {
   name: 'LoginView',
-  data() {
-    return {
-      nickname: '',
-      errorMessage: null,
-	  disabled: true,
-    }
-  },
-  methods: {
-  async login() {
-    try {
-      let response = await this.$axios.post('/session', {
-        nickname: this.nickname.trim()
-      });
+  data: function() {
+		return {
+			errormsg: null,
+			nickname: "",
+			disabled: true,
+		}
+	},
+	methods: {
+		async login() {
+			this.errormsg = null;
+			try {
+				let response = await this.$axios.post("/session", {
+                    nickname: this.nickname.trim()
+                });
 
-      localStorage.setItem('token', response.data.User_id);
-      localStorage.setItem('nickname', response.data.Nickname);
-      this.$axios.defaults.headers.common['Authorization'] = 'Bearer ' + response.data.User_id;
-
-      this.$router.push('/home');
-    } catch (error) {
-      if (error.response) {
-        if (error.response.status === 400) {
-          this.errorMessage = 'Nickname non valido (3-16 caratteri).';
-        } else if (error.response.status === 409) {
-          this.errorMessage = 'Nickname già in uso.'; 
-        } else if (error.response.status === 500) {
-          this.errorMessage = 'Errore del server. Riprova più tardi.';
-        } else {
-          this.errorMessage = 'Errore sconosciuto: ' + error.response.status;
-        }
-      } else {
-        this.errorMessage = 'Connessione al server non riuscita.';
-      }
-    }
-  }
-}
-
-
+				localStorage.setItem('token',response.data.user_id);
+				localStorage.setItem('nickname', this.nickname)
+				this.$axios.defaults.headers.common['Authorization']= 'Bearer ' + response.data.user_id
+				this.$router.replace("/home")
+				this.$emit('updatedLoggedChild',true)
+				
+			} catch (e) {
+				this.errormsg = e.toString();
+			}
+		},
+	},
+	mounted(){
+		localStorage.removeItem('token')
+      	localStorage.removeItem('nickname')
+		
+		if (localStorage.getItem('token')){
+			this.$router.replace("/home")
+		}
+	},
 }
 </script>
 
