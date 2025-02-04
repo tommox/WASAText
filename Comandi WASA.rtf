@@ -23,16 +23,14 @@ LOGIN: curl -i -X POST -H "Content-Type: application/json" \\\
 \
 PHOTO: 
 \f1\fs26 \cf3 \CocoaLigature1 curl -i -X PUT \\\
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
-\cf3 -H \cf4 "Authorization: Bearer 1"\cf3  \\\
+-H \cf4 "Authorization: Bearer 1"\cf3  \\\
 --data-binary \cf4 "@/Users/tommi/Desktop/uni/WASA/WASAText/images.jpeg"\cf3  \\\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 \cf4 "http://localhost:3000/users/1/photo"
 \f0\fs22 \cf2 \CocoaLigature0 \
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 \
 \
 SENDMESSAGE: curl -i -X POST \\\
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 -H "Authorization: Bearer 1" \\\
 -H "Content-Type: application/json" \\\
 -d '\{\
@@ -40,7 +38,6 @@ SENDMESSAGE: curl -i -X POST \\\
   "message_content": "ciao"\
 \}' \\\
 http://localhost:3000/messages\
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 \
 \
 GETMESSAGE: curl -i -X GET \\\
@@ -85,9 +82,13 @@ CREATEGROUP: curl -i -X POST \\           \
   http://localhost:3000/groups\
 \
 \
-DELETEGROUP: curl -i -X DELETE \\         \
-     -H "Authorization: Bearer 1" \\\
-     "http://localhost:3000/groups/1"  \
+DELETEGROUP: 
+\f1\fs26 \cf3 \CocoaLigature1 curl -i -X DELETE \\\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf3   -H \cf4 "Authorization: Bearer 1\'94\cf3  \\\
+  http://localhost:3000/groups/1/delete
+\f0\fs22 \cf2 \CocoaLigature0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 \
 \
 ADDTOGROUP: curl -i -X POST \\           \
@@ -119,7 +120,6 @@ SETPHOTOGROUP:  curl -i -X PUT \\            \
   -H "Authorization: Bearer 1" \\\
   --data-binary "@/Users/tommi/Desktop/uni/WASA/WASAText/images.jpeg" \\\
   http://localhost:3000/groups/1/photo\
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
 \f1\fs26 \cf3 \CocoaLigature1 \
 }

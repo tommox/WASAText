@@ -13,6 +13,7 @@ func (rt *_router) Handler() http.Handler {
 	// USERS
 	rt.router.PUT("/users/:User_id", rt.wrap(rt.setMyNicknameHandler))
 	rt.router.PUT("/users/:User_id/photo", rt.wrap(rt.setMyPhotoHandler))
+	rt.router.GET("/users", rt.wrap(rt.getUsersHandler))
 
 	// MESSAGES
 	rt.router.POST("/messages", rt.wrap(rt.sendMessageHandler))
@@ -23,7 +24,7 @@ func (rt *_router) Handler() http.Handler {
 
 	// GROUPS
 	rt.router.POST("/groups", rt.wrap(rt.createGroupHandler))
-	rt.router.DELETE("/groups/:Group_id", rt.wrap(rt.deleteGroupHandler))
+	rt.router.DELETE("/groups/:Group_id/delete", rt.wrap(rt.deleteGroupHandler))
 	rt.router.POST("/groups/:Group_id/users/:User_id", rt.wrap(rt.manageGroupUsersHandler))
 	rt.router.PATCH("/groups/:Group_id", rt.wrap(rt.changeGroupNameHandler))
 	rt.router.PUT("/groups/:Group_id/photo", rt.wrap(rt.setGroupPhotoHandler))
