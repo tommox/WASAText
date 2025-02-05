@@ -66,14 +66,14 @@ export default {
   methods: {
     async fetchChats() {
       const token = localStorage.getItem("token"); 
-      const response = await axios.get("http://localhost:3000/conversations", {
+      const response = await axios.get(__API_URL__+"/conversations", {
         headers: { Authorization: `Bearer ${token}` }
       });
       this.chats = response.data ?? [];
     },
 
     async fetchUsers() {
-      const response = await axios.get("http://localhost:3000/users");
+      const response = await axios.get(__API_URL__+"/users");
       this.users = Array.isArray(response.data) ? response.data : [];
       this.showUserList = true;
     },
