@@ -1,6 +1,5 @@
 <template>
   <div class="chat-list-container">
-    <!-- Barra di ricerca + Pulsante "Nuova Conversazione" -->
     <div class="search-bar-container flex items-center border-b bg-gray-100 p-2">
       <input 
         v-model="search" 
@@ -8,12 +7,9 @@
         placeholder="Cerca chat" 
         class="search-input flex-grow px-4 py-2 border rounded-lg"
       />
-      <button @click="fetchUsers" class="new-chat-btn">
-        ➕
-      </button>
+      <button @click="fetchUsers" class="new-chat-btn">➕</button>
     </div>
 
-    <!-- Lista Chat -->
     <div class="chat-list">
       <ChatItem 
         v-for="chat in filteredChats" 
@@ -24,12 +20,10 @@
     </div>
   </div>
 
-  <!-- Modale per scegliere un utente -->
   <div v-if="showUserList" class="modal-overlay">
     <div class="modal-content">
       <h2>Seleziona un utente</h2>
       <input v-model="userSearch" type="text" placeholder="Cerca utente..." class="modal-input" />
-
       <div class="user-list">
         <div 
           v-for="user in filteredUsers" 
@@ -37,10 +31,9 @@
           class="user-item"
           @click="startChat(user)"
         >
-          {{ user.name }}
+          {{ user.Nickname }}
         </div>
       </div>
-
       <button @click="showUserList = false" class="cancel-btn">Chiudi</button>
     </div>
   </div>
@@ -51,49 +44,38 @@ import ChatItem from "./ChatItem.vue";
 import axios from "axios";
 
 export default {
+  emits: ["chatSelected"],
   components: { ChatItem },
   data() {
     return {
       search: "", 
       chats: [],
-      users: [], // Lista utenti dal database
+      users: [],
       showUserList: false,
-      userSearch: "", // Per filtrare gli utenti
-      loading: true
+      userSearch: ""
     };
   },
   computed: {
     filteredChats() {
-      return this.chats.filter(chat => 
-        chat.name.toLowerCase().includes(this.search.toLowerCase())
-      );
+      return this.chats.filter(chat => chat.id.toString().includes(this.search.toLowerCase()));
     },
     filteredUsers() {
-      return this.users.filter(user => 
-        user.name.toLowerCase().includes(this.userSearch.toLowerCase())
-      );
+      return this.users.filter(user => user.Nickname.toLowerCase().includes(this.userSearch.toLowerCase()));
     }
   },
   methods: {
     async fetchChats() {
-      try {
-        const response = await axios.get("/conversations");
-        this.chats = response.data;
-      } catch (error) {
-        console.error("Errore nel caricamento delle conversazioni:", error);
-      } finally {
-        this.loading = false;
-      }
+      const token = localStorage.getItem("token"); 
+      const response = await axios.get("http://localhost:3000/conversations", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      this.chats = response.data ?? [];
     },
 
     async fetchUsers() {
-      try {
-        const response = await axios.get("/users"); // API per ottenere gli utenti dal DB
-        this.users = response.data;
-        this.showUserList = true; // Mostra il modale
-      } catch (error) {
-        console.error("Errore nel caricamento degli utenti:", error);
-      }
+      const response = await axios.get("http://localhost:3000/users");
+      this.users = Array.isArray(response.data) ? response.data : [];
+      this.showUserList = true;
     },
 
     startChat(user) {
@@ -108,7 +90,6 @@ export default {
 </script>
 
 <style scoped>
-/* Contenitore della lista chat */
 .chat-list-container {
   display: flex;
   flex-direction: column;
@@ -116,7 +97,6 @@ export default {
   overflow: hidden;
 }
 
-/* Barra di ricerca */
 .search-input {
   flex-grow: 1;
   width: 80%;
@@ -124,7 +104,6 @@ export default {
   font-size: 16px;
 }
 
-/* Pulsante nuova chat */
 .new-chat-btn {
   width: 36px;
   height: 36px;
@@ -145,14 +124,12 @@ export default {
   background-color: #d6d6d6;
 }
 
-/* Lista chat */
 .chat-list {
   flex-grow: 1;
   min-height: 0;
   overflow-y: auto;
 }
 
-/* Modale per selezionare un utente */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -181,7 +158,6 @@ export default {
   border-radius: 5px;
 }
 
-/* Lista utenti */
 .user-list {
   max-height: 200px;
   overflow-y: auto;

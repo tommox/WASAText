@@ -66,8 +66,9 @@ func (db *appdbimpl) GetUserConversations(userId int) ([]interface{}, error) {
 		groupConversations = append(groupConversations, groupConv)
 	}
 
-	// Combina i risultati in un unico slice
-	var allConversations []interface{}
+	// Inizializza `allConversations` come un array vuoto
+	allConversations := make([]interface{}, 0)
+
 	// Aggiungi le conversazioni normali
 	for _, conv := range userConversations {
 		allConversations = append(allConversations, conv)
@@ -75,6 +76,11 @@ func (db *appdbimpl) GetUserConversations(userId int) ([]interface{}, error) {
 	// Aggiungi le conversazioni di gruppo
 	for _, groupConv := range groupConversations {
 		allConversations = append(allConversations, groupConv)
+	}
+
+	// Se non ci sono conversazioni, restituisci un array vuoto invece di nil
+	if allConversations == nil {
+		return []interface{}{}, nil
 	}
 
 	return allConversations, nil

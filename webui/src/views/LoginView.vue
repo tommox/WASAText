@@ -3,7 +3,7 @@ export default {
   name: 'LoginView',
   data: function() {
 		return {
-			errormsg: null,
+			errorMessage: "",
 			nickname: "",
 			disabled: true,
 		}
@@ -27,14 +27,12 @@ export default {
 			}
 		},
 	},
-	mounted(){
-		localStorage.removeItem('token')
-      	localStorage.removeItem('nickname')
-		
-		if (localStorage.getItem('token')){
-			this.$router.replace("/home")
-		}
-	},
+  mounted(){
+    const token = localStorage.getItem('token');
+    if (token){
+        this.$router.replace("/home")
+    }
+},
 }
 </script>
 
