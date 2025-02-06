@@ -33,7 +33,7 @@ func (rt *_router) doLoginHandler(w http.ResponseWriter, r *http.Request, ps htt
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if temp_user.User_id != 0 { // assignment of user values
+	if err == nil {
 		user.User_id = temp_user.User_id
 		user.Nickname = temp_user.Nickname
 

@@ -1,19 +1,17 @@
 <template>
 	<div class="container-fluid h-100 d-flex">
-
 	  <div class="left-panel">
-
 		<div class="user-profile">
 		  <div class="profile-picture">
 			<img :src="userImage" alt="Foto Profilo" class="profile-img" />
 		  </div>
 		  <span class="user-name">{{ nickname }}</span>
-		</div>
-
-		<!-- Lista Chat (con barra di ricerca dentro) -->
-		<ChatList @chatSelected="selectedChat = $event" />
+		<button @click="logout" class="logout-btn">Logout</button>
 	  </div>
-  
+
+	<!-- Lista Chat (con barra di ricerca dentro) -->
+	<ChatList @chatSelected="selectedChat = $event" />
+	  </div>
 	  <!-- Sezione Destra: Chat Attiva o Placeholder -->
 	  <div class="right-panel">
 		<template v-if="selectedChat">
@@ -40,7 +38,13 @@
 		nickname: localStorage.getItem("nickname") || "Utente",
 		userImage: localStorage.getItem("profileImage") || defaultAvatar, 
 	  };
-	}
+	},
+	methods: {
+    logout() {
+        this.$router.replace("/login");
+    }
+}
+
   };
   </script>
   
@@ -59,6 +63,23 @@
 	height: 100vh;
 	overflow-y: auto;
   }
+
+  .logout-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 10px 15px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.logout-btn:hover {
+    background-color: #c82333;
+}
+
   
   /* Profilo utente */
   .user-profile {

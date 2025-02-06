@@ -3,36 +3,28 @@ export default {
   name: 'LoginView',
   data: function() {
 		return {
-			errorMessage: "",
+			errorMessage: null,
 			nickname: "",
 			disabled: true,
 		}
 	},
 	methods: {
 		async login() {
-			this.errormsg = null;
 			try {
 				let response = await this.$axios.post("/session", {
           nickname: this.nickname.trim()
         });
-
+        console.log("User ID ricevuto dal backend:", response);
 				localStorage.setItem('token',response.data.user_id);
 				localStorage.setItem('nickname', this.nickname)
 				this.$axios.defaults.headers.common['Authorization']= 'Bearer ' + response.data.user_id
 				this.$router.replace("/home")
-				this.$emit('updatedLoggedChild',true)
 				
 			} catch (e) {
-				this.errormsg = e.toString();
+				this.errorMessage = e.toString();
 			}
 		},
 	},
-  mounted(){
-    const token = localStorage.getItem('token');
-    if (token){
-        this.$router.replace("/home")
-    }
-},
 }
 </script>
 
