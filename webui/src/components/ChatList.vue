@@ -73,10 +73,17 @@ export default {
     },
 
     async fetchUsers() {
-      const response = await axios.get(__API_URL__+"/users");
-      this.users = Array.isArray(response.data) ? response.data : [];
+      const token = localStorage.getItem("token");
+      const response = await axios.get(__API_URL__ + "/users");
+      console.log("Users: ", response.data);
+      if (Array.isArray(response.data)) {
+        this.users = response.data.filter(user => user.User_id.toString() !== token);
+      } else {
+        this.users = [];
+      }
       this.showUserList = true;
     },
+
 
     startChat(user) {
       this.$emit("chatSelected", user);
