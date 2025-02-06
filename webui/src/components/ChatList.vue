@@ -177,7 +177,7 @@ export default {
 }
 
 .cancel-btn {
-  background-color: #dc3545;
+  background-color: #069327;
   color: white;
   padding: 10px 15px;
   border: none;
@@ -187,6 +187,6 @@ export default {
 }
 
 .cancel-btn:hover {
-  background-color: #c82333;
+  background-color: #069327;
 }
 </style>

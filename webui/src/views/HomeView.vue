@@ -66,18 +66,26 @@
 
   .logout-btn {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 40px;
+    right: 1000px;
     padding: 10px 15px;
-    background-color: #dc3545;
+    background-color: #069327;
     color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  	transition: all 0.3s ease;
 }
 
 .logout-btn:hover {
-    background-color: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 10px rgba(0, 0, 0, 0.1);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
   
@@ -98,7 +106,7 @@
 	border-radius: 50%;
 	overflow: hidden;
 	margin-right: 10px;
-	border: 2px solid #007bff;
+	border: 2px solid #069327;
   }
   
   /* Immagine del profilo */

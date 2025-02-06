@@ -14,7 +14,6 @@ export default {
 				let response = await this.$axios.post("/session", {
           nickname: this.nickname.trim()
         });
-        console.log("User ID ricevuto dal backend:", response);
 				localStorage.setItem('token',response.data.user_id);
 				localStorage.setItem('nickname', this.nickname)
 				this.$axios.defaults.headers.common['Authorization']= 'Bearer ' + response.data.user_id
