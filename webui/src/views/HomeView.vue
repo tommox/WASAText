@@ -2,12 +2,17 @@
 	<div class="container-fluid h-100 d-flex">
 	  <div class="left-panel">
 		<div class="user-profile">
-		  <div class="profile-picture">
-			<img :src="userImage" alt="Foto Profilo" class="profile-img" />
-		  </div>
-		  <span class="user-name">{{ nickname }}</span>
-		<button @click="logout" class="logout-btn">Logout</button>
-	  </div>
+			<label class="profile-picture">
+				<!-- Immagine del profilo -->
+				<img :src="userImage" alt="Foto Profilo" class="profile-img" />
+
+				<input type="file" @change="uploadProfilePicture" accept="image/*" class="upload-input" />
+			</label>
+
+		<span class="user-name">{{ nickname }}</span>
+	  <button @click="logout" class="logout-btn">Logout</button>
+	</div>
+
 
 	<!-- Lista Chat (con barra di ricerca dentro) -->
 	<ChatList @chatSelected="selectedChat = $event" />
@@ -42,10 +47,32 @@
 	methods: {
     logout() {
         this.$router.replace("/login");
-    }
-}
+    },
 
-  };
+	async uploadProfilePicture(event) {
+		const file = event.target.files[0]; 
+		if (!file) return;
+
+		const token = localStorage.getItem("token"); 
+		const formData = new FormData();
+		formData.append("profile_picture", file);
+
+		try {
+		const response = await axios.post(`${__API_URL__}/users/${token}/photo`, formData, {
+			headers: {
+			Authorization: `Bearer ${token}`,
+			"Content-Type": "multipart/form-data"
+			}
+		});
+
+		this.userImage = response.data.profile_picture;
+		localStorage.setItem("profileImage", this.userImage);
+		} catch (error) {
+		console.error("Errore nel caricamento dell'immagine:", error);
+		}
+	}
+  }
+};
   </script>
   
   <style scoped>
@@ -101,20 +128,27 @@
   
   /* Quadrato per la foto profilo */
   .profile-picture {
+	position: relative;
 	width: 50px;
 	height: 50px;
 	border-radius: 50%;
 	overflow: hidden;
 	margin-right: 10px;
 	border: 2px solid #069327;
-  }
+	cursor: pointer; 
+}
   
   /* Immagine del profilo */
   .profile-img {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
-  }
+}
+
+	/* Input file nascosto */
+   .upload-input {
+	display: none; 
+}
   
   /* Nome utente */
   .user-name {
