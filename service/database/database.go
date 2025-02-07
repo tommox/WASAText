@@ -46,6 +46,7 @@ type AppDatabase interface {
 
 	FindUserId(User) (int, error)
 	CheckUser(User) (User, error)
+	CheckUserId(u User) (User, error)
 	SearchNickname(string) (bool, error)
 	UpdateUserPhoto(userID int, photoData []byte) error
 	GetUsers() ([]User, error)

@@ -40,7 +40,7 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 	}
 
 	// Controlla se il destinatario esiste
-	_, err = rt.db.CheckUser(database.User{User_id: body.Recipient_id})
+	_, err = rt.db.CheckUserId(database.User{User_id: body.Recipient_id})
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		ctx.Logger.WithError(err).Error("sendMessage: recipient does not exist")
