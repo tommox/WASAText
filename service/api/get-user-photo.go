@@ -24,8 +24,7 @@ func (rt *_router) getUserPhotoHandler(w http.ResponseWriter, r *http.Request, p
 		return
 	}
 
-	// Imposta il Content-Type corretto (es. image/jpeg o image/png)
-	w.Header().Set("Content-Type", "image/jpeg")
+	w.Header().Set("Content-Type", "image/*")
 	w.WriteHeader(http.StatusOK)
 	w.Write(imageBytes)
 }
