@@ -2,22 +2,16 @@
 	<div class="container-fluid h-100 d-flex">
 	  <div class="left-panel">
 		<div class="user-profile">
-			<label class="profile-picture">
-				<!-- Immagine del profilo -->
-				<img :src="userImage" alt="Foto Profilo" class="profile-img" />
-
-				<input type="file" @change="uploadProfilePicture" accept="image/*" class="upload-input" />
-			</label>
-
-		<span class="user-name">{{ nickname }}</span>
-	  <button @click="logout" class="logout-btn">Logout</button>
-	</div>
-
-
-	<!-- Lista Chat (con barra di ricerca dentro) -->
-	<ChatList @chatSelected="selectedChat = $event" />
+		  <label class="profile-picture">
+			<!-- Immagine del profilo -->
+			<img :src="userImage || defaultAvatar" alt="Foto Profilo" class="profile-img" />
+			<input type="file" @change="uploadProfilePicture" accept="image/*" class="upload-input" />
+		  </label>
+		  <span class="user-name">{{ nickname }}</span>
+		  <button @click="logout" class="logout-btn">Logout</button>
+		</div>
+		<ChatList @chatSelected="selectedChat = $event" />
 	  </div>
-	  <!-- Sezione Destra: Chat Attiva o Placeholder -->
 	  <div class="right-panel">
 		<template v-if="selectedChat">
 		  <ChatWindow :chat="selectedChat" @closeChat="selectedChat = null" />
@@ -30,6 +24,7 @@
   </template>
   
   <script>
+  import axios from "axios";
   import ChatList from "@/components/ChatList.vue";
   import ChatWindow from "@/components/ChatWindow.vue";
   import EmptyChat from "@/components/EmptyChat.vue";
@@ -41,47 +36,70 @@
 	  return {
 		selectedChat: null,
 		nickname: localStorage.getItem("nickname") || "Utente",
-		userImage: localStorage.getItem("profileImage") || defaultAvatar, 
+		userImage: localStorage.getItem("profileImage") || defaultAvatar,
 	  };
 	},
 	methods: {
-    logout() {
-        this.$router.replace("/login");
-    },
-
-	async uploadProfilePicture(event) {
-		const file = event.target.files[0]; 
+	  logout() {
+		this.$router.replace("/login");
+	  },
+  
+	  async uploadProfilePicture(event) {
+		const file = event.target.files[0];
 		if (!file) return;
-
-		const token = localStorage.getItem("token"); 
+  
+		const token = localStorage.getItem("token");
 		const formData = new FormData();
-		formData.append("profile_picture", file);
-
+		formData.append("photo", file);
+  
 		try {
-		const response = await axios.post(`${__API_URL__}/users/${token}/photo`, formData, {
+		  const response = await axios.put(`${__API_URL__}/users/${token}/photo`, formData, {
 			headers: {
-			Authorization: `Bearer ${token}`,
-			"Content-Type": "multipart/form-data"
-			}
-		});
-
-		this.userImage = response.data.profile_picture;
-		localStorage.setItem("profileImage", this.userImage);
+			  Authorization: `Bearer ${token}`,
+			  "Content-Type": "multipart/form-data",
+			},
+		  });
+		  this.fetchUserPhoto();
 		} catch (error) {
-		console.error("Errore nel caricamento dell'immagine:", error);
+		  console.error("Errore nel caricamento dell'immagine:", error);
 		}
-	}
-  }
-};
+	  },
+  
+	  async fetchUserPhoto() {
+		const token = localStorage.getItem("token");
+		if (!token) return;
+  
+		try {
+		  const response = await axios.get(`${__API_URL__}/users/${token}/photo`, {
+			responseType: "blob",
+		  });
+  
+		  if (response.data.size === 0) {
+			throw new Error("Nessuna immagine trovata");
+		  }
+  
+		  const imageUrl = URL.createObjectURL(response.data);
+		  this.userImage = imageUrl;
+		  localStorage.setItem("profileImage", imageUrl);
+		  this.$forceUpdate();
+		} catch (error) {
+		  console.error("Errore nel recupero della foto:", error);
+		  this.userImage = defaultAvatar;
+		  localStorage.setItem("profileImage", defaultAvatar);
+		}
+	  },
+	},
+	created() {
+	  this.fetchUserPhoto();
+	},
+  };
   </script>
   
   <style scoped>
-  /* Contenitore principale */
   .container-fluid {
 	height: 100vh;
   }
   
-  /* Sezione sinistra */
   .left-panel {
 	width: 30%;
 	background: #ffffff;
@@ -90,33 +108,31 @@
 	height: 100vh;
 	overflow-y: auto;
   }
-
-  .logout-btn {
-    position: absolute;
-    top: 40px;
-    right: 1000px;
-    padding: 10px 15px;
-    background-color: #069327;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  	transition: all 0.3s ease;
-}
-
-.logout-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 10px rgba(0, 0, 0, 0.1);
-}
-
-.logout-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
   
-  /* Profilo utente */
+  .logout-btn {
+	position: absolute;
+	top: 40px;
+	right: 1000px;
+	padding: 10px 15px;
+	background-color: #069327;
+	color: white;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+	transition: all 0.3s ease;
+  }
+  
+  .logout-btn:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .logout-btn:active {
+	transform: translateY(0);
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
   .user-profile {
 	display: flex;
 	align-items: center;
@@ -126,7 +142,6 @@
 	border-radius: 10px;
   }
   
-  /* Quadrato per la foto profilo */
   .profile-picture {
 	position: relative;
 	width: 50px;
@@ -135,29 +150,25 @@
 	overflow: hidden;
 	margin-right: 10px;
 	border: 2px solid #069327;
-	cursor: pointer; 
-}
+	cursor: pointer;
+  }
   
-  /* Immagine del profilo */
   .profile-img {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
-}
-
-	/* Input file nascosto */
-   .upload-input {
-	display: none; 
-}
+  }
   
-  /* Nome utente */
+  .upload-input {
+	display: none;
+  }
+  
   .user-name {
 	font-size: 18px;
 	font-weight: bold;
 	color: #333;
   }
   
-  /* Sezione destra (chat attiva) */
   .right-panel {
 	width: 70%;
 	padding: 20px;

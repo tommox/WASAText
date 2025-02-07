@@ -12,49 +12,47 @@ import (
 func (rt *_router) setMyPhotoHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	user_id, err := strconv.Atoi(ps.ByName("User_id"))
 	if err != nil {
-		// Errore: L'ID utente fornito non è valido
 		w.WriteHeader(http.StatusBadRequest)
-		ctx.Logger.WithError(err).Error("Error: invalid User_id")
+		ctx.Logger.WithError(err).Error("Invalid User_id")
 		return
 	}
 
-	// Estrai lo User_id dal token Bearer
 	requestingUser_id_str, err := extractBearerToken(r, w)
 	if err != nil {
-		// Errore: Token Bearer mancante o non valido
 		w.WriteHeader(http.StatusForbidden)
-		ctx.Logger.WithError(err).Error("Error: unauthorized access, missing or invalid token")
+		ctx.Logger.WithError(err).Error("Unauthorized access")
 		return
 	}
 
 	requestingUser_id, err := strconv.Atoi(requestingUser_id_str)
-	if err != nil {
-		// Errore: User_id non valido
-		w.WriteHeader(http.StatusBadRequest)
-		ctx.Logger.WithError(err).Error("Error: invalid User_id from token")
-		return
-	}
-
-	if user_id != requestingUser_id {
-		// Errore: L'utente corrente non è autorizzato a modificare la foto per questo ID
+	if err != nil || user_id != requestingUser_id {
 		w.WriteHeader(http.StatusUnauthorized)
-		ctx.Logger.WithError(err).Error("setMyPhoto: unauthorized, user_id does not match token user")
+		ctx.Logger.WithError(err).Error("Unauthorized: user_id mismatch")
 		return
 	}
 
-	data, err := io.ReadAll(r.Body)
+	// Estrai il file dall'upload multipart
+	file, _, err := r.FormFile("photo")
 	if err != nil {
-		// Errore: Problema nella lettura del body
 		w.WriteHeader(http.StatusBadRequest)
-		ctx.Logger.WithError(err).Error("setMyPhoto: error reading photo data from request body")
+		ctx.Logger.WithError(err).Error("Error retrieving file")
+		return
+	}
+	defer file.Close()
+
+	// Leggi i byte del file
+	data, err := io.ReadAll(file)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		ctx.Logger.WithError(err).Error("Error reading file data")
 		return
 	}
 
+	// Salva l'immagine nel database
 	err = rt.db.UpdateUserPhoto(user_id, data)
 	if err != nil {
-		// Errore: Problema durante l'aggiornamento della foto nel database
 		w.WriteHeader(http.StatusInternalServerError)
-		ctx.Logger.WithError(err).Error("setMyPhoto: error updating photo in database")
+		ctx.Logger.WithError(err).Error("Error updating photo in database")
 		return
 	}
 

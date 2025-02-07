@@ -49,6 +49,7 @@ type AppDatabase interface {
 	SearchNickname(string) (bool, error)
 	UpdateUserPhoto(userID int, photoData []byte) error
 	GetUsers() ([]User, error)
+	GetUserPhoto(userID int) ([]byte, error)
 
 	// Messages
 	CreateMessage(senderId int, recipientId int, messageContent string, timestamp time.Time) (int, error)
