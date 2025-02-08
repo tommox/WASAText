@@ -34,5 +34,6 @@ func (rt *_router) Handler() http.Handler {
 	// CONVERSATIONS
 	rt.router.GET("/conversations", rt.wrap(rt.getMyConversationsHandler))
 	rt.router.GET("/conversations/:Conversation_id", rt.wrap(rt.getConversationHandler))
+	rt.router.POST("/conversations/conversation", rt.wrap(rt.checkOrCreateConversationHandler))
 	return rt.router
 }

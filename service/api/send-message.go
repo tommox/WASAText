@@ -8,7 +8,6 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/tommox/WASAText/service/api/reqcontext"
-	"github.com/tommox/WASAText/service/database"
 )
 
 func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
@@ -29,9 +28,9 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 
 	// Decodifica il corpo della richiesta
 	var body struct {
-		Recipient_id   int    `json:"recipient_id"`
+		ConversationId int    `json:"conversation_id"`
 		MessageContent string `json:"message_content"`
-		Timestamp      string `json:"timestamp,omitempty"` // Timestamp opzionale
+		Timestamp      string `json:"timestamp,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.MessageContent == "" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -39,15 +38,20 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 		return
 	}
 
-	// Controlla se il destinatario esiste
-	_, err = rt.db.CheckUserId(database.User{User_id: body.Recipient_id})
+	// Verifica l'accesso alla conversazione
+	hasAccess, _, err := rt.db.CheckConversationAccess(senderId, body.ConversationId)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		ctx.Logger.WithError(err).Error("sendMessage: recipient does not exist")
+		w.WriteHeader(http.StatusInternalServerError)
+		ctx.Logger.WithError(err).Error("sendMessage: error checking conversation access")
+		return
+	}
+	if !hasAccess {
+		w.WriteHeader(http.StatusForbidden)
+		ctx.Logger.WithError(err).Error("sendMessage: user has no access to this conversation")
 		return
 	}
 
-	// Convertire il timestamp, o usare quello corrente
+	// Converti il timestamp o usa quello corrente
 	var msgTime time.Time
 	if body.Timestamp == "" {
 		msgTime = time.Now()
@@ -60,8 +64,8 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 		}
 	}
 
-	// Salva il messaggio
-	messageId, err := rt.db.CreateMessage(senderId, body.Recipient_id, body.MessageContent, msgTime)
+	// Crea il nuovo messaggio
+	messageId, err := rt.db.CreateMessage(senderId, body.ConversationId, body.MessageContent, msgTime)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		ctx.Logger.WithError(err).Error("sendMessage: failed to create message")
@@ -73,6 +77,6 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"message_id": messageId,
 		"status":     "sent",
-		"timestamp":  msgTime, // Aggiunto nella risposta
+		"timestamp":  msgTime,
 	})
 }

@@ -43,6 +43,10 @@
 	  logout() {
 		this.$router.replace("/login");
 	  },
+
+	  openChat(chat) {
+      this.selectedChat = chat;
+    },
   
 	  async uploadProfilePicture(event) {
 		const file = event.target.files[0];
@@ -75,9 +79,11 @@
 		  });
   
 		  if (response.data.size === 0) {
-			throw new Error("Nessuna immagine trovata");
-		  }
-  
+			this.userImage = defaultAvatar;
+			localStorage.setItem("profileImage", defaultAvatar);
+			return;
+			}
+
 		  const imageUrl = URL.createObjectURL(response.data);
 		  this.userImage = imageUrl;
 		  localStorage.setItem("profileImage", imageUrl);

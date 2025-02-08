@@ -57,7 +57,7 @@ export default {
   },
   computed: {
     filteredChats() {
-      return this.chats.filter(chat => chat.id.toString().includes(this.search.toLowerCase()));
+      return this.chats.filter(chat => chat.conversation_id.toString().includes(this.search.toLowerCase()));
     },
     filteredUsers() {
       return this.users.filter(user => user.Nickname.toLowerCase().includes(this.userSearch.toLowerCase()));
@@ -69,6 +69,7 @@ export default {
       const response = await axios.get(__API_URL__+"/conversations", {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log("Dati caricati:", response.data);
       this.chats = response.data ?? [];
     },
 
@@ -84,11 +85,37 @@ export default {
       this.showUserList = true;
     },
 
+    async startChat(user) {
+  const token = localStorage.getItem("token");
+  
+  try {
+    const response = await axios.post(
+      `${__API_URL__}/conversations/conversation`,
+      {
+        recipient_id: user.User_id
+      }, 
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
 
-    startChat(user) {
-      this.$emit("chatSelected", user);
-      this.showUserList = false;
-    }
+    const conversationId = response.data.conversation_id;
+
+    // Emetti l'evento per aprire la chat con l'ID della conversazione ottenuto
+    this.$emit("chatSelected", { 
+      id: conversationId, 
+      name: user.Nickname, 
+      avatar: user.Avatar || null 
+    });
+
+    this.showUserList = false;
+  } catch (error) {
+    console.error("Errore nell'iniziare la chat:", error);
+    alert("Errore: impossibile iniziare la conversazione.");
+  }
+}
+
+
   },
   created() {
     this.fetchChats();

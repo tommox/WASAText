@@ -56,6 +56,7 @@ type AppDatabase interface {
 	CreateMessage(senderId int, recipientId int, messageContent string, timestamp time.Time) (int, error)
 	GetMessage(messageId int) (Message, error)
 	DeleteMessage(messageId int) error
+	UpdateOrCreateConversation(sender int, recipient int, messageId int, timestamp time.Time) (int, error)
 	// Reactions
 	AddReaction(messageId int, userId int, emoji string) error
 	RemoveReaction(messageId int, userId int) error
@@ -79,6 +80,8 @@ type AppDatabase interface {
 	GetConversationMessages(conversationId int) ([]Message, error)
 	GetGroupConversationMessages(groupConversationId int) ([]GroupMessage, error)
 	GetUserConversations(userId int) ([]interface{}, error)
+	CheckExistingConversation(userId int, recipientId int) (int, error)
+
 	// Authorization
 	CheckUserPermission(userId, messageId int) (bool, error)
 

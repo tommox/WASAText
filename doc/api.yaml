@@ -292,7 +292,7 @@ paths:
                   description: "The image file for the user's profile photo."
                   pattern: "^[01]+$"
                   minLength: 1
-                  maxLength: 1000
+                  maxLength: 1000000
       responses:
         '200':
           description: Profile photo updated successfully.
@@ -408,9 +408,9 @@ paths:
                 type: string
                 format: binary
                 description: "The photo"
-                pattern: "[0,1]"
+                pattern: "^[01]+$"
                 minLenght: 1
-                maxLenght: 9999999999999999999
+                maxLenght: 1000000
         '400':
           description: Invalid input or bad request.
           content:
@@ -593,6 +593,80 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error401'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error500'
+
+  /conversations/check-or-create:
+    post:
+      summary: "Check or create a conversation"
+      description: >
+        This endpoint checks if a conversation between the authenticated user and the specified recipient exists. 
+        If the conversation does not exist, it creates a new one and returns the `conversation_id`.
+      tags: ["conversations"]
+      security:
+        - bearerAuth: 
+      requestBody:
+        description: "JSON object containing the recipient's user ID."
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Schema for return of a conversation
+              required:
+                - recipient_id
+              properties:
+                recipient_id:
+                  type: integer
+                  description: "The ID of the recipient user with whom the conversation should be checked or created."
+                  minimum: 1
+                  maximum: 100000
+      responses:
+        "200":
+          description: "Conversation found or successfully created"
+          content:
+            application/json:
+              schema:
+                type: object
+                description: schema for succesfully returned conversation
+                properties:
+                  conversation_id:
+                    type: integer
+                    description: "The ID of the existing or newly created conversation."                   
+                    minimum: 1
+                    maximum: 100000
+        "400":
+          description: "Invalid request or missing `recipient_id` in the body"
+          content:
+            application/json:
+              schema:
+                type: object
+                description: schema for invalid return
+                properties:
+                  error:
+                    type: string
+                    description: "The string error"
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        "403":
+          description: "Unauthorized: the user is not authorized to access this resource"
+          content:
+            application/json:
+              schema:
+                type: object
+                description: schema for unauthorized access to a conversation
+                properties:
+                  error:
+                    type: string
+                    description: "The string error"
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
         '500':
           description: Server error
           content:
