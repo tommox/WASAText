@@ -1,31 +1,40 @@
 <template>
-  <div 
-    class="chat-item flex items-center p-3 border-b cursor-pointer transition duration-200"
-    @click="$emit('selectChat', chat)"
-  >
-    <!-- Immagine profilo -->
-    <img :src="chat.avatar || defaultAvatar" alt="Foto Profilo" class="profile-img mr-3" />
-    
-    <!-- Dettagli chat -->
-    <div class="flex-grow">
-      <div class="font-bold text-gray-800">{{ chat.name }}</div>
-      <div class="text-sm text-gray-600 truncate no-hover">{{ chat.lastMessage || "Nessun messaggio" }}</div>
+  <div class="chat-item" @click="$emit('selectChat', chat)">
+    <img :src="avatarUrl" alt="Avatar" class="profile-img" />
+    <div class="chat-details">
+      <div class="chat-name">{{ chat.name }}</div>
+      <div class="chat-last-message">{{ chat.lastMessage || 'Nessun messaggio' }}</div>
     </div>
   </div>
 </template>
 
 <script>
 import defaultAvatar from "@/assets/images/user.png";
+import axios from "axios";
 
 export default {
   props: { chat: Object },
   data() {
-    return { 
-      defaultAvatar,
+    return {
+      avatarUrl: defaultAvatar
     };
+  },
+  async created() {
+    try {
+      const response = await axios.get(`${__API_URL__}/users/${this.chat.recipient_id}/photo`, {
+        responseType: "blob"
+      });
+
+      if (response.data.size > 0) {
+        this.avatarUrl = URL.createObjectURL(response.data);
+      }
+    } catch (error) {
+      console.error("Errore nel caricamento della foto profilo:", error);
+    }
   }
 };
 </script>
+
 
 <style scoped>
 .chat-item {

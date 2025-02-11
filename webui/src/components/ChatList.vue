@@ -65,13 +65,23 @@ export default {
   },
   methods: {
     async fetchChats() {
-      const token = localStorage.getItem("token"); 
-      const response = await axios.get(__API_URL__+"/conversations", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      console.log("Dati caricati:", response.data);
-      this.chats = response.data ?? [];
-    },
+    const token = localStorage.getItem("token");
+    const response = await axios.get(`${__API_URL__}/conversations`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const userResponse = await axios.get(`${__API_URL__}/users`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const allUsers = userResponse.data;
+    this.chats = response.data.map(chat => {
+      const recipientId = chat.sender_id === parseInt(token) ? chat.recipient_id : chat.sender_id;
+      const recipient = allUsers.find(user => user.User_id === recipientId);
+      return {
+        ...chat,
+        name: recipient ? recipient.Nickname : "Utente Sconosciuto"
+      };
+    });
+},
 
     async fetchUsers() {
       const token = localStorage.getItem("token");
