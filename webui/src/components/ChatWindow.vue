@@ -69,7 +69,7 @@ export default {
     const token = localStorage.getItem("token");
   this.loading = true;
   try {
-    const response = await axios.get(`${__API_URL__}/conversations/${this.chat.id}`, {
+    const response = await axios.get(`${__API_URL__}/conversations/${this.chat.conversation_id}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
