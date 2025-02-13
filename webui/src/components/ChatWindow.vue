@@ -67,14 +67,14 @@ export default {
       return;
     }
     const token = localStorage.getItem("token");
-  this.loading = true;
-  try {
-    const response = await axios.get(`${__API_URL__}/conversations/${this.chat.conversation_id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+    this.loading = true;
+    try {
+      const response = await axios.get(`${__API_URL__}/conversations/${this.chat.conversation_id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
     });
-      this.messages = response.data.messages || [];
+    this.messages = response.data && Array.isArray(response.data.messages) ? response.data.messages : [];
       this.scrollToBottom();
     } catch (error) {
       console.error("Errore nel caricamento dei messaggi:", error);

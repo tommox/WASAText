@@ -3,14 +3,13 @@
 	  <div class="left-panel">
 		<div class="user-profile">
 		  <label class="profile-picture">
-			<!-- Immagine del profilo -->
 			<img :src="userImage || defaultAvatar" alt="Foto Profilo" class="profile-img" />
 			<input type="file" @change="uploadProfilePicture" accept="image/*" class="upload-input" />
 		  </label>
 		  <span class="user-name">{{ nickname }}</span>
 		  <button @click="logout" class="logout-btn">Logout</button>
 		</div>
-		<ChatList @chatSelected="selectedChat = $event" />
+		<ChatList @chatSelected="openChat" />
 	  </div>
 	  <div class="right-panel">
 		<template v-if="selectedChat">
@@ -40,13 +39,14 @@
 	  };
 	},
 	methods: {
-	  logout() {
+
+	openChat(chat) {
+	  this.selectedChat = chat;
+	},	
+
+	logout() {
 		this.$router.replace("/login");
 	  },
-
-	  openChat(chat) {
-      this.selectedChat = chat;
-    },
   
 	  async uploadProfilePicture(event) {
 		const file = event.target.files[0];

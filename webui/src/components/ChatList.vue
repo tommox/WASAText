@@ -81,12 +81,11 @@ export default {
         name: recipient ? recipient.Nickname : "Utente Sconosciuto"
       };
     });
-},
+  },
 
     async fetchUsers() {
       const token = localStorage.getItem("token");
       const response = await axios.get(__API_URL__ + "/users");
-      console.log("Users: ", response.data);
       if (Array.isArray(response.data)) {
         this.users = response.data.filter(user => user.User_id.toString() !== token);
       } else {
@@ -96,37 +95,29 @@ export default {
     },
 
     async startChat(user) {
-  const token = localStorage.getItem("token");
-  
-  try {
-    const response = await axios.post(
-      `${__API_URL__}/conversations/conversation`,
-      {
-        recipient_id: user.User_id
-      }, 
-      {
-        headers: { Authorization: `Bearer ${token}` }
-      }
-    );
+    const token = localStorage.getItem("token");
+    
+    try {
+      const response = await axios.post(
+        `${__API_URL__}/conversations/conversation`,
+        {recipient_id: user.User_id}, 
+        {headers: { Authorization: `Bearer ${token}` }}
+      );
+      const conversationId = response.data.conversation_id;
+      this.$emit("chatSelected", { 
+        conversation_id: conversationId, 
+        name: user.Nickname, 
+        avatar: user.Avatar || null 
+      });
 
-    const conversationId = response.data.conversation_id;
-
-    // Emetti l'evento per aprire la chat con l'ID della conversazione ottenuto
-    this.$emit("chatSelected", { 
-      id: conversationId, 
-      name: user.Nickname, 
-      avatar: user.Avatar || null 
-    });
-
-    this.showUserList = false;
-  } catch (error) {
-    console.error("Errore nell'iniziare la chat:", error);
-    alert("Errore: impossibile iniziare la conversazione.");
+      this.showUserList = false;
+    } catch (error) {
+      console.error("Errore nell'iniziare la chat:", error);
+      alert("Errore: impossibile iniziare la conversazione.");
+    }
   }
-}
+},
 
-
-  },
   created() {
     this.fetchChats();
   }

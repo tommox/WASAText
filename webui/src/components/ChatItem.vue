@@ -19,22 +19,30 @@ export default {
       avatarUrl: defaultAvatar
     };
   },
-  async created() {
-    try {
-      const response = await axios.get(`${__API_URL__}/users/${this.chat.recipient_id}/photo`, {
-        responseType: "blob"
-      });
+  watch: {
+    chat: {
+      immediate: true,
+      handler: "loadAvatar"
+    }
+  },
+  methods: {
+    async loadAvatar() {
+      this.avatarUrl = defaultAvatar; 
+      try {
+        const response = await axios.get(`${__API_URL__}/users/${this.chat.recipient_id}/photo`, {
+          responseType: "blob"
+        });
 
-      if (response.data.size > 0) {
-        this.avatarUrl = URL.createObjectURL(response.data);
+        if (response.data.size > 0) {
+          this.avatarUrl = URL.createObjectURL(response.data);
+        }
+      } catch (error) {
+        console.error("Errore nel caricamento della foto profilo:", error);
       }
-    } catch (error) {
-      console.error("Errore nel caricamento della foto profilo:", error);
     }
   }
 };
 </script>
-
 
 <style scoped>
 .chat-item {
