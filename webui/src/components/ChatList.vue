@@ -95,6 +95,17 @@ export default {
     },
 
     async startChat(user) {
+    
+    const existingChat = this.chats.find(
+    (chat) => chat.recipient_id === user.User_id || chat.sender_id === user.User_id
+  );
+
+  if (existingChat) {
+    this.$emit("chatSelected", existingChat);
+    this.showUserList = false;
+    return;
+  }
+    
     const token = localStorage.getItem("token");
     
     try {
@@ -104,11 +115,18 @@ export default {
         {headers: { Authorization: `Bearer ${token}` }}
       );
       const conversationId = response.data.conversation_id;
-      this.$emit("chatSelected", { 
-        conversation_id: conversationId, 
-        name: user.Nickname, 
-        avatar: user.Avatar || null 
-      });
+      const newChat = {
+      conversation_id: conversationId,
+      sender_id: parseInt(token),
+      recipient_id: user.User_id,
+      name: user.Nickname,
+      avatar: user.Avatar || null,
+      lastMessage: "",
+    };
+
+    this.chats.unshift(newChat); 
+
+    this.$emit("chatSelected", newChat);
 
       this.showUserList = false;
     } catch (error) {
@@ -124,19 +142,53 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
+
 .chat-list-container {
   display: flex;
   flex-direction: column;
-  max-height: 100vh;
-  overflow: hidden;
+  height: 100vh;
+  background-color: #f0f0f0;
+}
+
+.search-bar-container {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  background-color: #ffffff;
+}
+
+.logout-btn {
+  margin-left: auto; 
+  padding: 10px 15px;
+  background-color: #069327;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 10px rgba(0, 0, 0, 0.1);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .search-input {
   flex-grow: 1;
-  width: 80%;
   padding: 10px;
-  font-size: 16px;
+  font-size: 14px;
+  border: none;
+  border-radius: 20px;
+  outline: none;
+  background-color: #fff;
+  margin-right: 10px;
 }
 
 .new-chat-btn {
@@ -151,18 +203,26 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 300px;
-  margin-top: -38px;
+  transition: background-color 0.2s;
 }
 
 .new-chat-btn:hover {
-  background-color: #d6d6d6;
+  background-color: #069327;
 }
 
 .chat-list {
   flex-grow: 1;
-  min-height: 0;
   overflow-y: auto;
+  background-color: #fff;
+}
+
+.chat-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-list::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
 }
 
 .modal-overlay {
@@ -175,14 +235,16 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 999;
 }
 
 .modal-content {
   background: white;
   padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  width: 300px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 400px;
 }
 
 .modal-input {
@@ -190,7 +252,8 @@ export default {
   padding: 10px;
   margin: 10px 0;
   border: 1px solid #ddd;
-  border-radius: 5px;
+  border-radius: 20px;
+  outline: none;
 }
 
 .user-list {
@@ -201,10 +264,13 @@ export default {
 }
 
 .user-item {
-  padding: 10px;
+  padding: 15px;
   border-bottom: 1px solid #ddd;
   cursor: pointer;
   transition: background 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .user-item:hover {
@@ -224,4 +290,5 @@ export default {
 .cancel-btn:hover {
   background-color: #069327;
 }
+
 </style>

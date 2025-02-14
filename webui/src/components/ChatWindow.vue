@@ -1,5 +1,5 @@
 <template>
-  <div v-if="chat" class="w-full flex flex-col h-screen bg-gray-100">
+  <div v-if="chat" class="w-full flex flex-col flex-grow bg-gray-100">
     <!-- Header Chat -->
     <div class="p-3 border-b bg-gray-200 flex items-center">
       <img :src="chat.avatar || defaultAvatar" class="w-10 h-10 rounded-full">
@@ -41,9 +41,10 @@
     </div>
   </div>
 
-  <div v-else class="w-full flex items-center justify-center h-screen bg-gray-100 text-gray-500">
+  <div v-else class="empty-chat w-full flex items-center justify-center flex-grow bg-gray-100">
     Apri o inizia una nuova conversazione
   </div>
+
 </template>
 
 <script>
@@ -122,3 +123,117 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+
+/* Contenitore principale della chat */
+.w-full {
+  display: flex;
+  flex-direction: column;
+  height: 100%; 
+  width: 100%;
+  background-color: #e5ddd5;
+  padding: 0;
+  margin: 0;
+}
+
+/* Header della chat */
+.bg-gray-200 {
+  background-color: #357a4f !important;
+  color: white;
+}
+
+.p-3 {
+  padding: 1rem;
+}
+
+.w-10.h-10 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.font-bold.text-lg {
+  font-size: 1.125rem;
+  color:white;
+}
+
+/* Lista messaggi */
+.flex-grow {
+  background-color: #d6dbd6;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.inline-block {
+  max-width: 70%;
+  word-wrap: break-word;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.bg-blue-500 {
+  background-color: #dcf8c6; /* Colore messaggio inviato tipo WhatsApp */
+  color: black;
+}
+
+.bg-gray-200 {
+  background-color: white; /* Colore messaggio ricevuto tipo WhatsApp */
+  color: black;
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* Input messaggio */
+.p-3.border-t {
+  padding: 0.5rem 1rem;
+  border-top: 1px solid #ddd;
+  background-color: #f0f0f0;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 70%;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+}
+
+input[type="text"] {
+  flex-grow: 1;
+  padding: 0.6rem 0.8rem;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  background-color: white;
+  outline: none;
+  transition: box-shadow 0.2s ease;
+}
+
+input[type="text"]:focus {
+  box-shadow: 0 0 5px rgba(0, 149, 246, 0.5);
+}
+
+button {
+  color: rgb(255, 255, 255);
+  padding: 0.6rem 0.8rem;
+  font-size: 16px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+button:hover {
+  background-color: #069327;
+}
+</style>

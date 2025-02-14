@@ -46,8 +46,11 @@ export default {
 
 <style scoped>
 .chat-item {
-  height: 100px; 
+  display: flex; 
+  align-items: center;
+  padding: 10px;
   border-bottom: 1px solid #ddd;
+  cursor: pointer;
 }
 
 .profile-img {
@@ -55,6 +58,17 @@ export default {
   height: 50px;
   border-radius: 50%;
   object-fit: cover;
+  margin-right: 15px; 
+}
+
+.chat-name {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.chat-last-message {
+  color: #666;
+  font-size: 14px;
 }
 
 .chat-item:hover {
