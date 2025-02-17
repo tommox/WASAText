@@ -2,7 +2,7 @@
   <div v-if="chat" class="w-full flex flex-col flex-grow bg-gray-100">
     <!-- Header Chat -->
     <div class="chat-header">
-      <img :src="chat.avatar || defaultAvatar" class="w-10 h-10 rounded-full">
+      <img :src="avatarUrl" class="w-10 h-10 rounded-full">
       <span class="ml-3 font-bold text-lg">{{ chat.name }}</span>
     </div>
 
@@ -44,7 +44,6 @@
   <div v-else class="empty-chat w-full flex items-center justify-center flex-grow bg-gray-100">
     Apri o inizia una nuova conversazione
   </div>
-
 </template>
 
 <script>
@@ -58,36 +57,58 @@ export default {
       newMessage: "",
       messages: [],
       loading: true,
-      defaultAvatar,
+      avatarUrl: defaultAvatar
     };
   },
   methods: {
     async fetchMessages() {
-    if (!this.chat || !this.chat.conversation_id) {
-      console.warn("fetchMessages: conversation_id is missing");
-      return;
-    }
-    const token = localStorage.getItem("token");
-    this.loading = true;
-    try {
-      const response = await axios.get(`${__API_URL__}/conversations/${this.chat.conversation_id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
+      if (!this.chat || !this.chat.conversation_id) {
+        console.warn("fetchMessages: conversation_id is missing");
+        return;
+      }
+      const token = localStorage.getItem("token");
+      this.loading = true;
+      try {
+        const response = await axios.get(`${__API_URL__}/conversations/${this.chat.conversation_id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        this.messages = response.data && Array.isArray(response.data.messages) ? response.data.messages : [];
+        this.scrollToBottom();
+      } catch (error) {
+        console.error("Errore nel caricamento dei messaggi:", error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchUserPhoto() {
+      if (!this.chat || !this.chat.recipient_id) return;
+      this.avatarUrl = defaultAvatar; 
+      try {
+        const response = await axios.get(`${__API_URL__}/users/${this.chat.recipient_id}/photo`, {
+          responseType: "blob"
+        });
+
+        if (response.data.size === 0) {
+          this.avatarUrl = defaultAvatar;
+          return;
         }
-    });
-    this.messages = response.data && Array.isArray(response.data.messages) ? response.data.messages : [];
-      this.scrollToBottom();
-    } catch (error) {
-      console.error("Errore nel caricamento dei messaggi:", error);
-    } finally {
-      this.loading = false;
-    }
-},
+        const imageUrl = URL.createObjectURL(response.data);
+        this.avatarUrl = ""; // Svuota per forzare il refresh
+        this.$nextTick(() => {
+          this.avatarUrl = imageUrl;
+        });
+      } catch (error) {
+        console.error("Errore nel recupero della foto profilo:", error);
+        this.avatarUrl = defaultAvatar;
+      }
+    },
+
     async sendMessage() {
       if (this.newMessage.trim() !== "") {
         try {
-          const response = await axios.post("/messages", {
-            conversation_id: this.chat.id,
+          const response = await axios.post(`${__API_URL__}/messages`, {
+            conversation_id: this.chat.conversation_id,
             text: this.newMessage
           });
 
@@ -104,20 +125,23 @@ export default {
         }
       }
     },
+
     scrollToBottom() {
-    this.$nextTick(() => {
-      const container = this.$refs.messageContainer;
-      if (container) {
-        container.scrollTop = container.scrollHeight;
-      }
-  });
-}
+      this.$nextTick(() => {
+        const container = this.$refs.messageContainer;
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      });
+    }
   },
   watch: {
     chat: {
       immediate: true,
+      deep: true,
       handler() {
         this.fetchMessages();
+        this.fetchUserPhoto();
       }
     }
   }
@@ -125,7 +149,6 @@ export default {
 </script>
 
 <style scoped>
-
 /* Contenitore principale della chat */
 .w-full {
   display: flex;
@@ -205,12 +228,12 @@ export default {
 }
 
 .bg-blue-500 {
-  background-color: #dcf8c6; /* Colore messaggio inviato tipo WhatsApp */
+  background-color: #dcf8c6;
   color: black;
 }
 
 .bg-gray-200 {
-  background-color: white; /* Colore messaggio ricevuto tipo WhatsApp */
+  background-color: white;
   color: black;
 }
 
@@ -241,23 +264,6 @@ input[type="text"] {
   background-color: white;
   outline: none;
   transition: box-shadow 0.2s ease;
-}
-
-input[type="text"]:focus {
-  box-shadow: 0 0 5px rgba(0, 149, 246, 0.5);
-}
-
-button {
-  color: rgb(255, 255, 255);
-  padding: 0.6rem 0.8rem;
-  font-size: 16px;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s ease;
 }
 
 button:hover {
