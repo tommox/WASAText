@@ -1,13 +1,13 @@
 <template>
   <div v-if="chat" class="w-full flex flex-col flex-grow bg-gray-100">
     <!-- Header Chat -->
-    <div class="p-3 border-b bg-gray-200 flex items-center">
+    <div class="chat-header">
       <img :src="chat.avatar || defaultAvatar" class="w-10 h-10 rounded-full">
       <span class="ml-3 font-bold text-lg">{{ chat.name }}</span>
     </div>
 
     <!-- Lista Messaggi -->
-    <div ref="messageContainer" class="flex-grow overflow-y-auto p-3">
+    <div ref="messageContainer" class="chat-messages flex-grow overflow-y-auto p-3">
       <div v-if="loading" class="text-center text-gray-500">Caricamento messaggi...</div>
       <div v-else-if="messages.length === 0" class="text-center text-gray-500">Inizia una nuova conversazione!</div>
 
@@ -137,10 +137,37 @@ export default {
   margin: 0;
 }
 
-/* Header della chat */
-.bg-gray-200 {
-  background-color: #357a4f !important;
+/* HEADER CHAT */
+.chat-header {
+  position: fixed;
+  top: 0;
+  left: 30%;
+  width: 70%;
+  height: 60px;
+  background-color: #2f814e !important;
   color: white;
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #ccc;
+  z-index: 10;
+}
+
+.chat-header img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.chat-header span {
+  margin-left: 15px;
+  font-size: 1.2rem; 
+  font-weight: bold;
+  color: white;
+}
+
+.chat-messages {
+  margin-top: 60px;
 }
 
 .p-3 {

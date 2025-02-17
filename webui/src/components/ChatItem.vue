@@ -22,27 +22,36 @@ export default {
   watch: {
     chat: {
       immediate: true,
-      handler: "loadAvatar"
+      deep: true,
+      handler: "fetchUserPhoto"
     }
   },
   methods: {
-    async loadAvatar() {
-      this.avatarUrl = defaultAvatar; 
+    async fetchUserPhoto() {
+      if (!this.chat || !this.chat.recipient_id) return;
+      this.avatarUrl = defaultAvatar;
       try {
         const response = await axios.get(`${__API_URL__}/users/${this.chat.recipient_id}/photo`, {
           responseType: "blob"
         });
-
-        if (response.data.size > 0) {
-          this.avatarUrl = URL.createObjectURL(response.data);
+        if (response.data.size === 0) {
+          this.avatarUrl = defaultAvatar;
+          return;
         }
+        const imageUrl = URL.createObjectURL(response.data);
+        this.avatarUrl = ""; // Svuota per forzare l'aggiornamento
+        this.$nextTick(() => {
+          this.avatarUrl = imageUrl;
+        });
       } catch (error) {
-        console.error("Errore nel caricamento della foto profilo:", error);
+        console.error("Errore nel recupero della foto profilo:", error);
+        this.avatarUrl = defaultAvatar;
       }
     }
   }
 };
 </script>
+
 
 <style scoped>
 .chat-item {

@@ -99,7 +99,7 @@
   
   <style scoped>
   .container-fluid {
-    height: 100vh;
+    height: 100%;
     width: 100%;
     display: flex;
     padding: 0;
@@ -108,11 +108,19 @@
   }
   
   .left-panel {
-    width: 30%;
-    background: #ffffff;
-    border-right: 1px solid #ddd;
-    overflow-y: auto;
+	width: 30%;
+	background: #ffffff;
+	border-right: 1px solid #ddd;
+	display: flex;
+	flex-direction: column; 
+	height: 100vh;
   }
+
+  .chat-list-container {
+  flex-grow: 1; 
+  overflow-y: auto;
+  background-color: #f0f0f0;
+}
   
   .right-panel {
     width: 70%;
@@ -133,13 +141,28 @@
   }
   
   .profile-picture {
-    position: relative;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    overflow: hidden;
-    margin-right: 10px;
-    border: 2px solid #ffffff;
+	position: relative;
+	width: 50px;
+	height: 50px;
+	border-radius: 50%;
+	overflow: hidden;
+	margin-right: 10px;
+	border: 2px solid transparent; 
+	transition: border-color 0.3s ease-in-out;
+  }
+
+  .profile-picture:hover {
+	border-color: #069327; 
+  }
+
+  .upload-input {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	opacity: 0;
+	cursor: pointer;
   }
   
   .profile-img {

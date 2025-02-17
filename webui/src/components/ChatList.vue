@@ -65,7 +65,10 @@ export default {
   },
   methods: {
     async fetchChats() {
-    const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token"); // ID utente loggato
+  if (!token) return;
+
+  try {
     const response = await axios.get(`${__API_URL__}/conversations`, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -74,14 +77,22 @@ export default {
     });
     const allUsers = userResponse.data;
     this.chats = response.data.map(chat => {
-      const recipientId = chat.sender_id === parseInt(token) ? chat.recipient_id : chat.sender_id;
+      // Determina chi è il destinatario (l'interlocutore)
+      const isCurrentUserSender = chat.sender_id === parseInt(token);
+      const recipientId = isCurrentUserSender ? chat.recipient_id : chat.sender_id;
       const recipient = allUsers.find(user => user.User_id === recipientId);
       return {
         ...chat,
-        name: recipient ? recipient.Nickname : "Utente Sconosciuto"
+        recipient_id: recipientId, // Aggiorna il recipient dinamicamente
+        name: recipient ? recipient.Nickname : "Utente Sconosciuto",
+        avatarUrl: recipient ? `${__API_URL__}/users/${recipientId}/photo` : defaultAvatar
       };
     });
-  },
+
+  } catch (error) {
+    console.error("Errore nel recupero delle conversazioni:", error);
+  }
+},
 
     async fetchUsers() {
       const token = localStorage.getItem("token");
@@ -147,8 +158,7 @@ export default {
 .chat-list-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  background-color: #f0f0f0;
+  height: 100%;
 }
 
 .search-bar-container {
