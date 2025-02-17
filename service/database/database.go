@@ -53,7 +53,7 @@ type AppDatabase interface {
 	GetUserPhoto(userID int) ([]byte, error)
 
 	// Messages
-	CreateMessage(senderId int, recipientId int, messageContent string, timestamp time.Time) (int, error)
+	CreateMessage(senderId int, conversationId int, messageContent string, timestamp time.Time) (int, error)
 	GetMessage(messageId int) (Message, error)
 	DeleteMessage(messageId int) error
 	UpdateOrCreateConversation(sender int, recipient int, messageId int, timestamp time.Time) (int, error)
@@ -117,8 +117,8 @@ func New(db *sql.DB) (AppDatabase, error) {
 		// Creating DB for Messages if not existing
 		messages := `CREATE TABLE IF NOT EXISTS Messages
 									   (Message_id       INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-									    Sender_id 		 INTEGER NOT NULL,
-										Recipient_id     INTEGER NOT NULL, 
+									    Sender_id  INTEGER NOT NULL,
+										Conversation_id     INTEGER NOT NULL, 
 										MessageContent   VARCHAR(1000) NOT NULL,
 										Timestamp        DATETIME NOT NULL);`
 

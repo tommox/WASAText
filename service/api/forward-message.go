@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -36,29 +35,30 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	// Recupera il messaggio originale
-	originalMessage, err := rt.db.GetMessage(messageId)
+	// Recupera il messaggio per ottenere il conversation_id
+	msg, err := rt.db.GetMessage(messageId)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			w.WriteHeader(http.StatusNotFound)
-			ctx.Logger.WithError(err).Error("forwardMessage: message not found")
-		} else {
-			w.WriteHeader(http.StatusInternalServerError)
-			ctx.Logger.WithError(err).Error("forwardMessage: error retrieving message")
-		}
+		w.WriteHeader(http.StatusInternalServerError)
+		ctx.Logger.WithError(err).Error("forwardMessage: failed to retrieve message")
 		return
 	}
 
-	// Verifica se l'utente ha i permessi per accedere al messaggio
-	if originalMessage.Recipient_id != userId && originalMessage.Sender_id != userId {
+	// Verifica se l'utente può accedere alla conversazione
+	hasAccess, _, err := rt.db.CheckConversationAccess(userId, msg.Conversation_id)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		ctx.Logger.WithError(err).Error("forwardMessage: error checking conversation access")
+		return
+	}
+	if !hasAccess {
 		w.WriteHeader(http.StatusForbidden)
-		ctx.Logger.WithError(errors.New("user not allowed to access message")).Error("forwardMessage: permission denied")
+		ctx.Logger.WithError(errors.New("user has no access")).Error("forwardMessage: permission denied")
 		return
 	}
 
-	// Decodifica il corpo della richiesta
+	// Decodifica il corpo della richiesta per ottenere la conversazione di destinazione
 	var body struct {
-		Recipient_id int `json:"Recipient_id"`
+		ConversationId int `json:"conversation_id"`
 	}
 	err = json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
@@ -67,8 +67,8 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	// Salva il messaggio inoltrato nel DB
-	newMessageId, err := rt.db.CreateMessage(userId, body.Recipient_id, originalMessage.MessageContent, time.Now())
+	// Inoltra il messaggio alla nuova conversazione
+	newMessageId, err := rt.db.CreateMessage(userId, body.ConversationId, msg.MessageContent, time.Now())
 	if err != nil {
 		ctx.Logger.WithError(err).Error("forwardMessage: error creating forwarded message")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -77,7 +77,7 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 
 	// Risposta con successo
 	response := map[string]interface{}{
-		"Message_id": newMessageId,
+		"message_id": newMessageId,
 		"status":     "sent",
 	}
 	w.WriteHeader(http.StatusCreated)

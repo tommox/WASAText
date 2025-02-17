@@ -799,7 +799,7 @@ paths:
                 required:
                   - Message_id
                   - Sender_id
-                  - Recipient_id
+                  - Conversation_id
                   - MessageContent
                   - Timestamp
                   - Reactions
@@ -814,7 +814,7 @@ paths:
                     description: "The ID of the user who sent the message."
                     minimum: 1
                     maximum: 100000
-                  Recipient_id:
+                  Conversation_id:
                     type: integer
                     description: "The ID of the user who received the message."
                     minimum: 1
@@ -892,7 +892,7 @@ paths:
     post:
       tags: ["messages"]
       summary: Forward a message
-      description: Forward a message to a specific recipient
+      description: Forward a message to a specific conversation
       operationId: forwardMessage
       parameters:
         - name: Message_id
@@ -912,12 +912,12 @@ paths:
               type: object
               description: Schema for the request to forward a message.
               required:
-                - Recipient_id
+                - Conversation_id
                 - Timestamp
               properties:
-                Recipient_id:
+                Conversation_id:
                   type: integer
-                  description: "The unique identifier of the recipient."
+                  description: "The unique identifier of the conversation."
                   minimum: 1
                   maximum: 100000
                 Timestamp:
@@ -980,7 +980,7 @@ paths:
                     minLength: 3
                     maxLength: 1000
         '404':
-          description: Message or recipient not found.
+          description: Message or conversation not found.
           content:
             application/json:
               schema:
@@ -989,7 +989,7 @@ paths:
                 properties:
                   error:
                     type: string
-                    description: "Message o Recipient ID not found."
+                    description: "Message o Conversation ID not found."
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                     minLength: 3
                     maxLength: 1000

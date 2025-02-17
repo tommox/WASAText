@@ -7,14 +7,14 @@ func (db *appdbimpl) GetMessage(messageId int) (Message, error) {
 
 	// Recupera i dettagli principali del messaggio
 	query := `
-        SELECT Message_id, Sender_id, Recipient_id, MessageContent, Timestamp
+        SELECT Message_id, Sender_id, Conversation_id, MessageContent, Timestamp
         FROM Messages
         WHERE Message_id = ?;
     `
 	err := db.c.QueryRow(query, messageId).Scan(
 		&msg.Message_id,
 		&msg.Sender_id,
-		&msg.Recipient_id,
+		&msg.Conversation_id,
 		&msg.MessageContent,
 		&msg.Timestamp,
 	)

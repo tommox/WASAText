@@ -35,7 +35,7 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 	}
 
 	// Verifica permessi
-	hasPermission, err := rt.db.CheckUserPermission(userId, messageId)
+	hasPermission, _, err := rt.db.CheckConversationAccess(userId, messageId)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("getMessage: error checking permissions")
 		w.WriteHeader(http.StatusInternalServerError)

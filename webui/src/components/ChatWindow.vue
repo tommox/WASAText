@@ -94,7 +94,7 @@ export default {
           return;
         }
         const imageUrl = URL.createObjectURL(response.data);
-        this.avatarUrl = ""; // Svuota per forzare il refresh
+        this.avatarUrl = ""; 
         this.$nextTick(() => {
           this.avatarUrl = imageUrl;
         });
@@ -106,12 +106,23 @@ export default {
 
     async sendMessage() {
       if (this.newMessage.trim() !== "") {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          console.error("Errore: token non trovato. L'utente deve effettuare il login.");
+          alert("Sessione scaduta. Effettua nuovamente il login.");
+          this.$router.push("/login");
+          return;
+        }
         try {
           const response = await axios.post(`${__API_URL__}/messages`, {
             conversation_id: this.chat.conversation_id,
-            text: this.newMessage
-          });
-
+            message_content: this.newMessage
+          },
+          {
+        headers: { Authorization: `Bearer ${token}` } 
+          }
+        );
           this.messages.push({
             id: response.data.message_id,
             text: this.newMessage,
@@ -264,6 +275,23 @@ input[type="text"] {
   background-color: white;
   outline: none;
   transition: box-shadow 0.2s ease;
+}
+
+input[type="text"]:focus {
+  box-shadow: 0 0 5px rgba(0, 149, 246, 0.5);
+}
+
+button {
+  color: rgb(255, 255, 255);
+  padding: 0.6rem 0.8rem;
+  font-size: 16px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
 }
 
 button:hover {
