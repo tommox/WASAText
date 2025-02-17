@@ -20,6 +20,7 @@
           class="inline-block p-3 rounded-lg shadow-md"
           :class="message.sender === 'me' ? 'bg-blue-500 text-black' : 'bg-gray-200'">
           {{ message.text }}
+          <span class="text-xs text-gray-600 absolute bottom-0 right-2">{{ formatTime(message.timestamp) }}</span>
         </div>
       </div>
     </div>
@@ -75,7 +76,8 @@ export default {
       this.messages = response.data.map(msg => ({
         id: msg.message_id,
         text: msg.message_content,
-        sender: msg.sender_id === Number(token) ? "me" : "other" 
+        sender: msg.sender_id === Number(token) ? "me" : "other",
+        timestamp: new Date(msg.timestamp)
       }));
     } else {
       console.error("Formato della risposta non valido:", response.data);
@@ -134,7 +136,8 @@ export default {
           this.messages.push({
             id: response.data.message_id,
             text: this.newMessage,
-            sender: "me"
+            sender: "me",
+            timestamp: new Date()
           });
 
           this.newMessage = "";
@@ -143,6 +146,14 @@ export default {
           console.error("Errore nell'invio del messaggio:", error);
         }
       }
+    },
+
+    formatTime(timestamp) {
+      if (!timestamp) return "";
+      const date = new Date(timestamp);
+      const hours = date.getHours().toString().padStart(2, "0");
+      const minutes = date.getMinutes().toString().padStart(2, "0");
+      return `${hours}:${minutes}`;
     },
 
     scrollToBottom() {
@@ -214,7 +225,6 @@ export default {
   flex-grow: 1;
   overflow-y: auto;
 }
-
 
 .p-3 {
   padding: 1rem;
