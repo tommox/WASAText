@@ -19,5 +19,16 @@ func (db *appdbimpl) CreateMessage(senderId int, conversationId int, messageCont
 	if err != nil {
 		return 0, fmt.Errorf("CreateMessage: failed to retrieve message ID: %w", err)
 	}
+
+	updateQuery := `
+		UPDATE Conversations 
+		SET LastMessage_id = ? 
+		WHERE Conversation_id = ?
+	`
+	_, err = db.c.Exec(updateQuery, messageId, conversationId)
+	if err != nil {
+		return 0, fmt.Errorf("CreateMessage: failed to update lastMessageId: %w", err)
+	}
+
 	return int(messageId), nil
 }

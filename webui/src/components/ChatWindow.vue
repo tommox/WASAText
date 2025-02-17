@@ -14,13 +14,11 @@
       <div 
         v-else v-for="message in messages" 
         :key="message.id" 
-        class="mb-2"
-        :class="{ 'text-right': message.sender === 'me' }"
-      >
+        class="mb-2 flex"
+        :class="{'justify-end': message.sender === 'me', 'justify-start': message.sender === 'other'}">
         <div 
           class="inline-block p-3 rounded-lg shadow-md"
-          :class="message.sender === 'me' ? 'bg-blue-500 text-white' : 'bg-gray-200'"
-        >
+          :class="message.sender === 'me' ? 'bg-blue-500 text-black' : 'bg-gray-200'">
           {{ message.text }}
         </div>
       </div>
@@ -62,24 +60,34 @@ export default {
   },
   methods: {
     async fetchMessages() {
-      if (!this.chat || !this.chat.conversation_id) {
-        console.warn("fetchMessages: conversation_id is missing");
-        return;
-      }
-      const token = localStorage.getItem("token");
-      this.loading = true;
-      try {
-        const response = await axios.get(`${__API_URL__}/conversations/${this.chat.conversation_id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        this.messages = response.data && Array.isArray(response.data.messages) ? response.data.messages : [];
-        this.scrollToBottom();
-      } catch (error) {
-        console.error("Errore nel caricamento dei messaggi:", error);
-      } finally {
-        this.loading = false;
-      }
-    },
+  if (!this.chat || !this.chat.conversation_id) {
+    console.warn("fetchMessages: conversation_id is missing");
+    return;
+  }
+  const token = localStorage.getItem("token");
+  this.loading = true;
+  try {
+    const response = await axios.get(`${__API_URL__}/conversations/${this.chat.conversation_id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (Array.isArray(response.data)) {
+      this.messages = response.data.map(msg => ({
+        id: msg.message_id,
+        text: msg.message_content,
+        sender: msg.sender_id === Number(token) ? "me" : "other" 
+      }));
+    } else {
+      console.error("Formato della risposta non valido:", response.data);
+      this.messages = []; 
+    }
+    this.scrollToBottom();
+  } catch (error) {
+    console.error("Errore nel caricamento dei messaggi:", error);
+  } finally {
+    this.loading = false;
+  }
+},
 
     async fetchUserPhoto() {
       if (!this.chat || !this.chat.recipient_id) return;
@@ -201,8 +209,12 @@ export default {
 }
 
 .chat-messages {
-  margin-top: 60px;
+  margin-top: 45px;
+  margin-bottom: 45px; 
+  flex-grow: 1;
+  overflow-y: auto;
 }
+
 
 .p-3 {
   padding: 1rem;
@@ -216,7 +228,7 @@ export default {
 
 .font-bold.text-lg {
   font-size: 1.125rem;
-  color:white;
+  color:rgb(255, 255, 255);
 }
 
 /* Lista messaggi */
@@ -224,10 +236,6 @@ export default {
   background-color: #d6dbd6;
   overflow-y: auto;
   padding: 1rem;
-}
-
-.mb-2 {
-  margin-bottom: 0.5rem;
 }
 
 .inline-block {
@@ -297,4 +305,15 @@ button {
 button:hover {
   background-color: #069327;
 }
+
+.justify-end {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.justify-start {
+  display: flex;
+  justify-content: flex-start;
+}
+
 </style>
