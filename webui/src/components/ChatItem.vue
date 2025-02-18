@@ -3,7 +3,7 @@
     <img :src="avatarUrl" alt="Avatar" class="profile-img" />
     <div class="chat-details">
       <div class="chat-name">{{ chat.name }}</div>
-      <div class="chat-last-message">{{ chat.lastMessage || 'Nessun messaggio' }}</div>
+      <div class="chat-last-message">{{ lastMessage || 'Nessun messaggio' }}</div>
     </div>
   </div>
 </template>
@@ -16,19 +16,22 @@ export default {
   props: { chat: Object },
   data() {
     return {
-      avatarUrl: defaultAvatar
+      avatarUrl: defaultAvatar,
+      lastMessage: "Nessun messaggio"
     };
   },
   watch: {
     chat: {
       immediate: true,
       deep: true,
-      handler: "fetchUserPhoto"
+      handler() {
+        this.fetchUserPhoto();
+        this.fetchLastMessage();
+      }
     }
   },
   methods: {
     async fetchUserPhoto() {
-      console.log("chat, sono in chatitem: ",this.chat);
       if (!this.chat || !this.chat.recipient_id) return;
       this.avatarUrl = defaultAvatar;
       try {
@@ -40,7 +43,7 @@ export default {
           return;
         }
         const imageUrl = URL.createObjectURL(response.data);
-        this.avatarUrl = ""; 
+        this.avatarUrl = "";
         this.$nextTick(() => {
           this.avatarUrl = imageUrl;
         });
@@ -48,11 +51,33 @@ export default {
         console.error("Errore nel recupero della foto profilo:", error);
         this.avatarUrl = defaultAvatar;
       }
+    },
+    
+    async fetchLastMessage() {
+      console.log("token: ",localStorage.getItem("token"));
+      if (!this.chat || !this.chat.last_message_id) {
+        this.lastMessage = "Nessun messaggio";
+        return;
+      }
+      try {
+        const response = await axios.get(`${__API_URL__}/messages/${this.chat.last_message_id}/details`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+        if (response.data && response.data.message_content) {
+          this.lastMessage = response.data.message_content;
+        } else {
+          this.lastMessage = "Nessun messaggio";
+        }
+      } catch (error) {
+        console.error("Errore nel recupero dell'ultimo messaggio:", error);
+        this.lastMessage = "Nessun messaggio";
+      }
     }
   }
 };
 </script>
-
 
 <style scoped>
 .chat-item {

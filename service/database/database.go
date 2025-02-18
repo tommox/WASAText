@@ -81,6 +81,7 @@ type AppDatabase interface {
 	GetGroupConversationMessages(groupConversationId int) ([]GroupMessage, error)
 	GetUserConversations(userId int) ([]interface{}, error)
 	CheckExistingConversation(userId int, recipientId int) (int, error)
+	GetConversationIdByMessageId(messageId int) (int, error)
 
 	// Authorization
 	CheckUserPermission(userId, messageId int) (bool, error)

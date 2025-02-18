@@ -34,8 +34,20 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 		return
 	}
 
+	// Recupera il conversationId associato al messaggio
+	conversationId, err := rt.db.GetConversationIdByMessageId(messageId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		ctx.Logger.WithError(err).Error("getMessage: error retrieving conversation ID")
+		return
+	}
+
 	// Verifica permessi
-	hasPermission, _, err := rt.db.CheckConversationAccess(userId, messageId)
+	hasPermission, _, err := rt.db.CheckConversationAccess(userId, conversationId)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("getMessage: error checking permissions")
 		w.WriteHeader(http.StatusInternalServerError)
