@@ -27,6 +27,7 @@ export default {
       handler() {
         this.fetchUserPhoto();
         this.fetchLastMessage();
+        
       }
     }
   },
@@ -54,7 +55,6 @@ export default {
     },
     
     async fetchLastMessage() {
-      console.log("token: ",localStorage.getItem("token"));
       if (!this.chat || !this.chat.last_message_id) {
         this.lastMessage = "Nessun messaggio";
         return;

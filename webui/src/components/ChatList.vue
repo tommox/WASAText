@@ -92,7 +92,6 @@ export default {
   } catch (error) {
     console.error("Errore nel recupero delle conversazioni:", error);
   }
-  console.log("chat da chatlist: ",this.chats);
 },
 
     async fetchUsers() {
