@@ -17,10 +17,12 @@
         class="mb-2 flex"
         :class="{'justify-end': message.sender === 'me', 'justify-start': message.sender === 'other'}">
         <div 
-          class="inline-block p-3 rounded-lg shadow-md"
-          :class="message.sender === 'me' ? 'bg-blue-500 text-black' : 'bg-gray-200'">
-          {{ message.text }}
-          <span class="text-xs text-gray-600 absolute bottom-0 right-2">{{ formatTime(message.timestamp) }}</span>
+          class="relative flex flex-col max-w-xs p-3 rounded-3xl shadow-md"
+          :class="message.sender === 'me' ? 'bg-blue-500 text-black self-end' : 'bg-gray-200 self-start'">
+          <div class="flex items-end">
+            <span>{{ message.text }}</span>
+            <span class="message-time">{{ formatTime(message.timestamp) }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -139,7 +141,7 @@ export default {
             sender: "me",
             timestamp: new Date()
           });
-
+          
           this.newMessage = "";
           this.scrollToBottom();
         } catch (error) {
@@ -230,6 +232,13 @@ export default {
   padding: 1rem;
 }
 
+.message-time {
+  font-size: 10px;
+  color: gray;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
 .w-10.h-10 {
   width: 40px;
   height: 40px;
@@ -252,18 +261,19 @@ export default {
   max-width: 70%;
   word-wrap: break-word;
   padding: 0.8rem 1rem;
-  border-radius: 8px;
   box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .bg-blue-500 {
   background-color: #dcf8c6;
   color: black;
+  border-radius: 16px;
 }
 
 .bg-gray-200 {
   background-color: white;
   color: black;
+  border-radius: 16px;
 }
 
 .text-right {

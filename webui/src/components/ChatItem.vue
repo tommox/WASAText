@@ -28,6 +28,7 @@ export default {
   },
   methods: {
     async fetchUserPhoto() {
+      console.log("chat, sono in chatitem: ",this.chat);
       if (!this.chat || !this.chat.recipient_id) return;
       this.avatarUrl = defaultAvatar;
       try {
@@ -39,7 +40,7 @@ export default {
           return;
         }
         const imageUrl = URL.createObjectURL(response.data);
-        this.avatarUrl = ""; // Svuota per forzare l'aggiornamento
+        this.avatarUrl = ""; 
         this.$nextTick(() => {
           this.avatarUrl = imageUrl;
         });

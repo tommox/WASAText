@@ -83,7 +83,7 @@ export default {
       const recipient = allUsers.find(user => user.User_id === recipientId);
       return {
         ...chat,
-        recipient_id: recipientId, // Aggiorna il recipient dinamicamente
+        recipient_id: recipientId,
         name: recipient ? recipient.Nickname : "Utente Sconosciuto",
         avatarUrl: recipient ? `${__API_URL__}/users/${recipientId}/photo` : defaultAvatar
       };
@@ -92,6 +92,7 @@ export default {
   } catch (error) {
     console.error("Errore nel recupero delle conversazioni:", error);
   }
+  console.log("chat da chatlist: ",this.chats);
 },
 
     async fetchUsers() {
