@@ -11,6 +11,8 @@ var ErrReactionNotFound = errors.New("reaction not found")
 
 var ErrMessageNotFound = errors.New("message not found")
 
+var ErrConversationNotFound = errors.New("conversation not found")
+
 var (
 	ErrUserAlreadyInGroup = errors.New("user already in group")
 	ErrUserNotInGroup     = errors.New("user not in group")

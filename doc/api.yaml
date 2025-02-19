@@ -378,7 +378,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
-  /users/{User_id}/photo:
     get:
       summary: Recupera la foto profilo di un utente
       description: Restituisce l'immagine profilo di un utente come BLOB dal database.
@@ -403,14 +402,6 @@ paths:
                 pattern: "^[a-zA-Z0-9 .,!?'-]+$"
                 minLength: 3
                 maxLength: 1000
-            image/png:
-              schema:
-                type: string
-                format: binary
-                description: "The photo"
-                pattern: "^[01]+$"
-                minLenght: 1
-                maxLenght: 1000000
         '400':
           description: Invalid input or bad request.
           content:
@@ -600,6 +591,83 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
+    delete:
+      tags: ["conversations"]
+      summary: Delete a conversation by its ID
+      description: Permanently deletes a specific conversation along with all messages associated with it.
+      operationId: deleteConversation
+      parameters:
+        - name: Conversation_id
+          in: path
+          description: The unique identifier of the conversation to delete.
+          required: true
+          schema:
+            type: integer
+            description: "Schema for identifying a specific conversation to delete"
+            minimum: 1
+            maximum: 1000
+      responses:
+        '200':
+          description: Conversation successfully deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                description: The response schema after successful deletion.
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+                    description: Confirmation message indicating successful deletion.
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401'
+        '403':
+          description: Forbidden - User does not have permission to delete the conversation.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Error response when the user does not have permission to delete the conversation.
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                    description: Error message indicating the user does not have permission.
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '404':
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Error response when the conversation does not exist.
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+                    description: Error message indicating the conversation was not found.
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error500'
+
   /conversations/check-or-create:
     post:
       summary: "Check or create a conversation"
@@ -607,8 +675,6 @@ paths:
         This endpoint checks if a conversation between the authenticated user and the specified recipient exists. 
         If the conversation does not exist, it creates a new one and returns the `conversation_id`.
       tags: ["conversations"]
-      security:
-        - bearerAuth: 
       requestBody:
         description: "JSON object containing the recipient's user ID."
         required: true

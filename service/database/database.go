@@ -82,6 +82,7 @@ type AppDatabase interface {
 	GetUserConversations(userId int) ([]interface{}, error)
 	CheckExistingConversation(userId int, recipientId int) (int, error)
 	GetConversationIdByMessageId(messageId int) (int, error)
+	DeleteConversation(conversationId int) error
 
 	// Authorization
 	CheckUserPermission(userId, messageId int) (bool, error)
