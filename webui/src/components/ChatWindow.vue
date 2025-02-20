@@ -4,6 +4,9 @@
     <div class="chat-header">
       <img :src="avatarUrl" class="w-10 h-10 rounded-full">
       <span class="ml-3 font-bold text-lg">{{ chat.name }}</span>
+      <button @click="deleteConversation" class="delete-btn">
+        🗑️
+      </button>
     </div>
 
     <!-- Lista Messaggi -->
@@ -62,36 +65,51 @@ export default {
     };
   },
   methods: {
-    async fetchMessages() {
-  if (!this.chat || !this.chat.conversation_id) {
-    console.warn("fetchMessages: conversation_id is missing");
-    return;
-  }
-  const token = localStorage.getItem("token");
-  this.loading = true;
-  try {
-    const response = await axios.get(`${__API_URL__}/conversations/${this.chat.conversation_id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
 
-    if (Array.isArray(response.data)) {
-      this.messages = response.data.map(msg => ({
-        id: msg.message_id,
-        text: msg.message_content,
-        sender: msg.sender_id === Number(token) ? "me" : "other",
-        timestamp: new Date(msg.timestamp)
-      }));
-    } else {
-      console.error("Formato della risposta non valido:", response.data);
-      this.messages = []; 
+    async deleteConversation() {
+      if (!this.chat || !this.chat.conversation_id) return;
+      const token = localStorage.getItem("token");
+
+      try {
+        await axios.delete(`${__API_URL__}/conversations/${this.chat.conversation_id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        this.$emit("conversationDeleted", this.chat.conversation_id);
+      } catch (error) {
+        console.error("Errore nell'eliminazione della conversazione:", error);
+      }
+    },
+
+    async fetchMessages() {
+    if (!this.chat || !this.chat.conversation_id) {
+      console.warn("fetchMessages: conversation_id is missing");
+      return;
     }
-    this.scrollToBottom();
-  } catch (error) {
-    console.error("Errore nel caricamento dei messaggi:", error);
-  } finally {
-    this.loading = false;
-  }
-},
+    const token = localStorage.getItem("token");
+    this.loading = true;
+    try {
+      const response = await axios.get(`${__API_URL__}/conversations/${this.chat.conversation_id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (Array.isArray(response.data)) {
+        this.messages = response.data.map(msg => ({
+          id: msg.message_id,
+          text: msg.message_content,
+          sender: msg.sender_id === Number(token) ? "me" : "other",
+          timestamp: new Date(msg.timestamp)
+        }));
+      } else {
+        this.messages = []; 
+      }
+      this.scrollToBottom();
+    } catch (error) {
+      console.error("Errore nel caricamento dei messaggi:", error);
+    } finally {
+      this.loading = false;
+    }
+  },
 
     async fetchUserPhoto() {
       if (!this.chat || !this.chat.recipient_id) return;
@@ -119,7 +137,6 @@ export default {
     async sendMessage() {
       if (this.newMessage.trim() !== "") {
         const token = localStorage.getItem("token");
-
         if (!token) {
           console.error("Errore: token non trovato. L'utente deve effettuare il login.");
           alert("Sessione scaduta. Effettua nuovamente il login.");
@@ -219,6 +236,18 @@ export default {
   font-size: 1.2rem; 
   font-weight: bold;
   color: white;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: white;
+}
+
+.delete-btn:hover {
+  color: red;
 }
 
 .chat-messages {

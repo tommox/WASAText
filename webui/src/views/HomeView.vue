@@ -13,7 +13,10 @@
       </div>
       <div class="right-panel">
         <template v-if="selectedChat">
-          <ChatWindow :chat="selectedChat" @closeChat="selectedChat = null" />
+          <ChatWindow 
+            :chat="selectedChat"
+            @conversationDeleted="handleConversationDeleted"
+            @closeChat="selectedChat = null"/>
         </template>
         <template v-else>
           <EmptyChat />
@@ -42,9 +45,18 @@
       openChat(chat) {
         this.selectedChat = chat;
       },
+
+      handleConversationDeleted(conversationId) {
+        if (this.selectedChat?.conversation_id === conversationId) {
+            this.selectedChat = null;
+        }
+        this.$emit("conversationDeleted", conversationId);
+      },
+
       logout() {
         this.$router.replace("/login");
       },
+
       async uploadProfilePicture(event) {
         const file = event.target.files[0];
         if (!file) return;

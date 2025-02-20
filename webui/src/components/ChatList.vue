@@ -65,34 +65,35 @@ export default {
   },
   methods: {
     async fetchChats() {
-  const token = localStorage.getItem("token"); // ID utente loggato
-  if (!token) return;
+    const token = localStorage.getItem("token"); // ID utente loggato
+    if (!token) return;
 
-  try {
-    const response = await axios.get(`${__API_URL__}/conversations`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const userResponse = await axios.get(`${__API_URL__}/users`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const allUsers = userResponse.data;
-    this.chats = response.data.map(chat => {
-      // Determina chi è il destinatario (l'interlocutore)
-      const isCurrentUserSender = chat.sender_id === parseInt(token);
-      const recipientId = isCurrentUserSender ? chat.recipient_id : chat.sender_id;
-      const recipient = allUsers.find(user => user.User_id === recipientId);
-      return {
-        ...chat,
-        recipient_id: recipientId,
-        name: recipient ? recipient.Nickname : "Utente Sconosciuto",
-        avatarUrl: recipient ? `${__API_URL__}/users/${recipientId}/photo` : defaultAvatar
-      };
-    });
+    try {
+      const response = await axios.get(`${__API_URL__}/conversations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const userResponse = await axios.get(`${__API_URL__}/users`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const allUsers = userResponse.data;
+      this.chats = response.data.map(chat => {
+        // Determina chi è il destinatario (l'interlocutore)
+        const isCurrentUserSender = chat.sender_id === parseInt(token);
+        const recipientId = isCurrentUserSender ? chat.recipient_id : chat.sender_id;
+        const recipient = allUsers.find(user => user.User_id === recipientId);
+        return {
+          ...chat,
+          recipient_id: recipientId,
+          name: recipient ? recipient.Nickname : "Utente Sconosciuto",
+          avatarUrl: recipient ? `${__API_URL__}/users/${recipientId}/photo` : defaultAvatar
+        };
+      });
+      console.log("Chats: ",this.chats);
 
-  } catch (error) {
-    console.error("Errore nel recupero delle conversazioni:", error);
-  }
-},
+    } catch (error) {
+      console.error("Errore nel recupero delle conversazioni:", error);
+    }
+  },
 
     async fetchUsers() {
       const token = localStorage.getItem("token");
@@ -106,19 +107,16 @@ export default {
     },
 
     async startChat(user) {
-    
-    const existingChat = this.chats.find(
-    (chat) => chat.recipient_id === user.User_id || chat.sender_id === user.User_id
-  );
+      const existingChat = this.chats.find(
+      (chat) => chat.recipient_id === user.User_id || chat.sender_id === user.User_id
+    );
 
-  if (existingChat) {
-    this.$emit("chatSelected", existingChat);
-    this.showUserList = false;
-    return;
-  }
-    
+    if (existingChat) {
+      this.$emit("chatSelected", existingChat);
+      this.showUserList = false;
+      return;
+    }
     const token = localStorage.getItem("token");
-    
     try {
       const response = await axios.post(
         `${__API_URL__}/conversations/conversation`,
@@ -134,22 +132,22 @@ export default {
       avatar: user.Avatar || null,
       lastMessage: "",
     };
-
     this.chats.unshift(newChat); 
-
     this.$emit("chatSelected", newChat);
-
-      this.showUserList = false;
+    this.showUserList = false;
     } catch (error) {
       console.error("Errore nell'iniziare la chat:", error);
       alert("Errore: impossibile iniziare la conversazione.");
     }
+  },
+
+  handleConversationDeleted(conversationId) {
+    this.chats = this.chats.filter(chat => chat.conversation_id !== conversationId);
   }
 },
-
   created() {
     this.fetchChats();
-  }
+  },
 };
 </script>
 
