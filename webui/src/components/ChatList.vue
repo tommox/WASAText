@@ -57,15 +57,17 @@ export default {
   },
   computed: {
     filteredChats() {
-      return this.chats.filter(chat => chat.conversation_id.toString().includes(this.search.toLowerCase()));
-    },
+      return this.chats.filter(chat => 
+        chat.conversation_id.toString().includes(this.search.toLowerCase()) || 
+        chat.name.toLowerCase().includes(this.search.toLowerCase()));
+      },
     filteredUsers() {
       return this.users.filter(user => user.Nickname.toLowerCase().includes(this.userSearch.toLowerCase()));
     }
   },
   methods: {
     async fetchChats() {
-    const token = localStorage.getItem("token"); // ID utente loggato
+    const token = localStorage.getItem("token");
     if (!token) return;
 
     try {
