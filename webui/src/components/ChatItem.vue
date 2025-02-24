@@ -11,6 +11,7 @@
 <script>
 import defaultAvatar from "@/assets/images/user.png";
 import axios from "axios";
+import eventBus from "@/eventBus";
 
 export default {
   props: { chat: Object },
@@ -20,6 +21,23 @@ export default {
       lastMessage: "Nessun messaggio"
     };
   },
+
+  created() {
+    this.fetchUserPhoto();
+    this.fetchLastMessage();
+
+    // 🔥 Ascolta l'evento di nuovo messaggio
+    eventBus.on("newMessage", (data) => {
+      if (data.conversation_id === this.chat.conversation_id) {
+        this.lastMessage = data.lastMessage;
+      }
+    });
+  },
+  beforeUnmount() {
+    // 🔥 Rimuoviamo l'evento per evitare memory leaks
+    eventBus.off("newMessage");
+  },
+  
   watch: {
     chat: {
       immediate: true,

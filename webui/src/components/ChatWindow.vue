@@ -53,6 +53,7 @@
 <script>
 import axios from "axios";
 import defaultAvatar from "@/assets/images/user.png";
+import eventBus from "@/eventBus";
 
 export default {
   props: { chat: Object },
@@ -75,6 +76,7 @@ export default {
           headers: { Authorization: `Bearer ${token}` }
         });
 
+        eventBus.emit("conversationDeleted", this.chat.conversation_id);
         this.$emit("conversationDeleted", this.chat.conversation_id);
       } catch (error) {
         console.error("Errore nell'eliminazione della conversazione:", error);
@@ -159,8 +161,13 @@ export default {
             timestamp: new Date()
           });
           
-          this.newMessage = "";
           this.scrollToBottom();
+
+          eventBus.emit("newMessage", {
+            conversation_id: this.chat.conversation_id,
+            lastMessage: this.newMessage
+          })
+          this.newMessage = "";
         } catch (error) {
           console.error("Errore nell'invio del messaggio:", error);
         }

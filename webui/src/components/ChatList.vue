@@ -42,6 +42,7 @@
 <script>
 import ChatItem from "./ChatItem.vue";
 import axios from "axios";
+import eventBus from "@/eventBus";
 
 export default {
   emits: ["chatSelected"],
@@ -54,6 +55,18 @@ export default {
       showUserList: false,
       userSearch: ""
     };
+  },
+  created() {
+    this.fetchChats();
+    // 🔥 Ascolta l'evento di eliminazione della conversazione
+    eventBus.on("conversationDeleted", (conversationId) => {
+      this.chats = this.chats.filter(chat => chat.conversation_id !== conversationId);
+    });
+  },
+
+  beforeUnmount() {
+    // 🔥 Rimuoviamo l'evento per evitare memory leaks
+    eventBus.off("conversationDeleted");
   },
   computed: {
     filteredChats() {
@@ -88,14 +101,14 @@ export default {
           recipient_id: recipientId,
           name: recipient ? recipient.Nickname : "Utente Sconosciuto",
           avatarUrl: recipient ? `${__API_URL__}/users/${recipientId}/photo` : defaultAvatar
-        };
-      });
-      console.log("Chats: ",this.chats);
+          };
+        });
+        console.log("Chats: ",this.chats);
 
-    } catch (error) {
-      console.error("Errore nel recupero delle conversazioni:", error);
-    }
-  },
+      } catch (error) {
+        console.error("Errore nel recupero delle conversazioni:", error);
+      }
+    },
 
     async fetchUsers() {
       const token = localStorage.getItem("token");
@@ -133,22 +146,19 @@ export default {
       name: user.Nickname,
       avatar: user.Avatar || null,
       lastMessage: "",
-    };
-    this.chats.unshift(newChat); 
-    this.$emit("chatSelected", newChat);
-    this.showUserList = false;
-    } catch (error) {
-      console.error("Errore nell'iniziare la chat:", error);
-      alert("Errore: impossibile iniziare la conversazione.");
-    }
-  },
+      };
+      this.chats = [...this.chats, newChat];
+      this.$emit("chatSelected", newChat);
+      this.showUserList = false;
+      } catch (error) {
+        console.error("Errore nell'iniziare la chat:", error);
+        alert("Errore: impossibile iniziare la conversazione.");
+      }
+    },
 
   handleConversationDeleted(conversationId) {
     this.chats = this.chats.filter(chat => chat.conversation_id !== conversationId);
-  }
-},
-  created() {
-    this.fetchChats();
+    }
   },
 };
 </script>
