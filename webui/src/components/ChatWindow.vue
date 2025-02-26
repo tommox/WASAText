@@ -24,7 +24,16 @@
           :class="message.sender === 'me' ? 'bg-blue-500 text-black self-end' : 'bg-gray-200 self-start'">
           <div class="flex items-end">
             <span>{{ message.text }}</span>
-            <span class="message-time">{{ formatTime(message.timestamp) }}</span>
+            <div class="message-time" @click="openMenu">{{formatTime(message.timestamp)}}</div>
+            <div v-if="showOptions" class="modal-overlay">
+              <div class="modal-content">
+                <h2>Seleziona un opzione</h2>
+                <div class="option-list">
+                  <div class="option-item" @click="deleteMessage(message.id)">Elimina</div>
+                </div>
+                <button @click="showOptions = false" class="cancel-btn">Chiudi</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -62,10 +71,15 @@ export default {
       newMessage: "",
       messages: [],
       loading: true,
-      avatarUrl: defaultAvatar
+      avatarUrl: defaultAvatar,
+      showOptions: false
     };
   },
   methods: {
+
+    async openMenu(){
+      this.showOptions = true;
+    },
 
     async deleteConversation() {
       if (!this.chat || !this.chat.conversation_id) return;
@@ -174,6 +188,20 @@ export default {
       }
     },
 
+    async deleteMessage(message_id) {
+      if (!message_id) return;
+
+      const token = localStorage.getItem("token");
+      try {
+        await axios.delete(`${__API_URL__}/messages/${message_id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        this.messages = this.messages.filter(msg => msg.id !== message_id);
+      } catch (error) {
+        console.error("Errore nell'eliminazione del messaggio:", error);
+      }
+    },
+
     formatTime(timestamp) {
       if (!timestamp) return "";
       const date = new Date(timestamp);
@@ -271,7 +299,6 @@ export default {
 .message-time {
   font-size: 10px;
   color: gray;
-  margin-left: 8px;
   white-space: nowrap;
 }
 
@@ -372,4 +399,60 @@ button:hover {
   justify-content: flex-start;
 }
 
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  width: 90%;
+  max-width: 400px;
+}
+
+.option-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border-top: 1px solid #ddd;
+  margin-top: 10px;
+}
+
+.option-item {
+  padding: 15px;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+  transition: background 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: black;
+}
+
+.option-item:hover {
+  background: #f0f0f0;
+}
+
+.cancel-btn {
+  background-color: #069327;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.cancel-btn:hover {
+  background-color: #069327;
+}
 </style>
