@@ -23,18 +23,14 @@ export default {
   },
 
   created() {
-    this.fetchUserPhoto();
-    this.fetchLastMessage();
-
-    // 🔥 Ascolta l'evento di nuovo messaggio
     eventBus.on("newMessage", (data) => {
       if (data.conversation_id === this.chat.conversation_id) {
         this.lastMessage = data.lastMessage;
       }
     });
   },
+
   beforeUnmount() {
-    // 🔥 Rimuoviamo l'evento per evitare memory leaks
     eventBus.off("newMessage");
   },
   
@@ -78,10 +74,10 @@ export default {
       }
       try {
         const response = await axios.get(`${__API_URL__}/messages/${this.chat.last_message_id}/details`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    });
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
         if (response.data && response.data.message_content) {
           this.lastMessage = response.data.message_content;
         } else {

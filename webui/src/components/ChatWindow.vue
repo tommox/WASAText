@@ -197,6 +197,12 @@ export default {
           headers: { Authorization: `Bearer ${token}` }
         });
         this.messages = this.messages.filter(msg => msg.id !== message_id);
+        this.showOptions = false;
+        const lastMessage = this.messages.length > 0 ? this.messages[this.messages.length - 1].text : "Nessun messaggio";
+        eventBus.emit("newMessage", {
+          conversation_id: this.chat.conversation_id,
+          lastMessage: lastMessage
+        });
       } catch (error) {
         console.error("Errore nell'eliminazione del messaggio:", error);
       }
