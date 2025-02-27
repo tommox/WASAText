@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -32,6 +33,7 @@ func (rt *_router) deleteMessageHandler(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
+	fmt.Println(userId)
 	// Verifica i permessi
 	hasPermission, err := rt.db.CheckUserPermission(userId, messageId)
 	if err != nil {

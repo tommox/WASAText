@@ -192,6 +192,7 @@ export default {
       if (!message_id) return;
 
       const token = localStorage.getItem("token");
+      console.log("msg_id: ",message_id);
       try {
         await axios.delete(`${__API_URL__}/messages/${message_id}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -204,7 +205,11 @@ export default {
           lastMessage: lastMessage
         });
       } catch (error) {
-        console.error("Errore nell'eliminazione del messaggio:", error);
+        if (error.response && error.response.status === 403) {
+          console.warn("Non è possibile eliminare il messaggio in quanto non sei il sender.");
+        } else {
+          console.error("Errore nell'eliminazione del messaggio:", error);
+        }
       }
     },
 

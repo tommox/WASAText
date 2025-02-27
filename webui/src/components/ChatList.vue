@@ -58,14 +58,12 @@ export default {
   },
   created() {
     this.fetchChats();
-    // 🔥 Ascolta l'evento di eliminazione della conversazione
     eventBus.on("conversationDeleted", (conversationId) => {
       this.chats = this.chats.filter(chat => chat.conversation_id !== conversationId);
     });
   },
 
   beforeUnmount() {
-    // 🔥 Rimuoviamo l'evento per evitare memory leaks
     eventBus.off("conversationDeleted");
   },
   computed: {
@@ -90,6 +88,7 @@ export default {
       const userResponse = await axios.get(`${__API_URL__}/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log("response: ",response,"userResponse: ",userResponse);
       const allUsers = userResponse.data;
       this.chats = response.data.map(chat => {
         // Determina chi è il destinatario (l'interlocutore)
