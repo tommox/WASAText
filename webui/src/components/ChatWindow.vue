@@ -24,12 +24,12 @@
           :class="message.sender === 'me' ? 'bg-blue-500 text-black self-end' : 'bg-gray-200 self-start'">
           <div class="flex items-end">
             <span>{{ message.text }}</span>
-            <div class="message-time" @click="openMenu(message.id)">{{formatTime(message.timestamp)}}</div>
+            <div class="message-time" @click="openMenu(message.id, message.sender)">{{formatTime(message.timestamp)}}</div>
             <div v-if="showOptions && selectedMessageId === message.id" class="modal-overlay">
               <div class="modal-content">
                 <h2>Seleziona un opzione</h2>
                 <div class="option-list">
-                  <div class="option-item" @click="deleteMessage(message.id)">Elimina</div>
+                  <div v-if="selectedMessageSender === 'me'" class="option-item" @click="deleteMessage()">Elimina</div>
                 </div>
                 <button @click="showOptions = false" class="cancel-btn">Chiudi</button>
               </div>
@@ -73,13 +73,15 @@ export default {
       loading: true,
       avatarUrl: defaultAvatar,
       showOptions: false,
-      selectedMessageId: ""
+      selectedMessageId: "",
+      selectedMessageSender: ""
     };
   },
   methods: {
 
-    async openMenu(messageId) {
+    async openMenu(messageId, messageSender) {
       this.selectedMessageId = messageId;  
+      this.selectedMessageSender = messageSender;
       this.showOptions = true;
     },
 
@@ -209,11 +211,7 @@ export default {
           lastMessage: lastMessage
         });
       } catch (error) {
-        if (error.response && error.response.status === 403) {
-          console.warn("Non è possibile eliminare il messaggio in quanto non sei il sender.");
-        } else {
           console.error("Errore nell'eliminazione del messaggio:", error);
-        }
       }
     },
 
