@@ -24,8 +24,8 @@
           :class="message.sender === 'me' ? 'bg-blue-500 text-black self-end' : 'bg-gray-200 self-start'">
           <div class="flex items-end">
             <span>{{ message.text }}</span>
-            <div class="message-time" @click="openMenu">{{formatTime(message.timestamp)}}</div>
-            <div v-if="showOptions" class="modal-overlay">
+            <div class="message-time" @click="openMenu(message.id)">{{formatTime(message.timestamp)}}</div>
+            <div v-if="showOptions && selectedMessageId === message.id" class="modal-overlay">
               <div class="modal-content">
                 <h2>Seleziona un opzione</h2>
                 <div class="option-list">
@@ -72,12 +72,14 @@ export default {
       messages: [],
       loading: true,
       avatarUrl: defaultAvatar,
-      showOptions: false
+      showOptions: false,
+      selectedMessageId: ""
     };
   },
   methods: {
 
-    async openMenu(){
+    async openMenu(messageId) {
+      this.selectedMessageId = messageId;  
       this.showOptions = true;
     },
 
@@ -188,16 +190,18 @@ export default {
       }
     },
 
-    async deleteMessage(message_id) {
-      if (!message_id) return;
-
+    async deleteMessage(selectedMessageId) {
+      if (!this.selectedMessageId) {
+        console.error("Errore: nessun messaggio selezionato per l'eliminazione.");
+        return;
+      }
       const token = localStorage.getItem("token");
-      console.log("msg_id: ",message_id);
       try {
-        await axios.delete(`${__API_URL__}/messages/${message_id}`, {
+        await axios.delete(`${__API_URL__}/messages/${selectedMessageId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        this.messages = this.messages.filter(msg => msg.id !== message_id);
+        this.messages = this.messages.filter(msg => msg.id !== this.selectedMessageId);
+        this.selectedMessageId = null;
         this.showOptions = false;
         const lastMessage = this.messages.length > 0 ? this.messages[this.messages.length - 1].text : "Nessun messaggio";
         eventBus.emit("newMessage", {
