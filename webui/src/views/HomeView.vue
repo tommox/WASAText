@@ -1,29 +1,32 @@
 <template>
-    <div class="container-fluid h-100 w-100 p-0">
-      <div class="left-panel">
-        <div class="user-profile">
-          <label class="profile-picture">
-            <img :src="userImage || defaultAvatar" alt="Foto Profilo" class="profile-img" />
-            <input type="file" @change="uploadProfilePicture" accept="image/*" class="upload-input" />
-          </label>
-          <span class="user-name">{{ nickname }}</span>
-          <button @click="logout" class="logout-btn">Logout</button>
+  <div class="container-fluid h-100 w-100 p-0">
+    <div class="left-panel">
+      <div class="user-profile">
+        <label class="profile-picture">
+          <img :src="userImage || defaultAvatar" alt="Foto Profilo" class="profile-img" />
+          <input type="file" @change="uploadProfilePicture" accept="image/*" class="upload-input" />
+        </label>
+        <div class="user-name-container" @click="editNickname">
+          <span v-if="!isEditing" class="user-name">{{ nickname }}</span>
+          <input v-else ref="editableNickname" v-model="editableNickname" class="user-name-input" @blur="saveNickname" @keyup.enter="saveNickname" />
         </div>
-        <ChatList @chatSelected="openChat" />
+        <button @click="logout" class="logout-btn">Logout</button>
       </div>
-      <div class="right-panel">
-        <template v-if="selectedChat">
-          <ChatWindow 
-            :chat="selectedChat"
-            @conversationDeleted="handleConversationDeleted"
-            @closeChat="selectedChat = null"/>
-        </template>
-        <template v-else>
-          <EmptyChat />
-        </template>
-      </div>
+      <ChatList @chatSelected="openChat" />
     </div>
-  </template>
+    <div class="right-panel">
+      <template v-if="selectedChat">
+        <ChatWindow 
+          :chat="selectedChat"
+          @conversationDeleted="handleConversationDeleted"
+          @closeChat="selectedChat = null"/>
+      </template>
+      <template v-else>
+        <EmptyChat />
+      </template>
+    </div>
+  </div>
+</template>
   
   <script>
   import axios from "axios";
@@ -39,6 +42,8 @@
         selectedChat: null,
         nickname: localStorage.getItem("nickname") || "Utente",
         userImage: localStorage.getItem("profileImage") || defaultAvatar,
+        editableNickname: "",
+        isEditing: false,
       };
     },
     methods: {
@@ -56,6 +61,35 @@
       logout() {
         this.$router.replace("/login");
       },
+
+      editNickname() {
+        this.editableNickname = this.nickname;
+        this.isEditing = true;
+        this.$nextTick(() => {
+          this.$refs.editableNickname.focus();
+        });
+      },
+
+      async saveNickname() {
+      if (this.editableNickname.trim() && this.editableNickname !== this.nickname) {
+        const token = localStorage.getItem("token");
+        try {
+          await axios.put(`${__API_URL__}/users/${token}`, {
+            nickname: this.editableNickname.trim()
+          }, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+          this.nickname = this.editableNickname.trim();
+          localStorage.setItem("nickname", this.nickname);
+        } catch (error) {
+          console.error("Errore nel salvataggio del nickname:", error);
+        }
+      }
+      this.isEditing = false;
+    },
 
       async uploadProfilePicture(event) {
         const file = event.target.files[0];
@@ -116,23 +150,23 @@
     display: flex;
     padding: 0;
     margin: 0;
-	overflow: hidden;
+	  overflow: hidden;
   }
   
   .left-panel {
-	width: 30%;
-	background: #ffffff;
-	border-right: 1px solid #ddd;
-	display: flex;
-	flex-direction: column; 
-	height: 100vh;
+    width: 30%;
+    background: #ffffff;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column; 
+    height: 100vh;
   }
 
   .chat-list-container {
-  flex-grow: 1; 
-  overflow-y: auto;
-  background-color: #f0f0f0;
-}
+    flex-grow: 1; 
+    overflow-y: auto;
+    background-color: #f0f0f0;
+  }
   
   .right-panel {
     width: 70%;
@@ -153,28 +187,28 @@
   }
   
   .profile-picture {
-	position: relative;
-	width: 50px;
-	height: 50px;
-	border-radius: 50%;
-	overflow: hidden;
-	margin-right: 10px;
-	border: 2px solid transparent; 
-	transition: border-color 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
   }
 
   .profile-picture:hover {
-	border-color: #069327; 
+    border: 2px solid #069327; 
   }
 
   .upload-input {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	opacity: 0;
-	cursor: pointer;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
   }
   
   .profile-img {
@@ -197,5 +231,33 @@
     cursor: pointer;
     padding: 10px 15px;
   }
+
+  .user-name-container {
+    margin-left: 15px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    min-width: 150px;
+    max-width: 200px;
+  }
+
+  .user-name {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+  }
+
+  .user-name-input {
+    min-width: 120px;
+    width: auto;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    border: none;
+    background: transparent;
+    outline: none;
+    text-align: left;
+  }
+  
   </style>
   
