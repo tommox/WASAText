@@ -29,7 +29,7 @@
               <div class="modal-content">
                 <h2>Seleziona un opzione</h2>
                 <div class="option-list">
-                  <div v-if="selectedMessageSender === 'me'" class="option-item" @click="deleteMessage()">Elimina</div>
+                  <div v-if="selectedMessageSender === 'me'" class="option-item" @click="deleteMessage(selectedMessageId)">Elimina</div>
                 </div>
                 <button @click="showOptions = false" class="cancel-btn">Chiudi</button>
               </div>
