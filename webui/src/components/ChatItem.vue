@@ -114,9 +114,19 @@ export default {
   font-size: 16px;
 }
 
+.chat-details {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-width: 0; 
+}
+
 .chat-last-message {
-  color: #666;
-  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-grow: 1;
+  min-width: 0;
 }
 
 .chat-item:hover {

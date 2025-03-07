@@ -303,6 +303,10 @@ export default {
   margin-bottom: 45px; 
   flex-grow: 1;
   overflow-y: auto;
+  word-wrap: break-word; 
+  word-break: break-word;
+  overflow-wrap: break-word; 
+  white-space: pre-wrap;
 }
 
 .p-3 {
@@ -340,14 +344,8 @@ export default {
   box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.bg-blue-500 {
+.bg-blue-500, .bg-gray-200 {
   background-color: #dcf8c6;
-  color: black;
-  border-radius: 16px;
-}
-
-.bg-gray-200 {
-  background-color: white;
   color: black;
   border-radius: 16px;
 }
