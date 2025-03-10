@@ -7,7 +7,7 @@
         placeholder="Cerca chat" 
         class="search-input flex-grow px-4 py-2 border rounded-lg"
       />
-      <button @click="fetchUsers" class="new-chat-btn">➕</button>
+      <button @click="showChatOptions = true" class="new-chat-btn">➕</button>
     </div>
 
     <div class="chat-list">
@@ -20,6 +20,19 @@
     </div>
   </div>
 
+  <!-- Modale per la selezione tra Nuova Chat e Nuovo Gruppo -->
+  <div v-if="showChatOptions" class="modal-overlay">
+    <div class="modal-content">
+      <h2>Seleziona un'opzione</h2>
+        <div class="user-list">
+          <div @click="fetchUsers" class="user-item">Nuova Chat</div>
+        <div @click="fetchGroupUsers" class="user-item">Nuovo Gruppo</div>
+      </div>
+      <button @click="showChatOptions = false" class="cancel-btn">Chiudi</button>
+    </div>
+  </div>
+
+  <!-- Modale per la lista utenti -->
   <div v-if="showUserList" class="modal-overlay">
     <div class="modal-content">
       <h2>Seleziona un utente</h2>
@@ -37,7 +50,30 @@
       <button @click="showUserList = false" class="cancel-btn">Chiudi</button>
     </div>
   </div>
+
+    <!-- Modale per la creazione del gruppo -->
+    <div v-if="showGroupUserList" class="modal-overlay">
+    <div class="modal-content">
+      <h2>Crea un nuovo gruppo</h2>
+      <input v-model="groupName" type="text" placeholder="Nome del gruppo" class="modal-input" />
+      <div class="user-list">
+        <div 
+          v-for="user in filteredUsers" 
+          :key="user.id" 
+          class="user-item"
+          :class="{ 'selected': selectedUsers.includes(user.User_id) }"
+          @click="toggleUserSelection(user.User_id)"
+        >
+          {{ user.Nickname }}
+        </div>
+      </div>
+      <button @click="createGroup" class="confirm-btn" :disabled="!canCreateGroup">Crea</button>
+      <button @click="closeGroupUserList" class="cancel-btn">Chiudi</button>
+    </div>
+  </div>
 </template>
+
+
 
 <script>
 import ChatItem from "./ChatItem.vue";
@@ -53,7 +89,12 @@ export default {
       chats: [],
       users: [],
       showUserList: false,
-      userSearch: ""
+      showGroupUserList: false,
+      showChatOptions: false,
+      userSearch: "",
+      chatOptionSearch: "",
+      groupName: "",
+      selectedUsers: []
     };
   },
   created() {
@@ -74,9 +115,33 @@ export default {
       },
     filteredUsers() {
       return this.users.filter(user => user.Nickname.toLowerCase().includes(this.userSearch.toLowerCase()));
+    },
+    canCreateGroup() {
+      return this.groupName.trim() !== "" && this.selectedUsers.length > 0;
     }
   },
   methods: {
+
+    async fetchGroupUsers() {
+      this.showChatOptions = false;
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`${__API_URL__}/users`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (Array.isArray(response.data)) {
+          this.users = response.data.filter(user => user.User_id.toString() !== token);
+        } else {
+          this.users = [];
+        }
+        this.showGroupUserList = true; // Mostra la modale solo dopo aver caricato gli utenti
+      } catch (error) {
+        console.error("Errore nel recupero degli utenti per il gruppo:", error);
+        alert("Errore nel recupero degli utenti.");
+      }
+    },
+
+
     async fetchChats() {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -88,7 +153,6 @@ export default {
       const userResponse = await axios.get(`${__API_URL__}/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log("response: ",response,"userResponse: ",userResponse);
       const allUsers = userResponse.data;
       this.chats = response.data.map(chat => {
         // Determina chi è il destinatario (l'interlocutore)
@@ -155,8 +219,45 @@ export default {
       }
     },
 
-  handleConversationDeleted(conversationId) {
-    this.chats = this.chats.filter(chat => chat.conversation_id !== conversationId);
+    toggleUserSelection(userId) {
+      if (this.selectedUsers.includes(userId)) {
+        this.selectedUsers = this.selectedUsers.filter(id => id !== userId);
+      } else {
+        this.selectedUsers.push(userId);
+      }
+    },
+
+    async createGroup() {
+      if (!this.groupName || this.selectedUsers.length === 0) {
+        alert("Inserisci un nome e seleziona almeno un utente.");
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.post(`${__API_URL__}/groups`, {
+          name: this.groupName,
+          members: this.selectedUsers
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        console.log("Gruppo creato:", response.data);
+        this.showGroupUserList = false;
+      } catch (error) {
+        console.error("Errore nella creazione del gruppo:", error);
+      }
+    },
+
+    closeGroupUserList() {
+      this.selectedUsers = [];
+      this.groupName = "";
+      this.showGroupUserList = false;
+      this.showChatOptions = true;
+    },
+
+    handleConversationDeleted(conversationId) {
+      this.chats = this.chats.filter(chat => chat.conversation_id !== conversationId);
     }
   },
 };
@@ -197,6 +298,10 @@ export default {
 .logout-btn:active {
   transform: translateY(0);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.selected {
+  background-color: lightgreen !important;
 }
 
 .search-input {
@@ -294,6 +399,21 @@ export default {
 
 .user-item:hover {
   background: #f0f0f0;
+}
+
+.confirm-btn {
+  background-color: #069327;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.confirm-btn:disabled {
+  background-color: grey !important;
+  cursor: not-allowed;
 }
 
 .cancel-btn {
