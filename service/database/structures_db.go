@@ -62,6 +62,7 @@ type Conversation struct {
 type GroupConversation struct {
 	GroupConversation_id int       `json:"group_conversation_id"`
 	Group_id             int       `json:"group_id"`
+	GroupName            string    `json:"group_name"`
 	Sender_id            int       `json:"sender_id"`
 	LastMessage_id       int       `json:"last_message_id"`
 	LastMessageTimestamp time.Time `json:"last_message_timestamp"`

@@ -25,7 +25,7 @@ func (db *appdbimpl) CreateGroupMessage(groupId int, senderId int, messageConten
 	}
 
 	// Aggiorna la conversazione di gruppo
-	err = db.updateOrCreateGroupConversation(groupId, senderId, int(messageId), time.Now())
+	err = db.updateOrCreateGroupConversation(groupId, groupId, senderId, int(messageId), time.Now())
 	if err != nil {
 		return 0, fmt.Errorf("CreateGroupMessage: failed to update group conversation: %w", err)
 	}

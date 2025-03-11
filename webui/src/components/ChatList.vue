@@ -79,6 +79,7 @@
 import ChatItem from "./ChatItem.vue";
 import axios from "axios";
 import eventBus from "@/eventBus";
+import defaultAvatar from "@/assets/images/user.png";
 
 export default {
   emits: ["chatSelected"],
@@ -99,6 +100,7 @@ export default {
   },
   created() {
     this.fetchChats();
+    console.log("chats: ", this.chats);
     eventBus.on("conversationDeleted", (conversationId) => {
       this.chats = this.chats.filter(chat => chat.conversation_id !== conversationId);
     });
@@ -134,7 +136,7 @@ export default {
         } else {
           this.users = [];
         }
-        this.showGroupUserList = true; // Mostra la modale solo dopo aver caricato gli utenti
+        this.showGroupUserList = true; 
       } catch (error) {
         console.error("Errore nel recupero degli utenti per il gruppo:", error);
         alert("Errore nel recupero degli utenti.");
@@ -143,35 +145,48 @@ export default {
 
 
     async fetchChats() {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        try {
+          const response = await axios.get(`${__API_URL__}/conversations`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const userResponse = await axios.get(`${__API_URL__}/users`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const allUsers = userResponse.data;
+          // Conversazioni private
+          const privateChats = response.data.private_conversations || [];
+          const mappedPrivateChats = privateChats.map(chat => {
+            const isCurrentUserSender = chat.sender_id === parseInt(token);
+            const recipientId = isCurrentUserSender ? chat.recipient_id : chat.sender_id;
+            const recipient = allUsers.find(user => user.User_id === recipientId);
+            return {
+              conversation_id: chat.conversation_id,
+              name: recipient ? recipient.Nickname : "Utente Sconosciuto",
+              avatarUrl: recipient ? `${__API_URL__}/users/${recipientId}/photo` : defaultAvatar,
+              lastMessage: chat.last_message_id ? `${chat.last_message_id}` : "Nessun messaggio",
+              isGroup: false
+            };
+          });
+          // Conversazioni di gruppo
+          const groupChats = response.data.group_conversations || [];
+          const mappedGroupChats = groupChats.map(chat => {
+            return {
+              conversation_id: chat.group_conversation_id,
+              name: chat.group_name || "Gruppo Sconosciuto",
+              avatarUrl: defaultAvatar, 
+              lastMessage: chat.last_message_id ? `${chat.last_message_id}` : "Nessun messaggio",
+              isGroup: true
+            };
+          });
+          // Uniamo le conversazioni private e di gruppo
+          this.chats = [...mappedPrivateChats, ...mappedGroupChats];
+        } catch (error) {
+          console.error("Errore nel recupero delle conversazioni:", error);
+        }
+      },
 
-    try {
-      const response = await axios.get(`${__API_URL__}/conversations`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const userResponse = await axios.get(`${__API_URL__}/users`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const allUsers = userResponse.data;
-      this.chats = response.data.map(chat => {
-        // Determina chi è il destinatario (l'interlocutore)
-        const isCurrentUserSender = chat.sender_id === parseInt(token);
-        const recipientId = isCurrentUserSender ? chat.recipient_id : chat.sender_id;
-        const recipient = allUsers.find(user => user.User_id === recipientId);
-        return {
-          ...chat,
-          recipient_id: recipientId,
-          name: recipient ? recipient.Nickname : "Utente Sconosciuto",
-          avatarUrl: recipient ? `${__API_URL__}/users/${recipientId}/photo` : defaultAvatar
-          };
-        });
-        console.log("Chats: ",this.chats);
-
-      } catch (error) {
-        console.error("Errore nel recupero delle conversazioni:", error);
-      }
-    },
 
     async fetchUsers() {
       const token = localStorage.getItem("token");
@@ -228,22 +243,24 @@ export default {
     },
 
     async createGroup() {
-      if (!this.groupName || this.selectedUsers.length === 0) {
-        alert("Inserisci un nome e seleziona almeno un utente.");
-        return;
-      }
+      if (!this.canCreateGroup) return;
 
       try {
         const token = localStorage.getItem("token");
         const response = await axios.post(`${__API_URL__}/groups`, {
-          name: this.groupName,
-          members: this.selectedUsers
+          group_name: this.groupName // Cambiato da name a group_name
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        console.log("Gruppo creato:", response.data);
-        this.showGroupUserList = false;
+        const newGroup = {
+          conversation_id: response.data.group_id, 
+          name: this.groupName,
+          avatarUrl: "default_group_avatar.png",
+          lastMessage: ""
+        };
+        this.chats.push(newGroup);
+        this.closeGroupUserList();
       } catch (error) {
         console.error("Errore nella creazione del gruppo:", error);
       }

@@ -6,7 +6,7 @@ import (
 )
 
 // GetUserConversations recupera sia le conversazioni private che quelle di gruppo di un utente.
-func (db *appdbimpl) GetUserConversations(userId int) ([]interface{}, error) {
+func (db *appdbimpl) GetUserConversations(userId int) (map[string]interface{}, error) {
 	// Recupera le conversazioni private tra utenti
 	queryUserConversations := `
 		SELECT Conversation_id, Sender_id, Recipient_id, LastMessage_id, LastMessageTimestamp
@@ -43,27 +43,27 @@ func (db *appdbimpl) GetUserConversations(userId int) ([]interface{}, error) {
 		if lastMessageID.Valid {
 			conv.LastMessage_id = int(lastMessageID.Int64)
 		} else {
-			conv.LastMessage_id = 0 // Oppure un valore che indica "nessun messaggio"
+			conv.LastMessage_id = 0
 		}
 
 		// Gestiamo il valore NULL per LastMessageTimestamp
 		if lastMessageTimestamp.Valid {
 			conv.LastMessageTimestamp = lastMessageTimestamp.Time
 		} else {
-			conv.LastMessageTimestamp = sql.NullTime{}.Time // Impostiamo un timestamp di default
+			conv.LastMessageTimestamp = sql.NullTime{}.Time
 		}
 
 		userConversations = append(userConversations, conv)
 	}
 
-	// Recupera le conversazioni di gruppo
+	// Recupera le conversazioni di gruppo in cui l'utente è membro
 	queryGroupConversations := `
-		SELECT GroupConversation_id, Group_id, LastMessage_id, LastMessageTimestamp
-		FROM GroupConversations
-		WHERE Group_id IN (
-			SELECT Group_id FROM GroupMembers WHERE User_id = ?
-		)
-		ORDER BY LastMessageTimestamp DESC;
+		SELECT gc.GroupConversation_id, gc.Group_id, g.Group_name, gc.LastMessage_id, gc.LastMessageTimestamp
+		FROM GroupConversations gc
+		INNER JOIN GroupMembers gm ON gc.Group_id = gm.Group_id
+		INNER JOIN Groups g ON gc.Group_id = g.Group_id
+		WHERE gm.User_id = ?
+		ORDER BY gc.LastMessageTimestamp DESC;
 	`
 
 	groupRows, err := db.c.Query(queryGroupConversations, userId)
@@ -78,10 +78,12 @@ func (db *appdbimpl) GetUserConversations(userId int) ([]interface{}, error) {
 		var groupConv GroupConversation
 		var lastMessageID sql.NullInt64
 		var lastMessageTimestamp sql.NullTime
+		var groupName string
 
 		err := groupRows.Scan(
 			&groupConv.GroupConversation_id,
 			&groupConv.Group_id,
+			&groupName,
 			&lastMessageID,
 			&lastMessageTimestamp,
 		)
@@ -102,23 +104,15 @@ func (db *appdbimpl) GetUserConversations(userId int) ([]interface{}, error) {
 		} else {
 			groupConv.LastMessageTimestamp = sql.NullTime{}.Time
 		}
-
+		groupConv.GroupName = groupName
 		groupConversations = append(groupConversations, groupConv)
 	}
 
-	// Creiamo un array misto di conversazioni private e di gruppo
-	allConversations := make([]interface{}, 0, len(userConversations)+len(groupConversations))
-
-	// Aggiungiamo le conversazioni private
-	for _, conv := range userConversations {
-		allConversations = append(allConversations, conv)
+	// Creiamo una mappa per organizzare meglio i dati
+	result := map[string]interface{}{
+		"private_conversations": userConversations,
+		"group_conversations":   groupConversations,
 	}
 
-	// Aggiungiamo le conversazioni di gruppo
-	for _, groupConv := range groupConversations {
-		allConversations = append(allConversations, groupConv)
-	}
-
-	// Se non ci sono conversazioni, restituiamo un array vuoto
-	return allConversations, nil
+	return result, nil
 }

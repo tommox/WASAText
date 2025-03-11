@@ -69,7 +69,7 @@ type Conversation struct {
 
 // Conversation rappresenta una conversazione di un utente in un gruppo.
 type GroupConversation struct {
-	GroupConversation_id int       `json:"group_conversation_id"`
+	GroupConversation_id int       `json:"groupconversation_id"`
 	Group_id             int       `json:"group_id"`
 	Sender_id            int       `json:"sender_id"`
 	LastMessage_id       int       `json:"last_message_id"`

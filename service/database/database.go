@@ -74,12 +74,13 @@ type AppDatabase interface {
 	ChangeGroupName(groupId int, newGroupName string) error
 	UpdateGroupPhoto(groupId int, photoData []byte) error
 	CreateGroupMessage(groupId int, senderId int, messageContent string) (int, error)
+	updateOrCreateGroupConversation(groupconversation_id int, groupId int, senderId int, messageId int, timestamp time.Time) error
 
 	// Conversations
 	CheckConversationAccess(userId, conversationId int) (bool, bool, error)
 	GetConversationMessages(conversationId int) ([]Message, error)
 	GetGroupConversationMessages(groupConversationId int) ([]GroupMessage, error)
-	GetUserConversations(userId int) ([]interface{}, error)
+	GetUserConversations(userId int) (map[string]interface{}, error)
 	CheckExistingConversation(userId int, recipientId int) (int, error)
 	GetConversationIdByMessageId(messageId int) (int, error)
 	DeleteConversation(conversationId int) error
@@ -206,7 +207,8 @@ func New(db *sql.DB) (AppDatabase, error) {
 		// Creating DB for GroupConversation if not existing
 		groupConversations := `CREATE TABLE IF NOT EXISTS GroupConversations
 								   (GroupConversation_id INTEGER PRIMARY KEY AUTOINCREMENT,
-								    Group_id INTEGER NOT NULL,
+									Group_id INTEGER NOT NULL,
+									GroupName VAR CHAR(1000),
 									Sender_id INTEGER NOT NULL,
 									LastMessage_id INTEGER DEFAULT NULL,
 									LastMessageTimestamp DATETIME DEFAULT NULL,

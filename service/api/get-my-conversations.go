@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -27,6 +28,7 @@ func (rt *_router) getMyConversationsHandler(w http.ResponseWriter, r *http.Requ
 
 	// Ottieni le conversazioni
 	conversations, err := rt.db.GetUserConversations(userId)
+	fmt.Println("conversations: ", conversations)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		ctx.Logger.WithError(err).Error("getMyConversations: failed to retrieve conversations")

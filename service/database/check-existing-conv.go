@@ -10,7 +10,7 @@ func (db *appdbimpl) CheckExistingConversation(userId int, recipientId int) (int
     `
 	err := db.c.QueryRow(query, userId, recipientId, recipientId, userId).Scan(&conversationId)
 	if err != nil {
-		return 0, nil // Nessuna conversazione trovata
+		return 0, nil
 	}
 	return conversationId, nil
 }
