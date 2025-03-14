@@ -68,12 +68,13 @@ export default {
     },
     
     async fetchLastMessage() {
-      if (!this.chat || !this.chat.last_message_id) {
+      console.log("porcodio: ", this.chat);
+      if (!this.chat || !this.chat.lastMessage) {
         this.lastMessage = "Nessun messaggio";
         return;
       }
       try {
-        const response = await axios.get(`${__API_URL__}/messages/${this.chat.last_message_id}/details`, {
+        const response = await axios.get(`${__API_URL__}/messages/${this.chat.lastMessage}/details`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

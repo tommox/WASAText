@@ -164,7 +164,7 @@ export default {
               conversation_id: chat.conversation_id,
               name: recipient ? recipient.Nickname : "Utente Sconosciuto",
               avatarUrl: recipient ? `${__API_URL__}/users/${recipientId}/photo` : defaultAvatar,
-              lastMessage: chat.last_message_id ? `${chat.last_message_id}` : "Nessun messaggio",
+              lastMessage: chat.last_message_id ? parseInt(chat.last_message_id) : "Nessun messaggio",
               isGroup: false
             };
           });
@@ -175,7 +175,7 @@ export default {
               conversation_id: chat.group_conversation_id,
               name: chat.group_name || "Gruppo Sconosciuto",
               avatarUrl: defaultAvatar, 
-              lastMessage: chat.last_message_id ? `${chat.last_message_id}` : "Nessun messaggio",
+              lastMessage: chat.last_message_id ? parseInt(chat.last_message_id) : "Nessun messaggio",
               isGroup: true
             };
         });
