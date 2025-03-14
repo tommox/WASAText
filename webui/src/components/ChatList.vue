@@ -168,18 +168,21 @@ export default {
               isGroup: false
             };
           });
+
+          // sto usando la stessa chat attuale per il nuovo gruppo
+          
           // Conversazioni di gruppo
           const groupChats = response.data.group_conversations || [];
-          const mappedGroupChats = groupChats.map(chat => {
+          const mappedGroupChats = groupChats.map(groupchat => {
             return {
-              conversation_id: chat.group_conversation_id,
-              name: chat.group_name || "Gruppo Sconosciuto",
+              conversation_id: groupchat.group_conversation_id,
+              name: groupchat.group_name || "Gruppo Sconosciuto",
               avatarUrl: defaultAvatar, 
-              lastMessage: chat.last_message_id ? parseInt(chat.last_message_id) : "Nessun messaggio",
+              lastMessage: groupchat.last_message_id ? parseInt(groupchat.last_message_id) : "Nessun messaggio",
               isGroup: true
             };
         });
-        // Uniamo le conversazioni private e di gruppo
+        // Uniamo le conversazioni private e di gruppo (devono essere distinte però)
         this.chats = [...mappedPrivateChats, ...mappedGroupChats];
     } catch (error) {
         console.error("Errore nel recupero delle conversazioni:", error);
@@ -275,7 +278,7 @@ export default {
       this.selectedUsers = [];
       this.groupName = "";
       this.showGroupUserList = false;
-      this.showChatOptions = true;
+      this.showChatOptions = false;
     },
 
     handleConversationDeleted(conversationId) {
