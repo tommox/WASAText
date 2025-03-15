@@ -2,7 +2,7 @@
   <div class="chat-item" @click="$emit('selectChat', chat)">
     <img :src="avatarUrl" alt="Avatar" class="profile-img" />
     <div class="chat-details">
-      <div class="chat-name">{{ chat.name }}</div>
+      <div class="chat-name">{{ chatName }}</div>
       <div class="chat-last-message">{{ lastMessage || 'Nessun messaggio' }}</div>
     </div>
   </div>
@@ -14,7 +14,7 @@ import axios from "axios";
 import eventBus from "@/eventBus";
 
 export default {
-  props: { chat: Object },
+  props: { chat: Object, type: String }, // Aggiunto il tipo di chat (private/group)
   data() {
     return {
       avatarUrl: defaultAvatar,
@@ -24,29 +24,48 @@ export default {
 
   created() {
     eventBus.on("newMessage", (data) => {
-      if (data.conversation_id === this.chat.conversation_id) {
+      if (this.type === "private" && data.conversation_id === this.chat.conversation_id) {
+        this.lastMessage = data.lastMessage;
+      } else if (this.type === "group" && data.conversation_id === this.chat.group_conversation_id) {
         this.lastMessage = data.lastMessage;
       }
     });
+
+    if (this.type === "private") {
+      this.fetchLastMessage();
+    } else if (this.type === "group") {
+      this.fetchLastMessageGroup();
+    }
   },
 
   beforeUnmount() {
     eventBus.off("newMessage");
   },
-  
+
+  computed: {
+    chatName() {
+      return this.type === "private" ? this.chat.name : this.chat.group_name;
+    }
+  },
+
   watch: {
     chat: {
       immediate: true,
       deep: true,
       handler() {
         this.fetchUserPhoto();
-        this.fetchLastMessage();
+        if (this.type === "private") {
+          this.fetchLastMessage();
+        } else if (this.type === "group") {
+          this.fetchLastMessageGroup();
+        }
       }
     }
   },
+
   methods: {
     async fetchUserPhoto() {
-      if (!this.chat || !this.chat.recipient_id) return;
+      if (!this.chat || this.type !== "private") return;
       this.avatarUrl = defaultAvatar;
       try {
         const response = await axios.get(`${__API_URL__}/users/${this.chat.recipient_id}/photo`, {
@@ -66,26 +85,41 @@ export default {
         this.avatarUrl = defaultAvatar;
       }
     },
-    
+
     async fetchLastMessage() {
-      console.log("porcodio: ", this.chat);
+      console.log("padre1: ", this.chat);
       if (!this.chat || !this.chat.lastMessage) {
         this.lastMessage = "Nessun messaggio";
         return;
       }
       try {
         const response = await axios.get(`${__API_URL__}/messages/${this.chat.lastMessage}/details`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
         if (response.data && response.data.message_content) {
           this.lastMessage = response.data.message_content;
-        } else {
-          this.lastMessage = "Nessun messaggio";
         }
       } catch (error) {
         console.error("Errore nel recupero dell'ultimo messaggio:", error);
+        this.lastMessage = "Nessun messaggio";
+      }
+    },
+
+    async fetchLastMessageGroup() {
+      console.log("padre2: ", this.chat);
+      if (!this.chat || !this.chat.group_lastMessage) {
+        this.lastMessage = "Nessun messaggio";
+        return;
+      }
+      try {
+        const response = await axios.get(`${__API_URL__}/group_messages/${this.chat.group_lastMessage}/details`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        if (response.data && response.data.message_content) {
+          this.lastMessage = response.data.message_content;
+        }
+      } catch (error) {
+        console.error("Errore nel recupero dell'ultimo messaggio del gruppo:", error);
         this.lastMessage = "Nessun messaggio";
       }
     }
@@ -132,9 +166,5 @@ export default {
 
 .chat-item:hover {
   background-color: #f0f0f0;
-}
-
-.no-hover:hover {
-  background-color: transparent; 
 }
 </style>

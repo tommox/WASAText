@@ -13,9 +13,17 @@
     <div class="chat-list">
       <ChatItem 
         v-for="chat in filteredChats" 
-        :key="chat.id" 
+        :key="'chat-' + chat.conversation_id" 
         :chat="chat" 
+        :type="'private'"
         @selectChat="$emit('chatSelected', chat)"
+      />
+      <ChatItem 
+        v-for="group in filteredGroupChats" 
+        :key="'group-' + group.group_conversation_id" 
+        :chat="group" 
+        :type="'group'"
+        @selectChat="$emit('chatSelected', group)"
       />
     </div>
   </div>
@@ -88,37 +96,48 @@ export default {
     return {
       search: "", 
       chats: [],
+      groupChats: [],
       users: [],
       showUserList: false,
       showGroupUserList: false,
       showChatOptions: false,
       userSearch: "",
-      chatOptionSearch: "",
       groupName: "",
       selectedUsers: []
     };
   },
   created() {
     this.fetchChats();
+    this.fetchGroupChats();
     eventBus.on("conversationDeleted", (conversationId) => {
       this.chats = this.chats.filter(chat => chat.conversation_id !== conversationId);
+      this.groupChats = this.groupChats.filter(chat => chat.g_conversation_id !== conversationId);
     });
   },
-
   beforeUnmount() {
     eventBus.off("conversationDeleted");
   },
   computed: {
     filteredChats() {
       return this.chats.filter(chat => 
-        chat.conversation_id.toString().includes(this.search.toLowerCase()) || 
-        chat.name.toLowerCase().includes(this.search.toLowerCase()));
-      },
+        chat.conversation_id?.toString().includes(this.search.toLowerCase()) || 
+        chat.name?.toLowerCase().includes(this.search.toLowerCase())
+      );
+    },
+    filteredGroupChats() {
+      return this.groupChats.filter(group => 
+        group.group_conversation_id?.toString().includes(this.search.toLowerCase()) || 
+        group.group_name?.toLowerCase().includes(this.search.toLowerCase())
+      );
+    },
     filteredUsers() {
       return this.users.filter(user => user.Nickname.toLowerCase().includes(this.userSearch.toLowerCase()));
     },
     canCreateGroup() {
       return this.groupName.trim() !== "" && this.selectedUsers.length > 0;
+    },
+    allChats() {
+      return [...this.filteredChats, ...this.filteredGroupChats];
     }
   },
   methods: {
@@ -144,50 +163,62 @@ export default {
 
 
     async fetchChats() {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      try {
         const response = await axios.get(`${__API_URL__}/conversations`, {
-            headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` }
         });
         const userResponse = await axios.get(`${__API_URL__}/users`, {
-            headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` }
         });
         const allUsers = userResponse.data;
-        // Conversazioni private
-        const privateChats = response.data.private_conversations || [];
-        const mappedPrivateChats = privateChats.map(chat => {
+        if (response.data && Array.isArray(response.data.private_conversations)) {
+          this.chats = response.data.private_conversations.map(chat => {
+            if (!chat.conversation_id) {
+              console.error("Conversazione senza ID:", chat);
+              return null;
+            }
             const isCurrentUserSender = chat.sender_id === parseInt(token);
             const recipientId = isCurrentUserSender ? chat.recipient_id : chat.sender_id;
             const recipient = allUsers.find(user => user.User_id === recipientId);
             return {
-              conversation_id: chat.conversation_id,
+              ...chat,
+              recipient_id: recipientId,
               name: recipient ? recipient.Nickname : "Utente Sconosciuto",
               avatarUrl: recipient ? `${__API_URL__}/users/${recipientId}/photo` : defaultAvatar,
               lastMessage: chat.last_message_id ? parseInt(chat.last_message_id) : "Nessun messaggio",
-              isGroup: false
             };
-          });
+          }).filter(chat => chat !== null);
+        } else {
+          console.error("Formato della risposta inatteso:", response.data);
+          this.chats = [];
+        }
+        console.log("Chats: ", this.chats);
+      } catch (error) {
+        console.error("Errore nel recupero delle conversazioni private:", error);
+      }
+    },
 
-          // sto usando la stessa chat attuale per il nuovo gruppo
-          
-          // Conversazioni di gruppo
-          const groupChats = response.data.group_conversations || [];
-          const mappedGroupChats = groupChats.map(groupchat => {
-            return {
-              conversation_id: groupchat.group_conversation_id,
-              name: groupchat.group_name || "Gruppo Sconosciuto",
-              avatarUrl: defaultAvatar, 
-              lastMessage: groupchat.last_message_id ? parseInt(groupchat.last_message_id) : "Nessun messaggio",
-              isGroup: true
-            };
+    async fetchGroupChats() {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      try {
+        const response = await axios.get(`${__API_URL__}/conversations`, {
+          headers: { Authorization: `Bearer ${token}` }
         });
-        // Uniamo le conversazioni private e di gruppo (devono essere distinte però)
-        this.chats = [...mappedPrivateChats, ...mappedGroupChats];
-    } catch (error) {
-        console.error("Errore nel recupero delle conversazioni:", error);
-    }
-},
+        if (response.data && Array.isArray(response.data.group_conversations)) {
+          this.groupChats = response.data.group_conversations.map(group => ({
+            group_conversation_id: group.group_conversation_id, 
+            group_name: group.group_name || "Gruppo Sconosciuto",
+            group_avatarUrl: `${__API_URL__}/groups/${group.group_id}/photo`,
+            group_last_message_id: group.last_message_id || "Nessun messaggio",
+          }));
+        }
+      } catch (error) {
+        console.error("Errore nel recupero delle conversazioni di gruppo:", error);
+      }
+    },
 
     async fetchUsers() {
       const token = localStorage.getItem("token");
