@@ -33,7 +33,7 @@ func (rt *_router) deleteConversationHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Verifica i permessi
-	hasAccess, isGroup, err := rt.db.CheckConversationAccess(userId, conversationId)
+	hasAccess, err := rt.db.CheckPrivateConversationAccess(userId, conversationId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		ctx.Logger.WithError(err).Error("deleteConversation: error checking permissions")
@@ -45,12 +45,14 @@ func (rt *_router) deleteConversationHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Se la conversazione è di gruppo, non permettiamo l'eliminazione diretta
-	if isGroup {
-		w.WriteHeader(http.StatusForbidden)
-		ctx.Logger.Error("deleteConversation: cannot delete a group conversation directly")
-		return
-	}
+	/*
+		// Se la conversazione è di gruppo, non permettiamo l'eliminazione diretta
+		if isGroup {
+			w.WriteHeader(http.StatusForbidden)
+			ctx.Logger.Error("deleteConversation: cannot delete a group conversation directly")
+			return
+		}
+	*/
 
 	// Elimina la conversazione dal database
 	err = rt.db.DeleteConversation(conversationId)

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -19,7 +18,6 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 		return
 	}
 
-	// Recupera l'ID dell'utente richiedente
 	userIdStr, err := extractBearerToken(r, w)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
@@ -34,47 +32,70 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 		return
 	}
 
-	// Recupera il conversationId associato al messaggio
-	conversationId, err := rt.db.GetConversationIdByMessageId(messageId)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+	// 🏷️ Controllo che il tipo sia valido
+	messageType := r.URL.Query().Get("type")
+	if messageType != "private" && messageType != "group" {
+		w.WriteHeader(http.StatusBadRequest)
+		ctx.Logger.WithError(errors.New("invalid message type")).Error("getMessage: invalid type parameter")
+		return
+	}
+
+	if messageType == "private" {
+		conversationId, err := rt.db.GetConversationIdByMessageId(messageId)
+		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
-		} else {
-			w.WriteHeader(http.StatusInternalServerError)
+			ctx.Logger.WithError(err).Error("getMessage: conversation not found")
+			return
 		}
-		ctx.Logger.WithError(err).Error("getMessage: error retrieving conversation ID")
-		return
-	}
 
-	// Verifica permessi
-	hasPermission, _, err := rt.db.CheckConversationAccess(userId, conversationId)
-	if err != nil {
-		ctx.Logger.WithError(err).Error("getMessage: error checking permissions")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	if !hasPermission {
-		w.WriteHeader(http.StatusForbidden)
-		ctx.Logger.WithError(errors.New("user not allowed to access message")).Error("getMessage: permission denied")
-		return
-	}
+		hasPermission, err := rt.db.CheckPrivateConversationAccess(userId, conversationId)
+		if err != nil || !hasPermission {
+			w.WriteHeader(http.StatusForbidden)
+			ctx.Logger.WithError(err).Error("getMessage: no access to private chat")
+			return
+		}
 
-	// Recupera il messaggio dal database
-	dbMsg, err := rt.db.GetMessage(messageId)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		dbMsg, err := rt.db.GetMessage(messageId)
+		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
-		} else {
-			w.WriteHeader(http.StatusInternalServerError)
+			ctx.Logger.WithError(err).Error("getMessage: message not found")
+			return
 		}
-		ctx.Logger.WithError(err).Error("getMessage: error retrieving message")
+
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(toDatabaseMessage(dbMsg))
 		return
 	}
 
-	// Converte in formato API
-	apiMsg := toDatabaseMessage(dbMsg)
+	if messageType == "group" {
+		groupConv, err := rt.db.GetGroupById(messageId)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			ctx.Logger.WithError(err).Error("getMessage: group not found")
+			return
+		}
 
-	// Invia la risposta al client
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(apiMsg)
+		isMember, err := rt.db.IsGroupMember(groupConv.Group_id, userId)
+		if err != nil || !isMember {
+			w.WriteHeader(http.StatusForbidden)
+			ctx.Logger.WithError(err).Error("getMessage: no access to group chat")
+			return
+		}
+
+		groupMessages, err := rt.db.GetGroupConversationMessages(groupConv.Group_id)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			ctx.Logger.WithError(err).Error("getMessage: error retrieving group messages")
+			return
+		}
+		if len(groupMessages) > 0 {
+			lastMessage := groupMessages[len(groupMessages)-1] // Ultimo messaggio
+			w.WriteHeader(http.StatusOK)
+			_ = json.NewEncoder(w).Encode(lastMessage)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "No messages found"})
+		}
+		return
+	}
 }

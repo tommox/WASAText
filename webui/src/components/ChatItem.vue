@@ -14,7 +14,7 @@ import axios from "axios";
 import eventBus from "@/eventBus";
 
 export default {
-  props: { chat: Object, type: String }, // Aggiunto il tipo di chat (private/group)
+  props: { chat: Object, type: String }, 
   data() {
     return {
       avatarUrl: defaultAvatar,
@@ -23,12 +23,12 @@ export default {
   },
 
   created() {
-    eventBus.on("newMessage", (data) => {
-      if (this.type === "private" && data.conversation_id === this.chat.conversation_id) {
-        this.lastMessage = data.lastMessage;
-      } else if (this.type === "group" && data.conversation_id === this.chat.group_conversation_id) {
-        this.lastMessage = data.lastMessage;
-      }
+  eventBus.on("newMessage", (data) => {
+    if (data.type === "private" && data.conversation_id === this.chat.conversation_id) {
+      this.lastMessage = data.lastMessage;
+    } else if (data.type === "group" && data.conversation_id === this.chat.group_conversation_id) {
+      this.lastMessage = data.lastMessage;
+    }
     });
 
     if (this.type === "private") {
@@ -87,13 +87,12 @@ export default {
     },
 
     async fetchLastMessage() {
-      console.log("padre1: ", this.chat);
       if (!this.chat || !this.chat.lastMessage) {
         this.lastMessage = "Nessun messaggio";
         return;
       }
       try {
-        const response = await axios.get(`${__API_URL__}/messages/${this.chat.lastMessage}/details`, {
+        const response = await axios.get(`${__API_URL__}/messages/${this.chat.lastMessage}?type=${this.type}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         if (response.data && response.data.message_content) {
@@ -106,13 +105,12 @@ export default {
     },
 
     async fetchLastMessageGroup() {
-      console.log("padre2: ", this.chat);
-      if (!this.chat || !this.chat.group_lastMessage) {
+      if (!this.chat || !this.chat.group_last_message_id) {
         this.lastMessage = "Nessun messaggio";
         return;
       }
       try {
-        const response = await axios.get(`${__API_URL__}/group_messages/${this.chat.group_lastMessage}/details`, {
+        const response = await axios.get(`${__API_URL__}/messages/${this.chat.group_last_message_id}?type=${this.type}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         if (response.data && response.data.message_content) {

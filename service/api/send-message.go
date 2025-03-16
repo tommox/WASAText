@@ -39,7 +39,7 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 	}
 
 	// Verifica l'accesso alla conversazione
-	hasAccess, _, err := rt.db.CheckConversationAccess(senderId, body.ConversationId)
+	hasAccess, err := rt.db.CheckPrivateConversationAccess(senderId, body.ConversationId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		ctx.Logger.WithError(err).Error("sendMessage: error checking conversation access")

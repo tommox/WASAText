@@ -194,7 +194,6 @@ export default {
           console.error("Formato della risposta inatteso:", response.data);
           this.chats = [];
         }
-        console.log("Chats: ", this.chats);
       } catch (error) {
         console.error("Errore nel recupero delle conversazioni private:", error);
       }

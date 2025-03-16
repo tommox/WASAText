@@ -44,7 +44,7 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 	}
 
 	// Verifica se l'utente può accedere alla conversazione
-	hasAccess, _, err := rt.db.CheckConversationAccess(userId, msg.Conversation_id)
+	hasAccess, err := rt.db.CheckPrivateConversationAccess(userId, msg.Conversation_id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		ctx.Logger.WithError(err).Error("forwardMessage: error checking conversation access")

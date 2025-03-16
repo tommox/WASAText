@@ -65,7 +65,7 @@ import defaultAvatar from "@/assets/images/user.png";
 import eventBus from "@/eventBus";
 
 export default {
-  props: { chat: Object },
+  props: { chat: Object ,type: String },
   data() {
     return { 
       newMessage: "",
@@ -77,6 +77,13 @@ export default {
       selectedMessageSender: ""
     };
   },
+
+  computed: {
+    chatName() {
+      return this.type === "private" ? this.chat.name : this.chat.group_name;
+    }
+  },
+
   methods: {
 
     async openMenu(messageId, messageSender) {
@@ -102,34 +109,69 @@ export default {
     },
 
     async fetchMessages() {
-    if (!this.chat || !this.chat.conversation_id) {
-      console.warn("fetchMessages: conversation_id is missing");
-      return;
-    }
-    const token = localStorage.getItem("token");
-    this.loading = true;
-    try {
-      const response = await axios.get(`${__API_URL__}/conversations/${this.chat.conversation_id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (Array.isArray(response.data)) {
-        this.messages = response.data.map(msg => ({
-          id: msg.message_id,
-          text: msg.message_content,
-          sender: msg.sender_id === Number(token) ? "me" : "other",
-          timestamp: new Date(msg.timestamp)
-        }));
-      } else {
-        this.messages = []; 
+      if (!this.chat) return;
+      this.loading = true;
+      try {
+        if (this.type === "private") {
+          await this.fetchPrivateMessages();
+        } else if (this.type === "group") {
+          await this.fetchGroupMessages();
+        }
+        this.scrollToBottom();
+      } catch (error) {
+        console.error("Errore nel caricamento dei messaggi:", error);
+      } finally {
+        this.loading = false;
       }
-      this.scrollToBottom();
-    } catch (error) {
-      console.error("Errore nel caricamento dei messaggi:", error);
-    } finally {
-      this.loading = false;
-    }
-  },
+    },
+
+    async fetchPrivateMessages() {
+      if (!this.chat.conversation_id) return;
+      const token = localStorage.getItem("token");
+
+      try {
+        const response = await axios.get(`${__API_URL__}/conversations/${this.chat.conversation_id}?type=${this.type}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log("resp priv: ", response);
+        if (Array.isArray(response.data)) {
+          this.messages = response.data.map(msg => ({
+            id: msg.message_id,
+            text: msg.message_content,
+            sender: msg.sender_id === Number(token) ? "me" : "other",
+            timestamp: new Date(msg.timestamp)
+          }));
+        } else {
+          this.messages = [];
+        }
+      } catch (error) {
+        console.error("Errore nel caricamento dei messaggi privati:", error);
+      }
+    },
+
+    async fetchGroupMessages() {
+      if (!this.chat.group_conversation_id) return;
+      const token = localStorage.getItem("token");
+
+      try {
+        const response = await axios.get(`${__API_URL__}/conversations/${this.chat.group_conversation_id}?type=${this.type}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log("resp group: ", response);
+        if (Array.isArray(response.data)) {
+          this.messages = response.data.map(msg => ({
+            id: msg.message_id,
+            text: msg.message_content,
+            sender: msg.sender_id === Number(token) ? "me" : "other",
+            timestamp: new Date(msg.timestamp)
+          }));
+        } else {
+          this.messages = [];
+        }
+      } catch (error) {
+        console.error("Errore nel caricamento dei messaggi del gruppo:", error);
+      }
+    },
 
     async fetchUserPhoto() {
       if (!this.chat || !this.chat.recipient_id) return;
@@ -183,7 +225,8 @@ export default {
 
           eventBus.emit("newMessage", {
             conversation_id: this.chat.conversation_id,
-            lastMessage: this.newMessage
+            lastMessage: this.newMessage,
+            type: this.type
           })
           this.newMessage = "";
         } catch (error) {

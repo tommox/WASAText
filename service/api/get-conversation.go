@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -11,7 +12,6 @@ import (
 )
 
 func (rt *_router) getConversationHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
-	// Estrai `Conversation_id` dal percorso
 	conversationId, err := strconv.Atoi(ps.ByName("Conversation_id"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -19,7 +19,6 @@ func (rt *_router) getConversationHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Estrai `User_id` dal token
 	userIdStr, err := extractBearerToken(r, w)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
@@ -34,33 +33,59 @@ func (rt *_router) getConversationHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Verifica i permessi dell'utente
-	hasAccess, isGroup, err := rt.db.CheckConversationAccess(userId, conversationId)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		ctx.Logger.WithError(err).Error("getConversation: error checking access")
-		return
-	}
-	if !hasAccess {
-		w.WriteHeader(http.StatusForbidden)
-		ctx.Logger.WithError(errors.New("user has no access")).Error("getConversation: user has no access to this conversation")
-		return
+	// 🏷️ Leggiamo il tipo di conversazione dal parametro GET
+	conversationType := r.URL.Query().Get("type")
+
+	fmt.Println("DEBUG: Richiesta per conversationId =", conversationId, "da userId =", userId, "Type:", conversationType) // Debug
+
+	// ⚡ Se è una conversazione di gruppo, controlliamo prima i gruppi
+	if conversationType == "group" {
+		isGroup, err := rt.db.CheckGroupConversationAccess(userId, conversationId)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			ctx.Logger.WithError(err).Error("getConversation: error checking group access")
+			return
+		}
+
+		if isGroup {
+			fmt.Println("DEBUG: È una conversazione di gruppo")
+			messages, err := rt.db.GetGroupConversationMessages(conversationId)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				ctx.Logger.WithError(err).Error("getConversation: failed to retrieve group messages")
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			_ = json.NewEncoder(w).Encode(messages)
+			return
+		}
 	}
 
-	// Recupera i messaggi della conversazione
-	var messages interface{}
-	if isGroup {
-		messages, err = rt.db.GetGroupConversationMessages(conversationId)
-	} else {
-		messages, err = rt.db.GetConversationMessages(conversationId)
-	}
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		ctx.Logger.WithError(err).Error("getConversation: failed to retrieve messages")
-		return
+	// ⚡ Se è una conversazione privata, controlliamo le chat normali
+	if conversationType == "private" {
+		isPrivate, err := rt.db.CheckPrivateConversationAccess(userId, conversationId)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			ctx.Logger.WithError(err).Error("getConversation: error checking private access")
+			return
+		}
+
+		if isPrivate {
+			fmt.Println("DEBUG: È una conversazione privata")
+			messages, err := rt.db.GetConversationMessages(conversationId)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				ctx.Logger.WithError(err).Error("getConversation: failed to retrieve private messages")
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			_ = json.NewEncoder(w).Encode(messages)
+			return
+		}
 	}
 
-	// Rispondi con i messaggi
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(messages)
+	// ❌ Se l'utente non ha accesso né alla chat privata né al gruppo
+	fmt.Println("DEBUG: Nessun accesso trovato")
+	w.WriteHeader(http.StatusForbidden)
+	ctx.Logger.WithError(errors.New("user has no access")).Error("getConversation: user has no access to this conversation")
 }

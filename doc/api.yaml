@@ -844,7 +844,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
-  /messages/{Message_id}/details:
+  /messages/{Message_id}:
     get:
       tags: ["messages"]
       summary: Get a message

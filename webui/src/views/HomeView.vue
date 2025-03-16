@@ -18,6 +18,7 @@
       <template v-if="selectedChat">
         <ChatWindow 
           :chat="selectedChat"
+          :type="selectedChatType"
           @conversationDeleted="handleConversationDeleted"
           @closeChat="selectedChat = null"/>
       </template>
@@ -40,6 +41,7 @@
     data() {
       return {
         selectedChat: null,
+        selectedChatType: "",
         nickname: localStorage.getItem("nickname") || "Utente",
         userImage: localStorage.getItem("profileImage") || defaultAvatar,
         editableNickname: "",
@@ -47,9 +49,15 @@
       };
     },
     methods: {
+
       openChat(chat) {
-        this.selectedChat = chat;
-      },
+      if (chat.conversation_id) {
+        this.selectedChatType = "private"; 
+      } else if (chat.group_conversation_id) {
+        this.selectedChatType = "group"; 
+      }
+      this.selectedChat = chat;
+    },
 
       handleConversationDeleted(conversationId) {
         if (this.selectedChat?.conversation_id === conversationId) {

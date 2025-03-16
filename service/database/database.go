@@ -77,7 +77,8 @@ type AppDatabase interface {
 	updateOrCreateGroupConversation(groupconversation_id int, groupId int, senderId int, messageId int, timestamp time.Time) error
 
 	// Conversations
-	CheckConversationAccess(userId, conversationId int) (bool, bool, error)
+	CheckPrivateConversationAccess(userId, conversationId int) (bool, error)
+	CheckGroupConversationAccess(userId, groupConversationId int) (bool, error)
 	GetConversationMessages(conversationId int) ([]Message, error)
 	GetGroupConversationMessages(groupConversationId int) ([]GroupMessage, error)
 	GetUserConversations(userId int) (map[string]interface{}, error)
