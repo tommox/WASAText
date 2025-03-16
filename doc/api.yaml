@@ -958,6 +958,88 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error500'
+      
+    delete:
+      tags: ["messages"]
+      summary: Delete a message
+      description: Delete a specific message
+      operationId: deleteMessage
+      parameters:
+        - name: Message_id
+          in: path
+          required: true
+          description: "The unique identifier of the message to be deleted."
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100000
+      responses:
+        '200':
+          description: Message deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Confirmation that the message has been deleted.
+                properties:
+                  success:
+                    type: boolean
+                    description: "Indicates that the operation was successful."
+                  message:
+                    type: string
+                    description: "Descriptive confirmation of the deletion."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '400':
+          description: Invalid request. The provided `Message_id` is malformed or missing.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Rejection of deleting a message.
+                properties:
+                  error:
+                    type: string
+                    description: "Error message explaining the invalid data."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '403':
+          description: Permission denied.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for permission denied
+                properties:
+                  error:
+                    type: string
+                    description: "Permission error."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '404':
+          description: Message not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Rejection of deleting a message caused by not found
+                properties:
+                  error:
+                    type: string
+                    description: "The specified Message_id does not exist."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error500'
+
 
   /messages/{Message_id}/forwards:
     post:
@@ -1226,90 +1308,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error500'
-
-
-  /messages/{Message_id}:
-    delete:
-      tags: ["messages"]
-      summary: Delete a message
-      description: Delete a specific message
-      operationId: deleteMessage
-      parameters:
-        - name: Message_id
-          in: path
-          required: true
-          description: "The unique identifier of the message to be deleted."
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100000
-      responses:
-        '200':
-          description: Message deleted successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Confirmation that the message has been deleted.
-                properties:
-                  success:
-                    type: boolean
-                    description: "Indicates that the operation was successful."
-                  message:
-                    type: string
-                    description: "Descriptive confirmation of the deletion."
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
-        '400':
-          description: Invalid request. The provided `Message_id` is malformed or missing.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Rejection of deleting a message.
-                properties:
-                  error:
-                    type: string
-                    description: "Error message explaining the invalid data."
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
-        '403':
-          description: Permission denied.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Schema for permission denied
-                properties:
-                  error:
-                    type: string
-                    description: "Permission error."
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
-        '404':
-          description: Message not found.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Rejection of deleting a message caused by not found
-                properties:
-                  error:
-                    type: string
-                    description: "The specified Message_id does not exist."
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
-        '500':
-          description: Server error.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error500'
-
+                
 
   # -------------------------------------------------------
   # GROUPS
