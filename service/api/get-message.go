@@ -89,7 +89,7 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 			return
 		}
 		if len(groupMessages) > 0 {
-			lastMessage := groupMessages[len(groupMessages)-1] // Ultimo messaggio
+			lastMessage := groupMessages[len(groupMessages)-1]
 			w.WriteHeader(http.StatusOK)
 			_ = json.NewEncoder(w).Encode(lastMessage)
 		} else {

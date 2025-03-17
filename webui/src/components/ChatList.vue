@@ -238,6 +238,7 @@ export default {
     if (existingChat) {
       this.$emit("chatSelected", existingChat);
       this.showChatOptions = false;
+      this.showUserList = false;
       return;
     }
     const token = localStorage.getItem("token");
@@ -259,6 +260,7 @@ export default {
       this.chats = [...this.chats, newChat];
       this.$emit("chatSelected", newChat);
       this.showChatOptions = false;
+      this.showUserList = false;
       } catch (error) {
         console.error("Errore nell'iniziare la chat:", error);
         alert("Errore: impossibile iniziare la conversazione.");

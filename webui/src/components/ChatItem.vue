@@ -105,6 +105,7 @@ export default {
     },
 
     async fetchLastMessageGroup() {
+      console.log("lmsg: ",this.chat.group_last_message_id);
       if (!this.chat || !this.chat.group_last_message_id) {
         this.lastMessage = "Nessun messaggio";
         return;
@@ -113,6 +114,7 @@ export default {
         const response = await axios.get(`${__API_URL__}/messages/${this.chat.group_last_message_id}?type=${this.type}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
+        console.log("resp: ",response);
         if (response.data && response.data.message_content) {
           this.lastMessage = response.data.message_content;
         }
