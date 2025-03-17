@@ -29,6 +29,7 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.POST("/groups/:Group_id/users/:User_id", rt.wrap(rt.manageGroupUsersHandler))
 	rt.router.PATCH("/groups/:Group_id", rt.wrap(rt.changeGroupNameHandler))
 	rt.router.PUT("/groups/:Group_id/photo", rt.wrap(rt.setGroupPhotoHandler))
+	rt.router.GET("/groups/:Group_id/photo", rt.wrap(rt.getGroupPhotoHandler))
 	rt.router.POST("/groups/:Group_id/messages", rt.wrap(rt.sendMessageToGroupHandler))
 
 	// CONVERSATIONS

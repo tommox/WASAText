@@ -173,29 +173,24 @@ export default {
           headers: { Authorization: `Bearer ${token}` }
         });
         const allUsers = userResponse.data;
-        if (response.data && Array.isArray(response.data.private_conversations)) {
-          this.chats = response.data.private_conversations.map(chat => {
-            if (!chat.conversation_id) {
-              console.error("Conversazione senza ID:", chat);
-              return null;
-            }
-            const isCurrentUserSender = chat.sender_id === parseInt(token);
-            const recipientId = isCurrentUserSender ? chat.recipient_id : chat.sender_id;
-            const recipient = allUsers.find(user => user.User_id === recipientId);
-            return {
-              ...chat,
-              recipient_id: recipientId,
-              name: recipient ? recipient.Nickname : "Utente Sconosciuto",
-              avatarUrl: recipient ? `${__API_URL__}/users/${recipientId}/photo` : defaultAvatar,
-              lastMessage: chat.last_message_id ? parseInt(chat.last_message_id) : "Nessun messaggio",
-            };
-          }).filter(chat => chat !== null);
-        } else {
-          console.error("Formato della risposta inatteso:", response.data);
-          this.chats = [];
-        }
+        this.chats = Array.isArray(response.data.private_conversations)
+          ? response.data.private_conversations.map(chat => {
+              if (!chat.conversation_id) return null;
+              const isCurrentUserSender = chat.sender_id === parseInt(token);
+              const recipientId = isCurrentUserSender ? chat.recipient_id : chat.sender_id;
+              const recipient = allUsers.find(user => user.User_id === recipientId);
+              return {
+                ...chat,
+                recipient_id: recipientId,
+                name: recipient ? recipient.Nickname : "Utente Sconosciuto",
+                avatarUrl: recipient ? `${__API_URL__}/users/${recipientId}/photo` : defaultAvatar,
+                lastMessage: chat.last_message_id ? parseInt(chat.last_message_id) : "Nessun messaggio",
+              };
+            }).filter(chat => chat !== null)
+          : [];
       } catch (error) {
         console.error("Errore nel recupero delle conversazioni private:", error);
+        this.chats = [];
       }
     },
 
@@ -206,16 +201,17 @@ export default {
         const response = await axios.get(`${__API_URL__}/conversations`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        if (response.data && Array.isArray(response.data.group_conversations)) {
-          this.groupChats = response.data.group_conversations.map(group => ({
-            group_conversation_id: group.group_conversation_id, 
-            group_name: group.group_name || "Gruppo Sconosciuto",
-            group_avatarUrl: `${__API_URL__}/groups/${group.group_id}/photo`,
-            group_last_message_id: group.last_message_id || "Nessun messaggio",
-          }));
-        }
+        this.groupChats = Array.isArray(response.data.group_conversations)
+          ? response.data.group_conversations.map(group => ({
+              group_conversation_id: group.group_conversation_id,
+              group_name: group.group_name || "Gruppo Sconosciuto",
+              group_avatarUrl: `${__API_URL__}/groups/${group.group_conversation_id}/photo`,
+              group_last_message_id: group.last_message_id || "Nessun messaggio",
+            }))
+          : [];
       } catch (error) {
         console.error("Errore nel recupero delle conversazioni di gruppo:", error);
+        this.groupChats = [];
       }
     },
 

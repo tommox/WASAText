@@ -9,3 +9,13 @@ func (db *appdbimpl) GetUserPhoto(userID int) ([]byte, error) {
 	}
 	return photoData, nil
 }
+
+func (db *appdbimpl) GetGroupPhoto(groupId int) ([]byte, error) {
+	var photoData []byte
+
+	err := db.c.QueryRow(`SELECT photo FROM Groups WHERE Group_id = ?`, groupId).Scan(&photoData)
+	if err != nil {
+		return nil, err
+	}
+	return photoData, nil
+}

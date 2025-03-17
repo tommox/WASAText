@@ -72,6 +72,7 @@ type AppDatabase interface {
 	IsGroupMember(groupId int, userId int) (bool, error)
 	DeleteGroup(groupId int) error
 	ChangeGroupName(groupId int, newGroupName string) error
+	GetGroupPhoto(groupId int) ([]byte, error)
 	UpdateGroupPhoto(groupId int, photoData []byte) error
 	CreateGroupMessage(groupId int, senderId int, messageContent string) (int, error)
 	updateOrCreateGroupConversation(groupconversation_id int, groupId int, senderId int, messageId int, timestamp time.Time) error

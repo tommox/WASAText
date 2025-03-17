@@ -86,8 +86,35 @@ export default {
       }
     },
 
+    async fetchGroupPhoto() {
+      if (!this.chat || this.type !== "group") return;
+      this.avatarUrl = defaultAvatar; 
+
+      try {
+        const response = await axios.get(`${__API_URL__}/groups/${this.chat.group_id}/photo`, {
+          responseType: "blob"
+        });
+
+        if (response.data.size === 0) {
+          this.avatarUrl = defaultAvatar;
+          return;
+        }
+
+        const imageUrl = URL.createObjectURL(response.data);
+        this.avatarUrl = ""; 
+        this.$nextTick(() => {
+          this.avatarUrl = imageUrl;
+        });
+
+      } catch (error) {
+        console.error("Errore nel recupero della foto del gruppo:", error);
+        this.avatarUrl = defaultAvatar;
+      }
+    },
+
+
     async fetchLastMessage() {
-      if (!this.chat || !this.chat.lastMessage) {
+      if (!this.chat || !this.chat.group_last_message_id || this.chat.group_last_message_id === "Nessun messaggio") {
         this.lastMessage = "Nessun messaggio";
         return;
       }
@@ -105,8 +132,7 @@ export default {
     },
 
     async fetchLastMessageGroup() {
-      console.log("lmsg: ",this.chat.group_last_message_id);
-      if (!this.chat || !this.chat.group_last_message_id) {
+      if (!this.chat || !this.chat.group_last_message_id || this.chat.group_last_message_id === "Nessun messaggio") {
         this.lastMessage = "Nessun messaggio";
         return;
       }

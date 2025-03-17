@@ -1,12 +1,14 @@
 <template>
   <div v-if="chat" class="w-full flex flex-col flex-grow bg-gray-100">
     <!-- Header Chat -->
-    <div class="chat-header">
-      <img :src="avatarUrl" class="w-10 h-10 rounded-full">
-      <span class="ml-3 font-bold text-lg">{{ chat.name }}</span>
-      <button @click="deleteConversation" class="delete-btn">
-        🗑️
-      </button>
+     <div class="chat-header">
+      <label v-if="type === 'group'" class="profile-picture">
+        <img :src="avatarUrl || defaultAvatar" alt="Foto Gruppo" class="profile-img" />
+        <input type="file" @change="uploadGroupPhoto" accept="image/*" class="upload-input" />
+      </label>
+      <img v-else :src="avatarUrl" class="w-10 h-10 rounded-full">
+      <span class="ml-3 font-bold text-lg">{{ chatName }}</span>
+      <button @click="deleteConversation" class="delete-btn">🗑️</button>
     </div>
 
     <!-- Lista Messaggi -->
@@ -72,6 +74,7 @@ export default {
       messages: [],
       loading: true,
       avatarUrl: defaultAvatar,
+      defaultAvatar,
       showOptions: false,
       selectedMessageId: "",
       selectedMessageSender: ""
@@ -128,12 +131,10 @@ export default {
     async fetchPrivateMessages() {
       if (!this.chat.conversation_id) return;
       const token = localStorage.getItem("token");
-
       try {
         const response = await axios.get(`${__API_URL__}/conversations/${this.chat.conversation_id}?type=${this.type}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        console.log("resp priv: ", response);
         if (Array.isArray(response.data)) {
           this.messages = response.data.map(msg => ({
             id: msg.message_id,
@@ -152,12 +153,10 @@ export default {
     async fetchGroupMessages() {
       if (!this.chat.group_conversation_id) return;
       const token = localStorage.getItem("token");
-
       try {
         const response = await axios.get(`${__API_URL__}/conversations/${this.chat.group_conversation_id}?type=${this.type}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        console.log("resp group: ", response);
         if (Array.isArray(response.data)) {
           this.messages = response.data.map(msg => ({
             id: msg.message_id,
@@ -196,6 +195,48 @@ export default {
       }
     },
 
+    async fetchGroupPhoto() {
+      if (!this.chat || this.type !== "group") return;
+      this.avatarUrl = defaultAvatar; 
+      try {
+        const response = await axios.get(`${__API_URL__}/groups/${this.chat.group_conversation_id}/photo`, {
+          responseType: "blob"
+        });
+        if (response.data.size === 0) {
+          this.avatarUrl = defaultAvatar;
+          return;
+        }
+        const imageUrl = URL.createObjectURL(response.data);
+        this.avatarUrl = ""; 
+        this.$nextTick(() => {
+          this.avatarUrl = imageUrl;
+        });
+      } catch (error) {
+        console.error("Errore nel recupero della foto del gruppo:", error);
+        this.avatarUrl = defaultAvatar;
+      }
+    },
+
+    async uploadGroupPhoto(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("photo", file);
+      console.log("1:",this.chat);
+      try {
+        await axios.put(`${__API_URL__}/groups/${this.chat.group_conversation_id}/photo`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        this.fetchGroupPhoto();
+      } catch (error) {
+        console.error("Errore nell'upload della foto del gruppo:", error);
+      }
+    },
+
     async sendMessage() {
       if (this.newMessage.trim() !== "") {
         const token = localStorage.getItem("token");
@@ -220,9 +261,7 @@ export default {
             sender: "me",
             timestamp: new Date()
           });
-          
           this.scrollToBottom();
-
           eventBus.emit("newMessage", {
             conversation_id: this.chat.conversation_id,
             lastMessage: this.newMessage,
@@ -234,6 +273,8 @@ export default {
         }
       }
     },
+
+    async sendGroupMessage(){},
 
     async deleteMessage(selectedMessageId) {
       if (!this.selectedMessageId) {
@@ -281,7 +322,11 @@ export default {
       deep: true,
       handler() {
         this.fetchMessages();
-        this.fetchUserPhoto();
+        if (this.type === "private") {
+          this.fetchUserPhoto();
+        } else if (this.type === "group") {
+          this.fetchGroupPhoto();
+        }
       }
     }
   }
@@ -509,4 +554,37 @@ button:hover {
 .cancel-btn:hover {
   background-color: #069327;
 }
+
+.profile-picture {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+}
+
+  .profile-picture:hover {
+  border: 2px solid #069327; 
+}
+
+.upload-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+  
+.profile-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 </style>
