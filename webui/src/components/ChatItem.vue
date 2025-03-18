@@ -1,6 +1,9 @@
 <template>
   <div class="chat-item" @click="$emit('selectChat', chat)">
-    <img :src="avatarUrl" alt="Avatar" class="profile-img" />
+    <label v-if="type === 'group'">
+        <img :src="groupImage || defaultAvatar" alt="Foto Gruppo" class="profile-img" />
+      </label>
+    <img v-else :src="avatarUrl" alt="Avatar" class="profile-img" />
     <div class="chat-details">
       <div class="chat-name">{{ chatName }}</div>
       <div class="chat-last-message">{{ lastMessage || 'Nessun messaggio' }}</div>
@@ -18,6 +21,7 @@ export default {
   data() {
     return {
       avatarUrl: defaultAvatar,
+      groupImage: localStorage.getItem("groupImage") || defaultAvatar,
       lastMessage: "Nessun messaggio"
     };
   },
@@ -31,6 +35,13 @@ export default {
     }
     });
 
+  eventBus.on("groupPhotoUpdated", (data) => {
+    if (this.chat.group_conversation_id === data.groupId) {
+      console.log("data:",data.image);
+      this.groupImage = data.image;
+    }
+    });
+
     if (this.type === "private") {
       this.fetchLastMessage();
     } else if (this.type === "group") {
@@ -40,6 +51,7 @@ export default {
 
   beforeUnmount() {
     eventBus.off("newMessage");
+    eventBus.off("groupPhotoUpdated");
   },
 
   computed: {
@@ -89,7 +101,6 @@ export default {
     async fetchGroupPhoto() {
       if (!this.chat || this.type !== "group") return;
       this.avatarUrl = defaultAvatar; 
-
       try {
         const response = await axios.get(`${__API_URL__}/groups/${this.chat.group_id}/photo`, {
           responseType: "blob"
@@ -99,13 +110,11 @@ export default {
           this.avatarUrl = defaultAvatar;
           return;
         }
-
         const imageUrl = URL.createObjectURL(response.data);
         this.avatarUrl = ""; 
         this.$nextTick(() => {
           this.avatarUrl = imageUrl;
         });
-
       } catch (error) {
         console.error("Errore nel recupero della foto del gruppo:", error);
         this.avatarUrl = defaultAvatar;

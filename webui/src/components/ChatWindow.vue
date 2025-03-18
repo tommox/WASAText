@@ -3,7 +3,7 @@
     <!-- Header Chat -->
      <div class="chat-header">
       <label v-if="type === 'group'" class="profile-picture">
-        <img :src="avatarUrl || defaultAvatar" alt="Foto Gruppo" class="profile-img" />
+        <img :src="groupImage || defaultAvatar" alt="Foto Gruppo" class="profile-img" />
         <input type="file" @change="uploadGroupPhoto" accept="image/*" class="upload-input" />
       </label>
       <img v-else :src="avatarUrl" class="w-10 h-10 rounded-full">
@@ -73,8 +73,8 @@ export default {
       newMessage: "",
       messages: [],
       loading: true,
-      avatarUrl: defaultAvatar,
-      defaultAvatar,
+      avatarUrl: localStorage.getItem("profileImage") || defaultAvatar,
+      groupImage: localStorage.getItem("groupImage") || defaultAvatar,
       showOptions: false,
       selectedMessageId: "",
       selectedMessageSender: ""
@@ -179,15 +179,14 @@ export default {
         const response = await axios.get(`${__API_URL__}/users/${this.chat.recipient_id}/photo`, {
           responseType: "blob"
         });
-
         if (response.data.size === 0) {
           this.avatarUrl = defaultAvatar;
           return;
         }
         const imageUrl = URL.createObjectURL(response.data);
-        this.avatarUrl = ""; 
+        this.avatarUrl = "";
         this.$nextTick(() => {
-          this.avatarUrl = imageUrl;
+          this.avatarUrl = imageUrl; 
         });
       } catch (error) {
         console.error("Errore nel recupero della foto profilo:", error);
@@ -196,25 +195,28 @@ export default {
     },
 
     async fetchGroupPhoto() {
-      if (!this.chat || this.type !== "group") return;
-      this.avatarUrl = defaultAvatar; 
+      if (!this.chat || !this.chat.group_conversation_id || this.type !== "group") return;
+      this.groupImage = defaultAvatar; 
       try {
         const response = await axios.get(`${__API_URL__}/groups/${this.chat.group_conversation_id}/photo`, {
           responseType: "blob"
         });
         if (response.data.size === 0) {
-          this.avatarUrl = defaultAvatar;
+          console.warn("L'immagine del gruppo è vuota, manteniamo l'avatar di default.");
+          this.groupImage = defaultAvatar;
           return;
         }
         const imageUrl = URL.createObjectURL(response.data);
-        this.avatarUrl = ""; 
-        this.$nextTick(() => {
-          this.avatarUrl = imageUrl;
+        localStorage.setItem("groupImage", imageUrl);
+        this.groupImage = imageUrl;
+        eventBus.emit("groupPhotoUpdated", {
+          groupId: this.chat.group_conversation_id,
+          image: this.groupImage
         });
-      } catch (error) {
-        console.error("Errore nel recupero della foto del gruppo:", error);
-        this.avatarUrl = defaultAvatar;
-      }
+        } catch (error) {
+          console.error("Errore nel recupero della foto del gruppo:", error);
+          this.groupImage = defaultAvatar;
+        }
     },
 
     async uploadGroupPhoto(event) {
@@ -223,7 +225,6 @@ export default {
       const token = localStorage.getItem("token");
       const formData = new FormData();
       formData.append("photo", file);
-      console.log("1:",this.chat);
       try {
         await axios.put(`${__API_URL__}/groups/${this.chat.group_conversation_id}/photo`, formData, {
           headers: {

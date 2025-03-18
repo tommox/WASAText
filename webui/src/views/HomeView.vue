@@ -106,7 +106,6 @@
         const token = localStorage.getItem("token");
         const formData = new FormData();
         formData.append("photo", file);
-  
         try {
           await axios.put(`${__API_URL__}/users/${token}/photo`, formData, {
             headers: {
@@ -122,12 +121,10 @@
       async fetchUserPhoto() {
         const token = localStorage.getItem("token");
         if (!token) return;
-  
         try {
           const response = await axios.get(`${__API_URL__}/users/${token}/photo`, {
             responseType: "blob",
           });
-  
           if (response.data.size === 0) {
             this.userImage = defaultAvatar;
             localStorage.setItem("profileImage", defaultAvatar);

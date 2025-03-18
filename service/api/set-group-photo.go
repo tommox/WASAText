@@ -43,8 +43,17 @@ func (rt *_router) setGroupPhotoHandler(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
+	// Estrai il file dall'upload multipart
+	file, _, err := r.FormFile("photo")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		ctx.Logger.WithError(err).Error("Error retrieving file")
+		return
+	}
+	defer file.Close()
+
 	// Leggi la foto dal body
-	data, err := io.ReadAll(r.Body)
+	data, err := io.ReadAll(file)
 	if err != nil || len(data) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		ctx.Logger.WithError(err).Error("setGroupPhoto: invalid photo data")
