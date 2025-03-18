@@ -37,7 +37,6 @@ export default {
 
   eventBus.on("groupPhotoUpdated", (data) => {
     if (this.chat.group_conversation_id === data.groupId) {
-      console.log("data:",data.image);
       this.groupImage = data.image;
     }
     });
@@ -149,7 +148,6 @@ export default {
         const response = await axios.get(`${__API_URL__}/messages/${this.chat.group_last_message_id}?type=${this.type}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
-        console.log("resp: ",response);
         if (response.data && response.data.message_content) {
           this.lastMessage = response.data.message_content;
         }

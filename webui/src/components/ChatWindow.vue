@@ -275,7 +275,9 @@ export default {
       }
     },
 
-    async sendGroupMessage(){},
+    async sendGroupMessage(){
+      
+    },
 
     async deleteMessage(selectedMessageId) {
       if (!this.selectedMessageId) {
