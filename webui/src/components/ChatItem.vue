@@ -22,7 +22,7 @@ export default {
     return {
       avatarUrl: defaultAvatar,
       groupImage: localStorage.getItem("groupImage") || defaultAvatar,
-      lastMessage: "Nessun messaggio"
+      lastMessage: ""
     };
   },
 
@@ -122,12 +122,12 @@ export default {
 
 
     async fetchLastMessage() {
-      if (!this.chat || !this.chat.group_last_message_id || this.chat.group_last_message_id === "Nessun messaggio") {
+      if (!this.chat || !this.chat.last_message_id) {
         this.lastMessage = "Nessun messaggio";
         return;
       }
       try {
-        const response = await axios.get(`${__API_URL__}/messages/${this.chat.lastMessage}?type=${this.type}`, {
+        const response = await axios.get(`${__API_URL__}/messages/${this.chat.last_message_id}?type=${this.type}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         if (response.data && response.data.message_content) {
@@ -140,7 +140,8 @@ export default {
     },
 
     async fetchLastMessageGroup() {
-      if (!this.chat || !this.chat.group_last_message_id || this.chat.group_last_message_id === "Nessun messaggio") {
+      console.log("sto in fetchLastMessageGroup");
+      if (!this.chat || !this.chat.group_last_message_id) {
         this.lastMessage = "Nessun messaggio";
         return;
       }

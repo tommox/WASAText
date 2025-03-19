@@ -50,7 +50,9 @@
         class="flex-grow px-3 py-2 border rounded-lg focus:outline-none"
         @keyup.enter="sendMessage"
       />
-      <button @click="sendMessage" class="ml-3 p-2 bg-blue-500 text-white rounded-lg">
+      <button 
+        @click="type === 'group' ? sendGroupMessage() : sendMessage()" 
+        class="ml-3 p-2 bg-blue-500 text-white rounded-lg">
         ➤
       </button>
     </div>
@@ -72,6 +74,7 @@ export default {
     return { 
       newMessage: "",
       messages: [],
+      group_messages: [],
       loading: true,
       avatarUrl: localStorage.getItem("profileImage") || defaultAvatar,
       groupImage: localStorage.getItem("groupImage") || defaultAvatar,
@@ -275,8 +278,44 @@ export default {
       }
     },
 
-    async sendGroupMessage(){
-      
+    async sendGroupMessage() { // manda in chatitem real-time messaggi normali
+      if (this.newMessage.trim() !== "") {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.error("Errore: token non trovato. L'utente deve effettuare il login.");
+          alert("Sessione scaduta. Effettua nuovamente il login.");
+          this.$router.push("/login");
+          return;
+        }
+        
+        try {
+          const response = await axios.post(`${__API_URL__}/groups/${this.chat.group_conversation_id}/messages`, {
+            message_content: this.newMessage
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          this.group_messages.push({
+            id: response.data.message_id,
+            text: this.newMessage,
+            sender: "me",
+            timestamp: new Date()
+          });
+
+          this.scrollToBottom();
+
+          eventBus.emit("newMessage", {
+            group_conversation_id: this.chat.group_conversation_id,
+            lastMessage: this.newMessage,
+            type: this.type
+          });
+
+          // Reset del messaggio da inviare
+          this.newMessage = "";
+        } catch (error) {
+          console.error("Errore nell'invio del messaggio al gruppo:", error);
+        }
+      }
     },
 
     async deleteMessage(selectedMessageId) {
