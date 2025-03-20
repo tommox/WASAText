@@ -25,16 +25,16 @@ func (db *appdbimpl) GetMessage(messageId int) (Message, error) {
 }
 
 // GetGroupMessage recupera un messaggio di gruppo specifico
-func (db *appdbimpl) GetGroupMessage(groupMessageId int) (GroupMessage, error) {
+func (db *appdbimpl) GetGroupMessage(groupId, messageId int) (GroupMessage, error) {
 	var msg GroupMessage
 
 	// Recupera i dettagli principali del messaggio di gruppo
 	query := `
         SELECT GroupMessage_id, Sender_id, Group_id, MessageContent, Timestamp
         FROM GroupMessages
-        WHERE GroupMessage_id = ?;
+        WHERE Group_id = ? AND GroupMessage_id = ?;
     `
-	err := db.c.QueryRow(query, groupMessageId).Scan(
+	err := db.c.QueryRow(query, groupId, messageId).Scan(
 		&msg.GroupMessage_id,
 		&msg.Sender_id,
 		&msg.Group_id,

@@ -66,12 +66,12 @@ type AppDatabase interface {
 	AddUserToGroup(groupId int, userId int, role string) error
 	RemoveUserFromGroup(groupId int, userId int) error
 	PromoteToAdmin(groupId int, userId int) error
-	GetGroupById(groupId int) (Group, error)
+	GetGroupByMessageId(messageId int) (Group, error)
 	GetGroupMembers(groupId int) ([]GroupMember, error)
 	IsGroupAdmin(groupId int, userId int) (bool, error)
 	IsGroupMember(groupId int, userId int) (bool, error)
 	DeleteGroup(groupId int) error
-	GetGroupMessage(groupMessageId int) (GroupMessage, error)
+	GetGroupMessage(groupId, messageId int) (GroupMessage, error)
 	ChangeGroupName(groupId int, newGroupName string) error
 	GetGroupPhoto(groupId int) ([]byte, error)
 	UpdateGroupPhoto(groupId int, photoData []byte) error

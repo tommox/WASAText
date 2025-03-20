@@ -325,8 +325,8 @@ export default {
             let lastMessage = "Nessun messaggio";
             // Se c'è un last_message_id, recupera il contenuto del messaggio
             if (group.last_message_id) {
-              console.log("aaa",group.last_message_id);
               try {
+                console.log("aaa",group.last_message_id);
                 const msgResponse = await axios.get(
                   `${__API_URL__}/messages/${group.last_message_id}?type=group`,
                   { headers: { Authorization: `Bearer ${token}` } }
@@ -446,20 +446,20 @@ export default {
           // Cerca l'elemento della chat nella chatlist e aggiornalo
           const idx = this.chats.findIndex(chat => chat.conversation_id === this.selectedChat.conversation_id);
           if (idx !== -1) {
-            this.$set(this.chats, idx, {
-              ...this.chats[idx],
-              lastMessage: this.newMessage,
-            });
+            this.chats[idx] = {
+            ...this.chats[idx],
+            lastMessage: this.newMessage,
+          };
           }
         } else if (this.selectedChatType === "group") {
           this.selectedChat.lastMessage = this.newMessage;
           // Per i gruppi, se usi una proprietà diversa, ad esempio group_last_message_id, aggiorna anche quella
           const idx = this.groupChats.findIndex(group => group.group_conversation_id === this.selectedChat.group_conversation_id);
           if (idx !== -1) {
-            this.$set(this.groupChats, idx, {
-              ...this.groupChats[idx],
-              group_lastMessage: this.newMessage,
-            });
+            this.groupChats[idx] = {
+            ...this.groupChats[idx],
+            group_lastMessage: this.newMessage,
+          };
           }
         }
         this.scrollToBottom();
