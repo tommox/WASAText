@@ -36,7 +36,7 @@
             class="chat-item"
             @click="selectChat(chat, 'private')"
           >
-            <img :src="userImage" alt="Avatar" class="profile-img" />
+            <img :src="chat.avatarUrl" alt="Avatar" class="profile-img" />
             <div class="chat-details">
               <div class="chat-name">{{ chat.name }}</div>
               <div class="chat-last-message">{{ chat.lastMessage || 'Nessun messaggio' }}</div>
@@ -49,7 +49,7 @@
             class="chat-item"
             @click="selectChat(group, 'group')"
           >
-            <img :src="groupImage" alt="Foto Gruppo" class="profile-img" />
+            <img :src="group.group_avatarUrl" alt="Foto Gruppo" class="profile-img" />
             <div class="chat-details">
               <div class="chat-name">{{ group.group_name }}</div>
               <div class="group-chat-last-message">{{ group.group_lastMessage || 'Nessun messaggio' }}</div>
@@ -119,7 +119,7 @@
             <input type="file" @change="uploadGroupPhoto" accept="image/*" class="upload-input" />
           </div>
           <div v-else>
-            <img :src="userImage || defaultAvatar" alt="Avatar" class="profile-img" />
+            <img :src="avatarUrl" alt="Avatar" class="profile-img" />
           </div>
           <span class="chat-header-name">
             {{ selectedChatType === 'private' ? selectedChat.name : selectedChat.group_name }}
@@ -223,6 +223,7 @@ export default {
       messages: [],
       newMessage: "",
       loading: false,
+      avatarUrl: defaultAvatar, // Usato per la chat window (utente privato)
       groupImage: defaultAvatar, // Usato per la chat window dei gruppi
       // Opzioni messaggio
       showOptions: false,
@@ -260,6 +261,7 @@ export default {
       const token = localStorage.getItem("token");
       if (!token) return;
       try {
+        // Richiama le conversazioni e gli utenti
         const response = await axios.get(`${__API_URL__}/conversations`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -268,6 +270,7 @@ export default {
         });
         const allUsers = userResponse.data;
         
+        // Per ogni conversazione privata, se presente last_message_id, richiedi il contenuto
         let chats = [];
         if (Array.isArray(response.data.private_conversations)) {
           chats = await Promise.all(response.data.private_conversations.map(async (chat) => {
@@ -357,6 +360,50 @@ export default {
         this.fetchUserPhoto();
       } else if (type === "group") {
         this.fetchGroupPhoto();
+      }
+    },
+    // --- Gestione messaggi ---
+    async fetchMessages() {
+      if (!this.selectedChat) return;
+      this.loading = true;
+      const token = localStorage.getItem("token");
+      try {
+        if (this.selectedChatType === "private" && this.selectedChat.conversation_id) {
+          const response = await axios.get(
+            `${__API_URL__}/conversations/${this.selectedChat.conversation_id}?type=private`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (Array.isArray(response.data)) {
+            this.messages = response.data.map(msg => ({
+              id: msg.message_id,
+              text: msg.message_content,
+              sender: msg.sender_id === Number(token) ? "me" : "other",
+              timestamp: new Date(msg.timestamp),
+            }));
+          } else {
+            this.messages = [];
+          }
+        } else if (this.selectedChatType === "group" && this.selectedChat.group_conversation_id) {
+          const response = await axios.get(
+            `${__API_URL__}/conversations/${this.selectedChat.group_conversation_id}?type=group`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (Array.isArray(response.data)) {
+            this.messages = response.data.map(msg => ({
+              id: msg.message_id,
+              text: msg.message_content,
+              sender: msg.sender_id === Number(token) ? "me" : "other",
+              timestamp: new Date(msg.timestamp),
+            }));
+          } else {
+            this.messages = [];
+          }
+        }
+        this.scrollToBottom();
+      } catch (error) {
+        console.error("Errore nel caricamento dei messaggi:", error);
+      } finally {
+        this.loading = false;
       }
     },
     async sendCurrentMessage() {
@@ -485,7 +532,7 @@ export default {
     async fetchUserPhoto() {
       // Per la chat window privata, recupera direttamente dal backend usando il token loggato
       if (!this.selectedChat || this.selectedChatType !== "private") return;
-      this.userImage = `${__API_URL__}/users/${this.selectedChat.recipient_id}/photo`;
+      this.avatarUrl = `${__API_URL__}/users/${this.selectedChat.recipient_id}/photo`;
     },
     async fetchGroupPhoto() {
       if (!this.selectedChat || !this.selectedChat.group_conversation_id || this.selectedChatType !== "group") return;
@@ -669,6 +716,7 @@ export default {
           sender_id: parseInt(token),
           recipient_id: user.User_id,
           name: user.Nickname,
+          // Imposta direttamente l'URL backend per la foto
           avatarUrl: user.Avatar ? `${__API_URL__}/users/${user.User_id}/photo` : defaultAvatar,
           lastMessage: "",
         };
@@ -736,7 +784,6 @@ export default {
   },
 };
 </script>
-
 
 <style scoped>
 /* Container */
