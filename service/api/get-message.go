@@ -82,20 +82,14 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 			return
 		}
 
-		groupMessages, err := rt.db.GetGroupConversationMessages(groupConv.Group_id)
+		lastGroupMessage, err := rt.db.GetGroupMessage(groupConv.Group_id)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			ctx.Logger.WithError(err).Error("getMessage: error retrieving group messages")
 			return
 		}
-		if len(groupMessages) > 0 {
-			lastMessage := groupMessages[len(groupMessages)-1]
-			w.WriteHeader(http.StatusOK)
-			_ = json.NewEncoder(w).Encode(lastMessage)
-		} else {
-			w.WriteHeader(http.StatusNotFound)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "No messages found"})
-		}
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(lastGroupMessage)
 		return
 	}
 }

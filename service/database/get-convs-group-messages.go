@@ -8,7 +8,7 @@ func (db *appdbimpl) GetGroupConversationMessages(groupConversationId int) ([]Gr
 		SELECT gm.GroupMessage_id, gm.Sender_id, gm.Group_id, gm.MessageContent, gm.Timestamp
 		FROM GroupMessages gm
 		WHERE gm.Group_id = (
-			SELECT Group_id
+			SELECT GroupConversation_id
 			FROM GroupConversations
 			WHERE GroupConversation_id = ?
 		)
