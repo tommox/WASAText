@@ -323,7 +323,6 @@ export default {
           groupChats = await Promise.all(response.data.group_conversations.map(async group => {
             const groupConversationId = group.group_conversation_id;
             let lastMessage = "Nessun messaggio";
-            // Se c'è un last_message_id, recupera il contenuto del messaggio
             if (group.last_message_id) {
               try {
                 console.log("aaa",group.last_message_id);
