@@ -352,6 +352,7 @@ export default {
           groupChats = await Promise.all(response.data.group_conversations.map(async group => {
             const groupConversationId = group.group_conversation_id;
             let lastMessage = "Nessun messaggio";
+            let avatarUrl = defaultAvatar;
             if (group.last_message_id) {
               try {
                 const msgResponse = await axios.get(
@@ -365,10 +366,25 @@ export default {
                 console.error("Errore nel recupero dell'ultimo messaggio per il gruppo", error);
               }
             }
+            try {
+              const photoResponse = await axios.get(
+                `${__API_URL__}/groups/${groupConversationId}/photo`,
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                  responseType: "blob"
+                }
+              );
+              if (photoResponse.data && photoResponse.data.size > 0) {
+                avatarUrl = await blobToBase64(photoResponse.data);
+              }
+            } catch (e) {
+              console.warn("Errore nel recupero foto gruppo:", e);
+              avatarUrl = defaultAvatar;
+            }
             return {
               group_conversation_id: groupConversationId,
               group_name: group.group_name || "Gruppo Sconosciuto",
-              group_avatarUrl: `${__API_URL__}/groups/${groupConversationId}/photo`,
+              group_avatarUrl: avatarUrl,
               group_lastMessage: lastMessage,
             };
           }));
