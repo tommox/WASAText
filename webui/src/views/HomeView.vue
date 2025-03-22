@@ -149,10 +149,9 @@
             :class="{'message-me': message.sender === 'me', 'message-other': message.sender === 'other'}"
           >
             <div class="message-content">
-              <strong v-if="selectedChatType === 'group'">
-                {{ message.sender === 'me' ? 'Tu' : userMap[message.rawSenderId] || 'Utente' }}
-              </strong>
-              <br />
+              <template v-if="selectedChatType === 'group'">
+                <strong>{{ message.sender === 'me' ? 'Tu' : userMap[message.rawSenderId] || 'Utente' }}</strong><br />
+              </template>
               <span>{{ message.text }}</span>
               <div class="message-time" @click="openMessageMenu(message.id, message.sender)">
                 {{ formatTime(message.timestamp) }}
