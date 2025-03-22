@@ -47,6 +47,7 @@ type GroupMember struct {
 	Group_id       int    `json:"group_id"`
 	User_id        int    `json:"user_id"`
 	Role           string `json:"role"`
+	Nickname       string `json:"nickname"`
 }
 
 // Conversation rappresenta una conversazione di un utente con un altro.

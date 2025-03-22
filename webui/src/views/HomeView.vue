@@ -123,7 +123,18 @@
           <span class="chat-header-name">
             {{ selectedChatType === 'private' ? selectedChat.name : selectedChat.group_name }}
           </span>
-          <button @click="deleteConversation" class="delete-btn">🗑️</button>
+          <button
+            @click="selectedChatType === 'private' ? deleteConversation() : deleteGroupConversation()"
+            class="delete-btn">
+            🗑️
+          </button>
+          <div v-if="showGroupErrorModal" class="modal-overlay">
+            <div class="modal-content">
+              <h2 class="modal-error-title">Errore</h2>
+                <p class="modal-error-box">{{ groupErrorMessage }}</p>
+              <button class="confirm-btn" @click="showGroupErrorModal = false">OK</button>
+            </div>
+          </div>
         </div>
 
         <!-- Lista messaggi -->
@@ -138,6 +149,10 @@
             :class="{'message-me': message.sender === 'me', 'message-other': message.sender === 'other'}"
           >
             <div class="message-content">
+              <strong v-if="selectedChatType === 'group'">
+                {{ message.sender === 'me' ? 'Tu' : userMap[message.rawSenderId] || 'Utente' }}
+              </strong>
+              <br />
               <span>{{ message.text }}</span>
               <div class="message-time" @click="openMessageMenu(message.id, message.sender)">
                 {{ formatTime(message.timestamp) }}
@@ -193,7 +208,7 @@ function blobToBase64(blob) {
     reader.readAsDataURL(blob);
   });
 }
-
+//this.userMap = Object.fromEntries(this.users.map(user => [user.User_id, user.Nickname]));
 export default {
   name: "HomeView",
   data() {
@@ -203,10 +218,13 @@ export default {
       userImage: defaultAvatar, // Inizializzato a defaultAvatar, verrà aggiornato dal backend
       editableNickname: "",
       isEditing: false,
+      showGroupErrorModal: false,
+      groupErrorMessage: "",
       // Lista chat
       search: "",
       chats: [],
       groupChats: [],
+      userMap: {},
       // Selezione chat
       selectedChat: null,
       selectedChatType: "",
@@ -336,12 +354,10 @@ export default {
             let lastMessage = "Nessun messaggio";
             if (group.last_message_id) {
               try {
-                console.log("aaa",group.last_message_id);
                 const msgResponse = await axios.get(
                   `${__API_URL__}/messages/${group.last_message_id}?type=group`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
-                console.log("aoao",msgResponse.data);
                 if (msgResponse.data && msgResponse.data.message_content) {
                   lastMessage = msgResponse.data.message_content;
                 }
@@ -363,6 +379,19 @@ export default {
         this.groupChats = [];
       }
     },
+    async fetchGroupMembers(groupId) {
+      const token = localStorage.getItem("token");
+      try {
+        const response = await axios.get(`${__API_URL__}/groups/${groupId}/users`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const members = response.data;
+        this.userMap = Object.fromEntries(members.map(user => [user.user_id, user.nickname]));
+      } catch (error) {
+        console.error("Errore nel recupero dei membri del gruppo:", error);
+      }
+    },
     selectChat(chat, type) {
       this.selectedChat = chat;
       this.selectedChatType = type;
@@ -371,9 +400,9 @@ export default {
         this.fetchUserPhoto();
       } else if (type === "group") {
         this.fetchGroupPhoto();
+        this.fetchGroupMembers(chat.group_conversation_id);
       }
     },
-    // --- Gestione messaggi ---
     async fetchMessages() {
       if (!this.selectedChat) return;
       this.loading = true;
@@ -404,6 +433,7 @@ export default {
               id: msg.message_id,
               text: msg.message_content,
               sender: msg.sender_id === Number(token) ? "me" : "other",
+              rawSenderId: msg.sender_id,
               timestamp: new Date(msg.timestamp),
             }));
           } else {
@@ -443,17 +473,14 @@ export default {
             { headers: { Authorization: `Bearer ${token}` } }
           );
         }
-        // Aggiungi il nuovo messaggio alla finestra chat
         this.messages.push({
           id: response.data.message_id,
           text: this.newMessage,
           sender: "me",
           timestamp: new Date(),
         });
-        // Aggiorna la chat corrente (lastMessage) con il contenuto del nuovo messaggio
         if (this.selectedChatType === "private") {
           this.selectedChat.lastMessage = this.newMessage;
-          // Cerca l'elemento della chat nella chatlist e aggiornalo
           const idx = this.chats.findIndex(chat => chat.conversation_id === this.selectedChat.conversation_id);
           if (idx !== -1) {
             this.chats[idx] = {
@@ -463,7 +490,6 @@ export default {
           }
         } else if (this.selectedChatType === "group") {
           this.selectedChat.lastMessage = this.newMessage;
-          // Per i gruppi, se usi una proprietà diversa, ad esempio group_last_message_id, aggiorna anche quella
           const idx = this.groupChats.findIndex(group => group.group_conversation_id === this.selectedChat.group_conversation_id);
           if (idx !== -1) {
             this.groupChats[idx] = {
@@ -537,6 +563,29 @@ export default {
         } catch (error) {
           console.error("Errore nell'eliminazione della conversazione di gruppo:", error);
         }
+      }
+    },
+    async deleteGroupConversation() {
+      const token = localStorage.getItem("token");
+      if (!this.selectedChat || !this.selectedChat.group_conversation_id) return
+      this.groupErrorMessage = ""; 
+      try {
+        const groupId = this.selectedChat.group_conversation_id;
+        await axios.delete(`${__API_URL__}/groups/${groupId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        this.groupChats = this.groupChats.filter(
+          group => group.group_conversation_id !== groupId
+        );
+        this.selectedChat = null;
+      } catch (error) {
+        if (error.response && error.response.status === 403) {
+          this.groupErrorMessage = "Non puoi eliminare il gruppo in quanto non sei admin.";
+        } else {
+          this.groupErrorMessage = "Si è verificato un errore durante l'eliminazione del gruppo.";
+          console.error("Errore nella cancellazione del gruppo:", error);
+        }
+        this.showGroupErrorModal = true;
       }
     },
     async fetchUserPhoto() {
@@ -979,7 +1028,11 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* Finestra Chat */
+.error-message {
+  color: red;
+  margin-top: 10px;
+  font-weight: bold;
+}
 .chat-window {
   display: flex;
   flex-direction: column;
@@ -1102,6 +1155,22 @@ export default {
   width: 90%;
   max-width: 400px;
   text-align: center;
+}
+.modal-content p {
+  margin-top: 10px;
+  font-size: 16px;
+  color: #000000; 
+}
+.modal-error-title {
+  color: #ff0800;
+}
+.modal-error-box {
+  margin: 20px 0;
+  padding: 15px;
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  font-size: 16px;
+  color: #333;
 }
 .modal-input {
   width: 100%;
