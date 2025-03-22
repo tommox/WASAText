@@ -34,8 +34,7 @@
             v-for="chat in filteredChats"
             :key="'chat-' + chat.conversation_id"
             class="chat-item"
-            @click="selectChat(chat, 'private')"
-          >
+            @click="selectChat(chat, 'private')">
             <img :src="chat.avatarUrl" alt="Avatar" class="profile-img" />
             <div class="chat-details">
               <div class="chat-name">{{ chat.name }}</div>
@@ -278,9 +277,21 @@ export default {
             const isCurrentUserSender = chat.sender_id === parseInt(token);
             const recipientId = isCurrentUserSender ? chat.recipient_id : chat.sender_id;
             const recipient = allUsers.find(user => user.User_id === recipientId);
-            const avatarUrl = recipient
-              ? `${__API_URL__}/users/${recipientId}/photo`
-              : defaultAvatar;
+            let avatarUrl = defaultAvatar;
+            if (recipient) {
+              try {
+                const photoResponse = await axios.get(`${__API_URL__}/users/${recipientId}/photo`, {
+                  headers: { Authorization: `Bearer ${token}` },
+                  responseType: "blob",
+                });
+                if (photoResponse.data && photoResponse.data.size > 0) {
+                  avatarUrl = await blobToBase64(photoResponse.data);
+                }
+              } catch (e) {
+                console.warn("Errore nel recupero della foto utente:", e);
+                avatarUrl = defaultAvatar;
+              }
+            }
             let lastMessage = "Nessun messaggio";
             if (chat.last_message_id) {
               try {
@@ -528,11 +539,25 @@ export default {
         }
       }
     },
-    // --- Gestione foto: recupero tramite backend in tempo reale ---
     async fetchUserPhoto() {
-      // Per la chat window privata, recupera direttamente dal backend usando il token loggato
       if (!this.selectedChat || this.selectedChatType !== "private") return;
-      this.avatarUrl = `${__API_URL__}/users/${this.selectedChat.recipient_id}/photo`;
+      const recipientId = this.selectedChat.recipient_id;
+      const token = localStorage.getItem("token");
+      try {
+        const response = await axios.get(`${__API_URL__}/users/${recipientId}/photo`, {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: "blob",
+        });
+        if (!response.data || response.data.size === 0) {
+          this.avatarUrl = defaultAvatar;
+          return;
+        }
+        const base64data = await blobToBase64(response.data);
+        this.avatarUrl = base64data;
+      } catch (error) {
+        console.error("Errore nel recupero della foto del destinatario:", error);
+        this.avatarUrl = defaultAvatar;
+      }
     },
     async fetchGroupPhoto() {
       if (!this.selectedChat || !this.selectedChat.group_conversation_id || this.selectedChatType !== "group") return;
