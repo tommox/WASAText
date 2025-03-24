@@ -156,16 +156,24 @@
               <div class="message-time" @click="openMessageMenu(message.id, message.sender)">
                 {{ formatTime(message.timestamp) }}
               </div>
-              <div v-if="showOptions && selectedMessageId === message.id" class="modal-overlay message-options">
+              <div v-if="showOptions && selectedMessageId === message.id" class="modal-overlay">
                 <div class="modal-content">
                   <h2>Seleziona un'opzione</h2>
-                  <div class="option-list">
+                  <div class="user-list">
+                    <!-- Elimina disponibile solo se il messaggio è nostro -->
                     <div
                       v-if="selectedMessageSender === 'me'"
-                      class="option-item"
+                      class="user-item"
                       @click="deleteMessage(selectedMessageId)"
                     >
-                      Elimina
+                      🗑️ Elimina
+                    </div>
+                    <div class="user-item" @click="forwardMessage(selectedMessageId)">
+                      🔁 Inoltra
+                    </div>
+                    <!-- Reagisci (sempre visibile) -->
+                    <div class="user-item" @click="reactToMessage(selectedMessageId)">
+                      😄 Reagisci
                     </div>
                   </div>
                   <button @click="showOptions = false" class="cancel-btn">Chiudi</button>
@@ -524,7 +532,8 @@ export default {
       if (!messageId) return;
       const token = localStorage.getItem("token");
       try {
-        await axios.delete(`${__API_URL__}/messages/${messageId}`, {
+        const type = this.selectedChatType;
+        await axios.delete(`${__API_URL__}/messages/${messageId}?type=${type}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         this.messages = this.messages.filter(msg => msg.id !== messageId);
@@ -533,6 +542,7 @@ export default {
         console.error("Errore nell'eliminazione del messaggio:", error);
       }
       this.fetchChats();
+      this.fetchGroupChats();
     },
     openMessageMenu(messageId, messageSender) {
       this.selectedMessageId = messageId;
@@ -828,6 +838,17 @@ export default {
       } else {
         this.selectedUsers.push(userId);
       }
+    },
+    forwardMessage(messageId) {
+      console.log("Inoltra messaggio:", messageId);
+      alert("Funzione inoltra in arrivo!");
+      this.showOptions = false;
+    },
+
+    reactToMessage(messageId) {
+      console.log("Reagisci al messaggio:", messageId);
+      alert("Funzione reazioni in arrivo!");
+      this.showOptions = false;
     },
     async createGroup() {
       if (!this.canCreateGroup) return;

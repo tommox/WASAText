@@ -66,6 +66,7 @@ type AppDatabase interface {
 	AddUserToGroup(groupId int, userId int, role string) error
 	RemoveUserFromGroup(groupId int, userId int) error
 	PromoteToAdmin(groupId int, userId int) error
+	DeleteGroupMessage(messageId int) error
 	GetGroupByMessageId(messageId int) (Group, error)
 	GetGroupMembers(groupId int) ([]GroupMember, error)
 	IsGroupAdmin(groupId int, userId int) (bool, error)
