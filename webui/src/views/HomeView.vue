@@ -120,9 +120,52 @@
           <div v-else>
             <img :src="avatarUrl" alt="Avatar" class="profile-img" />
           </div>
-          <span class="chat-header-name">
-            {{ selectedChatType === 'private' ? selectedChat.name : selectedChat.group_name }}
+          <div class="chat-header-name" v-if="selectedChatType === 'group'" @click="toggleGroupMenu">
+            {{ selectedChat.group_name }}
+            <div v-if="showGroupMenu" class="modal-overlay" @click="showGroupMenu = false">
+              <div class="modal-content" @click.stop>
+                <h2>Azioni gruppo</h2>
+                <div class="user-list">
+                  <div class="user-item" @click="openRenameGroup"> Cambia nome al gruppo</div>
+                  <div class="user-item" @click="openManageMembers"> Gestisci membri del gruppo</div>
+                </div>
+                <button @click="showGroupMenu = false" class="cancel-btn">Chiudi</button>
+              </div>
+            </div>
+          </div>
+          <span class="chat-header-name" v-else>
+            {{ selectedChat.name }}
           </span>
+          <!-- Modale Cambia Nome -->
+          <div v-if="showRenameGroupModal" class="modal-overlay">
+            <div class="modal-content">
+              <h2>Modifica nome gruppo</h2>
+              <input v-model="editedGroupName" class="modal-input" placeholder="Nuovo nome" />
+              <button class="confirm-btn" @click="renameGroup">Salva</button>
+              <button class="cancel-btn" @click="showRenameGroupModal = false">Annulla</button>
+            </div>
+          </div>
+
+          <!-- Modale Gestione Membri -->
+          <div v-if="showManageMembersModal" class="modal-overlay">
+            <div class="modal-content">
+              <h2>Gestisci membri del gruppo</h2>
+              <div v-if="groupMembers.length === 0" class="loading-text">Caricamento membri...</div>
+              <div class="user-list">
+                <div
+                  v-for="user in groupMembers"
+                  :key="user.user_id"
+                  class="user-item"
+                >
+                  {{ user.nickname }}
+                  <span v-if="user.role === 'admin'" class="badge">Admin</span>
+                  <button class="small-btn" @click="promoteToAdmin(user.user_id)">Promuovi</button>
+                  <button class="small-btn" @click="removeFromGroup(user.user_id)">Rimuovi</button>
+                </div>
+              </div>
+              <button class="cancel-btn" @click="showManageMembersModal = false">Chiudi</button>
+            </div>
+          </div>
           <button
             @click="selectedChatType === 'private' ? deleteConversation() : deleteGroupConversation()"
             class="delete-btn">
@@ -166,14 +209,14 @@
                       class="user-item"
                       @click="deleteMessage(selectedMessageId)"
                     >
-                      🗑️ Elimina
+                      Elimina
                     </div>
                     <div class="user-item" @click="forwardMessage(selectedMessageId)">
-                      🔁 Inoltra
+                      Inoltra
                     </div>
                     <!-- Reagisci (sempre visibile) -->
                     <div class="user-item" @click="reactToMessage(selectedMessageId)">
-                      😄 Reagisci
+                      Reagisci
                     </div>
                   </div>
                   <button @click="showOptions = false" class="cancel-btn">Chiudi</button>
@@ -267,6 +310,11 @@ export default {
       users: [],
       groupName: "",
       selectedUsers: [],
+      showGroupMenu: false,
+      showRenameGroupModal: false,
+      showManageMembersModal: false,
+      editedGroupName: "",
+      groupMembers: [],
       // Finestra chat
       messages: [],
       newMessage: "",
@@ -442,6 +490,54 @@ export default {
         console.error("Errore nel recupero dei membri del gruppo:", error);
       }
     },
+    toggleGroupMenu() {
+      this.showGroupMenu = !this.showGroupMenu;
+    },
+    async renameGroup() {
+      const token = localStorage.getItem("token");
+      try {
+        await axios.patch(`${__API_URL__}/groups/${this.selectedChat.group_conversation_id}`, {
+          group_name: this.editedGroupName,
+        }, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        this.selectedChat.group_name = this.editedGroupName;
+        const idx = this.groupChats.findIndex(group => group.group_conversation_id === this.selectedChat.group_conversation_id);
+        if (idx !== -1) {
+          this.groupChats[idx].group_name = this.editedGroupName;
+        }
+
+        this.showRenameGroupModal = false;
+        this.showGroupMenu = false;
+      } catch (err) {
+        console.error("Errore nel cambiare nome al gruppo:", err);
+        alert("Errore nella modifica del nome.");
+      }
+    },
+    async promoteToAdmin(userId) {
+      const token = localStorage.getItem("token");
+      try {
+        await axios.post(`${__API_URL__}/groups/${this.selectedChat.group_conversation_id}/users/${userId}?state=promote`, null, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        this.fetchGroupMembers(this.selectedChat.group_conversation_id);
+      } catch (err) {
+        console.error("Errore nella promozione:", err);
+      }
+    },
+
+    async removeFromGroup(userId) {
+      const token = localStorage.getItem("token");
+      try {
+        await axios.post(`${__API_URL__}/groups/${this.selectedChat.group_conversation_id}/users/${userId}?state=remove`, null, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        this.fetchGroupMembers(this.selectedChat.group_conversation_id);
+      } catch (err) {
+        console.error("Errore nella rimozione dal gruppo:", err);
+      }
+    },
     selectChat(chat, type) {
       this.selectedChat = chat;
       this.selectedChatType = type;
@@ -451,6 +547,7 @@ export default {
       } else if (type === "group") {
         this.fetchGroupPhoto();
         this.fetchGroupMembers(chat.group_conversation_id);
+        this.editedGroupName = chat.group_name;
       }
     },
     async fetchMessages() {
@@ -575,6 +672,14 @@ export default {
       this.selectedMessageId = messageId;
       this.selectedMessageSender = messageSender;
       this.showOptions = true;
+    },
+    openRenameGroup() {
+      this.showRenameGroupModal = true;
+      this.showGroupMenu = false;
+    },
+    openManageMembers() {
+      this.showManageMembersModal = true;
+      this.showGroupMenu = false;
     },
     formatTime(timestamp) {
       if (!timestamp) return "";
@@ -1172,6 +1277,8 @@ export default {
   margin-left: 15px;
   font-size: 1.2rem;
   font-weight: bold;
+  cursor: pointer;
+  position: relative;
 }
 .delete-btn {
   background: none;
@@ -1258,6 +1365,10 @@ export default {
   justify-content: center;
   z-index: 999;
 }
+.modal-content h2 {
+  color: #000; 
+  font-size: 20px; 
+}
 .modal-content {
   background: white;
   padding: 20px;
@@ -1291,12 +1402,17 @@ export default {
   outline: none;
 }
 .user-list {
+  color: #000;
+  background: #fff;
   max-height: 200px;
   overflow-y: auto;
   border-top: 1px solid #ddd;
   margin-top: 10px;
 }
 .user-item {
+  color: #000;
+  font-size: 14px;
+  font-weight: normal !important;
   padding: 15px;
   border-bottom: 1px solid #ddd;
   cursor: pointer;
@@ -1336,5 +1452,44 @@ export default {
 .loading-text {
   text-align: center;
   margin-top: 25%;
+}
+.group-dropdown {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  top: 60px;
+  left: 10px;
+  z-index: 999;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.dropdown-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+.dropdown-item:hover {
+  background-color: #f5f5f5;
+}
+.badge {
+  background-color: #069327;
+  color: white;
+  font-size: 12px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  margin-left: 10px;
+}
+.small-btn {
+  background: none;
+  border: none;
+  color: #069327;
+  cursor: pointer;
+  margin-left: 10px;
+}
+.small-btn:hover {
+  text-decoration: underline;
 }
 </style>
