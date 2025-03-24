@@ -146,10 +146,37 @@
             </div>
           </div>
 
+          <!-- Modale Aggiunta Membri -->
+          <div v-if="showAddMembersModal" class="modal-overlay">
+            <div class="modal-content">
+              <h2>Aggiungi membri</h2>
+              <input
+                v-model="newMemberSearch"
+                type="text"
+                placeholder="Cerca utente..."
+                class="modal-input"
+              />
+              <div class="user-list">
+                <div
+                  v-for="user in filteredAvailableUsers"
+                  :key="user.User_id"
+                  class="user-item"
+                  @click="addUserToGroup(user.User_id)"
+                >
+                  {{ user.Nickname }}
+                </div>
+              </div>
+              <button class="cancel-btn" @click="showAddMembersModal = false">Chiudi</button>
+            </div>
+          </div>
+
           <!-- Modale Gestione Membri -->
           <div v-if="showManageMembersModal" class="modal-overlay">
             <div class="modal-content">
-              <h2>Gestisci membri del gruppo</h2>
+              <div class="modal-header-with-button">
+                <h2>Gestisci membri del gruppo</h2>
+                <button @click="openAddMembersModal" class="new-chat-btn" title="Aggiungi membro">➕</button>
+              </div>
               <div v-if="groupMembers.length === 0" class="loading-text">Caricamento membri...</div>
               <div class="user-list">
                 <div
@@ -159,7 +186,12 @@
                 >
                   {{ user.nickname }}
                   <span v-if="user.role === 'admin'" class="badge">Admin</span>
-                  <button class="small-btn" @click="promoteToAdmin(user.user_id)">Promuovi</button>
+                  <button
+                    v-if="user.role !== 'admin'"
+                    class="small-btn"
+                    @click="promoteToAdmin(user.user_id)">
+                    Promuovi
+                  </button>
                   <button class="small-btn" @click="removeFromGroup(user.user_id)">Rimuovi</button>
                 </div>
               </div>
@@ -203,7 +235,6 @@
                 <div class="modal-content">
                   <h2>Seleziona un'opzione</h2>
                   <div class="user-list">
-                    <!-- Elimina disponibile solo se il messaggio è nostro -->
                     <div
                       v-if="selectedMessageSender === 'me'"
                       class="user-item"
@@ -214,7 +245,6 @@
                     <div class="user-item" @click="forwardMessage(selectedMessageId)">
                       Inoltra
                     </div>
-                    <!-- Reagisci (sempre visibile) -->
                     <div class="user-item" @click="reactToMessage(selectedMessageId)">
                       Reagisci
                     </div>
@@ -273,7 +303,6 @@ import axios from "axios";
 import eventBus from "@/eventBus";
 import defaultAvatar from "@/assets/images/user.png";
 
-// Funzione helper per convertire un blob in Base64 (utilizzata per foto profilo e gruppi)
 function blobToBase64(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -282,14 +311,13 @@ function blobToBase64(blob) {
     reader.readAsDataURL(blob);
   });
 }
-//this.userMap = Object.fromEntries(this.users.map(user => [user.User_id, user.Nickname]));
 export default {
   name: "HomeView",
   data() {
     return {
       // Profilo utente
       nickname: localStorage.getItem("nickname") || "Utente",
-      userImage: defaultAvatar, // Inizializzato a defaultAvatar, verrà aggiornato dal backend
+      userImage: defaultAvatar, 
       editableNickname: "",
       isEditing: false,
       showGroupErrorModal: false,
@@ -315,6 +343,9 @@ export default {
       showManageMembersModal: false,
       editedGroupName: "",
       groupMembers: [],
+      newMemberSearch: "",
+      availableUsers: [],
+      showAddMembersModal: false,
       // Finestra chat
       messages: [],
       newMessage: "",
@@ -322,8 +353,8 @@ export default {
       forwardMessageId: null,
       forwardMessageType: "",
       loading: false,
-      avatarUrl: defaultAvatar, // Usato per la chat window (utente privato)
-      groupImage: defaultAvatar, // Usato per la chat window dei gruppi
+      avatarUrl: defaultAvatar, 
+      groupImage: defaultAvatar, 
       // Opzioni messaggio
       showOptions: false,
       selectedMessageId: null,
@@ -343,6 +374,11 @@ export default {
         group =>
           (group.group_name && group.group_name.toLowerCase().includes(this.search.toLowerCase())) ||
           (group.group_conversation_id && group.group_conversation_id.toString().includes(this.search.toLowerCase()))
+      );
+    },
+    filteredAvailableUsers() {
+      return this.availableUsers.filter(user =>
+        user.Nickname.toLowerCase().includes(this.newMemberSearch.toLowerCase())
       );
     },
     filteredUsers() {
@@ -485,6 +521,7 @@ export default {
         });
 
         const members = response.data;
+        this.groupMembers = members;
         this.userMap = Object.fromEntries(members.map(user => [user.user_id, user.nickname]));
       } catch (error) {
         console.error("Errore nel recupero dei membri del gruppo:", error);
@@ -534,6 +571,10 @@ export default {
           headers: { Authorization: `Bearer ${token}` },
         });
         this.fetchGroupMembers(this.selectedChat.group_conversation_id);
+        eventBus.emit("userRemovedFromGroup", {
+          groupId: this.selectedChat.group_conversation_id,
+          userId: userId,
+        });
       } catch (err) {
         console.error("Errore nella rimozione dal gruppo:", err);
       }
@@ -673,6 +714,10 @@ export default {
       this.selectedMessageSender = messageSender;
       this.showOptions = true;
     },
+    openAddMembersModal() {
+      this.showManageMembersModal = false; 
+      this.showAddMembersModal = true; 
+    },
     openRenameGroup() {
       this.showRenameGroupModal = true;
       this.showGroupMenu = false;
@@ -680,6 +725,7 @@ export default {
     openManageMembers() {
       this.showManageMembersModal = true;
       this.showGroupMenu = false;
+      this.fetchAvailableUsers();
     },
     formatTime(timestamp) {
       if (!timestamp) return "";
@@ -1022,6 +1068,15 @@ export default {
       await this.fetchChats();
       await this.fetchGroupChats();
     },
+    handleUserRemovedFromGroup({ groupId, userId }) {
+      if (
+        this.selectedChatType === "group" &&
+        this.selectedChat &&
+        this.selectedChat.group_conversation_id === groupId
+      ) {
+        this.messages = this.messages.filter(msg => msg.rawSenderId !== userId);
+      }
+    },
     reactToMessage(messageId) {
       console.log("Reagisci al messaggio:", messageId);
       alert("Funzione reazioni in arrivo!");
@@ -1054,7 +1109,39 @@ export default {
       this.showGroupUserList = false;
       this.showChatOptions = false;
     },
+    async fetchAvailableUsers() {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await axios.get(`${__API_URL__}/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const allUsers = response.data;
+      const currentMemberIds = this.groupMembers.map(u => u.user_id);
+      this.availableUsers = allUsers.filter(user => !currentMemberIds.includes(user.User_id));
+    } catch (err) {
+      console.error("Errore nel recuperare utenti disponibili:", err);
+    }
   },
+  async addUserToGroup(userId) {
+    const token = localStorage.getItem("token");
+    try {
+      await axios.post(
+      `${__API_URL__}/groups/${this.selectedChat.group_conversation_id}/users/${userId}?state=add`,
+      { role: "member" }, 
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+      await this.fetchGroupMembers(this.selectedChat.group_conversation_id);
+      await this.fetchAvailableUsers();
+      this.showAddMembersModal = false;
+      this.showManageMembersModal = false;
+      this.showGroupMenu = false;
+    } catch (err) {
+      console.error("Errore nell'aggiunta del membro:", err);
+    }
+  },
+},
   created() {
     this.fetchChats();
     this.fetchGroupChats();
@@ -1066,10 +1153,12 @@ export default {
       this.groupChats = this.groupChats.filter(group => group.group_conversation_id !== conversationId);
     });
     eventBus.on("messageForwarded", this.handleMessageForwarded);
+    eventBus.on("userRemovedFromGroup", this.handleUserRemovedFromGroup);
   },
   beforeUnmount() {
     eventBus.off("conversationDeleted");
     eventBus.off("messageForwarded", this.handleMessageForwarded);
+    eventBus.off("userRemovedFromGroup", this.handleUserRemovedFromGroup);
   },
 };
 </script>
@@ -1364,6 +1453,11 @@ export default {
   align-items: center;
   justify-content: center;
   z-index: 999;
+}
+.modal-header-with-button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 .modal-content h2 {
   color: #000; 

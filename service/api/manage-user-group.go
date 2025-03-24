@@ -124,6 +124,12 @@ func (rt *_router) manageGroupUsersHandler(w http.ResponseWriter, r *http.Reques
 			ctx.Logger.WithError(err).Error("manageGroupUsers: error removing user from group")
 			return
 		}
+
+		err = rt.db.DeleteAllMessagesFromUserInGroup(groupId, userId)
+		if err != nil {
+			ctx.Logger.WithError(err).Error("manageGroupUsers: errore nella cancellazione dei messaggi dell'utente")
+		}
+
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"success": true,

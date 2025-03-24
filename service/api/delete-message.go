@@ -80,7 +80,6 @@ func (rt *_router) deleteMessageHandler(w http.ResponseWriter, r *http.Request, 
 			return
 		}
 
-		// ✅ Solo l'autore o un admin del gruppo può cancellare
 		isMember, err := rt.db.IsGroupMember(groupConv.Group_id, userId)
 		if err != nil || !isMember {
 			w.WriteHeader(http.StatusForbidden)
@@ -88,7 +87,6 @@ func (rt *_router) deleteMessageHandler(w http.ResponseWriter, r *http.Request, 
 			return
 		}
 
-		// Ottieni il messaggio di gruppo
 		groupMsg, err := rt.db.GetGroupMessage(groupConv.Group_id, messageId)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
@@ -96,7 +94,6 @@ func (rt *_router) deleteMessageHandler(w http.ResponseWriter, r *http.Request, 
 			return
 		}
 
-		// Verifica se è l’autore oppure admin
 		isAdmin, err := rt.db.IsGroupAdmin(groupConv.Group_id, userId)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -110,7 +107,6 @@ func (rt *_router) deleteMessageHandler(w http.ResponseWriter, r *http.Request, 
 			return
 		}
 
-		// Elimina il messaggio di gruppo
 		err = rt.db.DeleteGroupMessage(messageId)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)

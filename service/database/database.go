@@ -78,6 +78,7 @@ type AppDatabase interface {
 	UpdateGroupPhoto(groupId int, photoData []byte) error
 	CreateGroupMessage(groupId int, senderId int, messageContent string) (int, error)
 	updateOrCreateGroupConversation(groupconversation_id int, groupId int, senderId int, messageId int, timestamp time.Time) error
+	DeleteAllMessagesFromUserInGroup(groupId int, userId int) error
 
 	// Conversations
 	CheckPrivateConversationAccess(userId, conversationId int) (bool, error)
