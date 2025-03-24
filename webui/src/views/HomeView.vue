@@ -179,6 +179,30 @@
                   <button @click="showOptions = false" class="cancel-btn">Chiudi</button>
                 </div>
               </div>
+              <div v-if="forwardMode" class="modal-overlay">
+                <div class="modal-content">
+                  <h2>Inoltra a...</h2>
+                  <div class="user-list">
+                    <div
+                      v-for="chat in chats"
+                      :key="'fwd-chat-' + chat.conversation_id"
+                      class="user-item"
+                      @click="confirmForward('private', chat.conversation_id)"
+                    >
+                      {{ chat.name }}
+                    </div>
+                    <div
+                      v-for="group in groupChats"
+                      :key="'fwd-group-' + group.group_conversation_id"
+                      class="user-item"
+                      @click="confirmForward('group', group.group_conversation_id)"
+                    >
+                      {{ group.group_name }}
+                    </div>
+                  </div>
+                  <button @click="forwardMode = false" class="cancel-btn">Annulla</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -246,6 +270,9 @@ export default {
       // Finestra chat
       messages: [],
       newMessage: "",
+      forwardMode: false,
+      forwardMessageId: null,
+      forwardMessageType: "",
       loading: false,
       avatarUrl: defaultAvatar, // Usato per la chat window (utente privato)
       groupImage: defaultAvatar, // Usato per la chat window dei gruppi
@@ -752,7 +779,6 @@ export default {
     logout() {
       this.$router.replace("/login");
     },
-    // --- Funzioni per la creazione di nuove conversazioni ---
     async fetchUsersForChat() {
       this.showChatOptions = false;
       const token = localStorage.getItem("token");
@@ -840,11 +866,57 @@ export default {
       }
     },
     forwardMessage(messageId) {
-      console.log("Inoltra messaggio:", messageId);
-      alert("Funzione inoltra in arrivo!");
+      this.forwardMessageId = messageId;
+      this.forwardMessageType = this.selectedChatType;
       this.showOptions = false;
+      this.forwardMode = true;
     },
+    async confirmForward(type, destinationId) {
+      const token = localStorage.getItem("token");
+      const payload =
+        type === "private"
+          ? { conversation_id: destinationId }
+          : { group_id: destinationId };
+      try {
+        await axios.post(
+          `${__API_URL__}/messages/${this.forwardMessageId}/forwards?type=${this.forwardMessageType}`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        eventBus.emit("messageForwarded", {
+          type,
+          destinationId,
+        });
+        this.forwardMode = false;
+        this.forwardMessageId = null;
+        this.forwardMessageType = "";
+      } catch (error) {
+        console.error("Errore durante l'inoltro del messaggio:", error);
+        alert("Errore durante l'inoltro del messaggio.");
+        this.forwardMode = false;
+      }
+    },
+    async handleMessageForwarded({type, destinationId}) {
+      const isActiveChat =
+        (type === "private" &&
+          this.selectedChatType === "private" &&
+          this.selectedChat?.conversation_id === destinationId) ||
+        (type === "group" &&
+          this.selectedChatType === "group" &&
+          this.selectedChat?.group_conversation_id === destinationId);
 
+      if (isActiveChat) {
+        await this.fetchMessages();
+        this.scrollToBottom();
+      }
+      await this.fetchChats();
+      await this.fetchGroupChats();
+    },
     reactToMessage(messageId) {
       console.log("Reagisci al messaggio:", messageId);
       alert("Funzione reazioni in arrivo!");
@@ -888,9 +960,11 @@ export default {
       this.chats = this.chats.filter(chat => chat.conversation_id !== conversationId);
       this.groupChats = this.groupChats.filter(group => group.group_conversation_id !== conversationId);
     });
+    eventBus.on("messageForwarded", this.handleMessageForwarded);
   },
   beforeUnmount() {
     eventBus.off("conversationDeleted");
+    eventBus.off("messageForwarded", this.handleMessageForwarded);
   },
 };
 </script>

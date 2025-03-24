@@ -12,7 +12,6 @@ import (
 )
 
 func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
-	// Estrai il messageId dalla richiesta
 	messageId, err := strconv.Atoi(ps.ByName("Message_id"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -20,14 +19,12 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	// Estrai l'utente corrente dal Bearer Token
 	userIdStr, err := extractBearerToken(r, w)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
 		ctx.Logger.WithError(err).Error("forwardMessage: unauthorized user")
 		return
 	}
-
 	userId, err := strconv.Atoi(userIdStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -35,51 +32,143 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	// Recupera il messaggio per ottenere il conversation_id
-	msg, err := rt.db.GetMessage(messageId)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		ctx.Logger.WithError(err).Error("forwardMessage: failed to retrieve message")
+	messageType := r.URL.Query().Get("type")
+	if messageType != "private" && messageType != "group" {
+		w.WriteHeader(http.StatusBadRequest)
+		ctx.Logger.WithError(errors.New("invalid message type")).Error("forwardMessage: invalid type")
 		return
 	}
 
-	// Verifica se l'utente può accedere alla conversazione
-	hasAccess, err := rt.db.CheckPrivateConversationAccess(userId, msg.Conversation_id)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		ctx.Logger.WithError(err).Error("forwardMessage: error checking conversation access")
-		return
-	}
-	if !hasAccess {
-		w.WriteHeader(http.StatusForbidden)
-		ctx.Logger.WithError(errors.New("user has no access")).Error("forwardMessage: permission denied")
-		return
-	}
-
-	// Decodifica il corpo della richiesta per ottenere la conversazione di destinazione
 	var body struct {
-		ConversationId int `json:"conversation_id"`
+		ConversationId *int `json:"conversation_id,omitempty"`
+		GroupId        *int `json:"group_id,omitempty"`
 	}
 	err = json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		ctx.Logger.WithError(err).Error("forwardMessage: error decoding request body")
+		ctx.Logger.WithError(err).Error("forwardMessage: error decoding body")
 		return
 	}
 
-	// Inoltra il messaggio alla nuova conversazione
-	newMessageId, err := rt.db.CreateMessage(userId, body.ConversationId, msg.MessageContent, time.Now())
-	if err != nil {
-		ctx.Logger.WithError(err).Error("forwardMessage: error creating forwarded message")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	// ✅ Origine: Messaggio privato
+	if messageType == "private" {
+		msg, err := rt.db.GetMessage(messageId)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			ctx.Logger.WithError(err).Error("forwardMessage: private message not found")
+			return
+		}
+
+		hasAccess, err := rt.db.CheckPrivateConversationAccess(userId, msg.Conversation_id)
+		if err != nil || !hasAccess {
+			w.WriteHeader(http.StatusForbidden)
+			ctx.Logger.WithError(err).Error("forwardMessage: no access to source private conversation")
+			return
+		}
+
+		if body.ConversationId != nil {
+			// ✅ Destinazione: conversazione privata
+			newMessageId, err := rt.db.CreateMessage(userId, *body.ConversationId, msg.MessageContent, time.Now())
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				ctx.Logger.WithError(err).Error("forwardMessage: failed to forward private → private")
+				return
+			}
+			w.WriteHeader(http.StatusCreated)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"message_id": newMessageId,
+				"status":     "sent",
+			})
+			return
+		} else if body.GroupId != nil {
+			// ✅ Destinazione: gruppo
+			isTargetMember, err := rt.db.IsGroupMember(*body.GroupId, userId)
+			if err != nil || !isTargetMember {
+				w.WriteHeader(http.StatusForbidden)
+				ctx.Logger.WithError(err).Error("forwardMessage: no access to target group (private → group)")
+				return
+			}
+			newMessageId, err := rt.db.CreateGroupMessage(*body.GroupId, userId, msg.MessageContent)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				ctx.Logger.WithError(err).Error("forwardMessage: failed to forward private → group")
+				return
+			}
+			w.WriteHeader(http.StatusCreated)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"message_id": newMessageId,
+				"status":     "sent",
+			})
+			return
+		}
 	}
 
-	// Risposta con successo
-	response := map[string]interface{}{
-		"message_id": newMessageId,
-		"status":     "sent",
+	// ✅ Origine: Messaggio di gruppo
+	if messageType == "group" {
+		group, err := rt.db.GetGroupByMessageId(messageId)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			ctx.Logger.WithError(err).Error("forwardMessage: group not found for message")
+			return
+		}
+
+		isMember, err := rt.db.IsGroupMember(group.Group_id, userId)
+		if err != nil || !isMember {
+			w.WriteHeader(http.StatusForbidden)
+			ctx.Logger.WithError(errors.New("user not in source group")).Error("forwardMessage: source group access denied")
+			return
+		}
+
+		msg, err := rt.db.GetGroupMessage(group.Group_id, messageId)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			ctx.Logger.WithError(err).Error("forwardMessage: original group message not found")
+			return
+		}
+
+		if body.ConversationId != nil {
+			// ✅ Destinazione: conversazione privata
+			hasAccess, err := rt.db.CheckPrivateConversationAccess(userId, *body.ConversationId)
+			if err != nil || !hasAccess {
+				w.WriteHeader(http.StatusForbidden)
+				ctx.Logger.WithError(err).Error("forwardMessage: no access to target private (group → private)")
+				return
+			}
+			newMessageId, err := rt.db.CreateMessage(userId, *body.ConversationId, msg.MessageContent, time.Now())
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				ctx.Logger.WithError(err).Error("forwardMessage: failed to forward group → private")
+				return
+			}
+			w.WriteHeader(http.StatusCreated)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"message_id": newMessageId,
+				"status":     "sent",
+			})
+			return
+		} else if body.GroupId != nil {
+			// ✅ Destinazione: altro gruppo
+			isTargetMember, err := rt.db.IsGroupMember(*body.GroupId, userId)
+			if err != nil || !isTargetMember {
+				w.WriteHeader(http.StatusForbidden)
+				ctx.Logger.WithError(err).Error("forwardMessage: no access to target group")
+				return
+			}
+			newMessageId, err := rt.db.CreateGroupMessage(*body.GroupId, userId, msg.MessageContent)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				ctx.Logger.WithError(err).Error("forwardMessage: failed to forward group → group")
+				return
+			}
+			w.WriteHeader(http.StatusCreated)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"message_id": newMessageId,
+				"status":     "sent",
+			})
+			return
+		}
 	}
-	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(response)
+
+	w.WriteHeader(http.StatusBadRequest)
+	ctx.Logger.Error("forwardMessage: missing or invalid destination")
 }
