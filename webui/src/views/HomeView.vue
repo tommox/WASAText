@@ -622,7 +622,6 @@ export default {
               };
               return message;
             }));
-            console.log("messaggip",this.messages);
           } else {
             this.messages = [];
           }
@@ -643,7 +642,6 @@ export default {
               };
               return message;
             }));
-            console.log("messaggig",this.messages);
           } else {
             this.messages = [];
           }

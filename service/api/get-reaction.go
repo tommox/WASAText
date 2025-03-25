@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -28,7 +27,6 @@ func (rt *_router) getReactionHandler(w http.ResponseWriter, r *http.Request, ps
 		ctx.Logger.WithError(err).Error("manageGetReactionsHandler: error retrieving reactions")
 		return
 	}
-	fmt.Println(reactions)
 
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(reactions)

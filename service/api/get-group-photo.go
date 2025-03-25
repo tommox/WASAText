@@ -11,6 +11,7 @@ import (
 )
 
 func (rt *_router) getGroupPhotoHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+
 	groupId, err := strconv.Atoi(ps.ByName("Group_id"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
