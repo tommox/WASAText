@@ -301,6 +301,10 @@
             placeholder="Scrivi un messaggio..."
             @keyup.enter="sendCurrentMessage"
           />
+          <label class="image-upload-btn">
+            📷
+            <input type="file" accept="image/*" @change="uploadImageMessage" style="display: none" ref="imageInput" />
+          </label>
           <button @click="sendCurrentMessage">➤</button>
         </div>
       </div>
@@ -1506,6 +1510,22 @@ export default {
 .reaction:hover {
   opacity: 0.7; 
 }
+.image-upload-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff00;
+  color: white;
+  font-size: 20px;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+.hidden-image-input {
+  display: none;
+}
 .message-input-container {
   padding: 1rem;
   border-top: 1px solid #ddd;
@@ -1521,7 +1541,7 @@ export default {
 }
 .message-input-container button {
   margin-left: 10px;
-  padding: 10px;
+  padding: 10px 15px;
   background-color: #069327;
   color: white;
   border: none;
