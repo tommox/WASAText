@@ -59,6 +59,11 @@ type GroupMember struct {
 	Nickname       string `json:"nickname"`
 }
 
+type Reaction struct {
+	Emoji   string `json:"emoji"`
+	User_id int    `json:"user_id"`
+}
+
 // Conversation rappresenta una conversazione di un utente con un altro.
 type Conversation struct {
 	Conversation_id      int       `json:"conversation_id"`

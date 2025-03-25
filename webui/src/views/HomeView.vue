@@ -231,6 +231,15 @@
               <div class="message-time" @click="openMessageMenu(message.id, message.sender)">
                 {{ formatTime(message.timestamp) }}
               </div>
+              <div class="message-reactions">
+                <span 
+                  v-for="reaction in message.reactions" 
+                  :key="reaction.userId" 
+                  class="reaction"
+                  @click="removeReaction(message.id, reaction)">
+                  {{ reaction.emoji }}
+                </span>
+              </div>
               <div v-if="showOptions && selectedMessageId === message.id" class="modal-overlay">
                 <div class="modal-content">
                   <h2>Seleziona un'opzione</h2>
@@ -245,8 +254,12 @@
                     <div class="user-item" @click="forwardMessage(selectedMessageId)">
                       Inoltra
                     </div>
-                    <div class="user-item" @click="reactToMessage(selectedMessageId)">
-                      Reagisci
+                    <div class="emoji-container">
+                      <span class="emoji" @click="reactToMessage(selectedMessageId, '👍')">👍</span>
+                      <span class="emoji" @click="reactToMessage(selectedMessageId, '❤️')">❤️</span>
+                      <span class="emoji" @click="reactToMessage(selectedMessageId, '😂')">😂</span>
+                      <span class="emoji" @click="reactToMessage(selectedMessageId, '😢')">😢</span>
+                      <span class="emoji" @click="reactToMessage(selectedMessageId, '🔥')">🔥</span>
                     </div>
                   </div>
                   <button @click="showOptions = false" class="cancel-btn">Chiudi</button>
@@ -391,12 +404,10 @@ export default {
     },
   },
   methods: {
-    // --- Recupero delle conversazioni ---
     async fetchChats() {
       const token = localStorage.getItem("token");
       if (!token) return;
       try {
-        // Richiama le conversazioni e gli utenti
         const response = await axios.get(`${__API_URL__}/conversations`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -404,8 +415,6 @@ export default {
           headers: { Authorization: `Bearer ${token}` }
         });
         const allUsers = userResponse.data;
-        
-        // Per ogni conversazione privata, se presente last_message_id, richiedi il contenuto
         let chats = [];
         if (Array.isArray(response.data.private_conversations)) {
           chats = await Promise.all(response.data.private_conversations.map(async (chat) => {
@@ -596,34 +605,45 @@ export default {
       this.loading = true;
       const token = localStorage.getItem("token");
       try {
+        let response;
         if (this.selectedChatType === "private" && this.selectedChat.conversation_id) {
-          const response = await axios.get(
+          response = await axios.get(
             `${__API_URL__}/conversations/${this.selectedChat.conversation_id}?type=private`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           if (Array.isArray(response.data)) {
-            this.messages = response.data.map(msg => ({
-              id: msg.message_id,
-              text: msg.message_content,
-              sender: msg.sender_id === Number(token) ? "me" : "other",
-              timestamp: new Date(msg.timestamp),
+            this.messages = await Promise.all(response.data.map(async (msg) => {
+              const message = {
+                id: msg.message_id,
+                text: msg.message_content,
+                sender: msg.sender_id === Number(token) ? "me" : "other",
+                timestamp: new Date(msg.timestamp),
+                reactions: await this.fetchReactionsForMessage(msg.message_id), 
+              };
+              return message;
             }));
+            console.log("messaggip",this.messages);
           } else {
             this.messages = [];
           }
         } else if (this.selectedChatType === "group" && this.selectedChat.group_conversation_id) {
-          const response = await axios.get(
+          response = await axios.get(
             `${__API_URL__}/conversations/${this.selectedChat.group_conversation_id}?type=group`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           if (Array.isArray(response.data)) {
-            this.messages = response.data.map(msg => ({
-              id: msg.message_id,
-              text: msg.message_content,
-              sender: msg.sender_id === Number(token) ? "me" : "other",
-              rawSenderId: msg.sender_id,
-              timestamp: new Date(msg.timestamp),
+            this.messages = await Promise.all(response.data.map(async (msg) => {
+              const message = {
+                id: msg.message_id,
+                text: msg.message_content,
+                sender: msg.sender_id === Number(token) ? "me" : "other",
+                rawSenderId: msg.sender_id,
+                timestamp: new Date(msg.timestamp),
+                reactions: await this.fetchReactionsForMessage(msg.message_id),
+              };
+              return message;
             }));
+            console.log("messaggig",this.messages);
           } else {
             this.messages = [];
           }
@@ -633,6 +653,22 @@ export default {
         console.error("Errore nel caricamento dei messaggi:", error);
       } finally {
         this.loading = false;
+      }
+    },
+    async fetchReactionsForMessage(messageId) {
+      const token = localStorage.getItem("token");
+      const isGroup = this.selectedChatType === 'group';
+      try {
+        const response = await axios.get(
+          `${__API_URL__}/messages/${messageId}/reactions?isGroup=${isGroup}`,
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+        return response.data || [];
+      } catch (error) {
+        console.error("Errore nel recupero delle reazioni:", error);
+        return [];
       }
     },
     async sendCurrentMessage() {
@@ -901,7 +937,6 @@ export default {
         this.userImage = defaultAvatar;
       }
     },
-    // --- Funzioni del profilo utente ---
     editNickname() {
       this.editableNickname = this.nickname;
       this.isEditing = true;
@@ -1077,10 +1112,51 @@ export default {
         this.messages = this.messages.filter(msg => msg.rawSenderId !== userId);
       }
     },
-    reactToMessage(messageId) {
-      console.log("Reagisci al messaggio:", messageId);
-      alert("Funzione reazioni in arrivo!");
-      this.showOptions = false;
+    async reactToMessage(messageId, reaction) {
+      const token = localStorage.getItem("token");
+      try {
+        const body = {
+          emoji: reaction,
+          add: true,  
+          isGroup: this.selectedChatType === "group", 
+        };
+        await axios.post(`${__API_URL__}/messages/${messageId}/reactions`, body, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const message = this.messages.find(msg => msg.id === messageId);
+        if (!message.reactions) {
+          message.reactions = [];
+        }
+        message.reactions.push({ reaction }); 
+        this.fetchMessages();  
+        this.showOptions = false;
+      } catch (error) {
+        console.error("Errore nell'aggiungere la reazione:", error);
+      }
+    },
+    async removeReaction(messageId, reaction) {
+      const token = localStorage.getItem("token");
+      try {
+        const body = {
+          emoji: reaction.emoji,  
+          add: false,  
+          isGroup: this.selectedChatType === "group", 
+        };
+        await axios.post(`${__API_URL__}/messages/${messageId}/reactions`, body, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const message = this.messages.find(msg => msg.id === messageId);
+        if (message) {
+          message.reactions = message.reactions.filter(r => r.reaction !== reaction.reaction);
+        }
+        this.fetchMessages(); 
+      } catch (error) {
+        console.error("Errore nella rimozione della reazione:", error);
+      }
     },
     async createGroup() {
       if (!this.canCreateGroup) return;
@@ -1408,6 +1484,29 @@ export default {
   white-space: nowrap;
   margin-top: 5px;
   cursor: pointer;
+}
+.emoji-container {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 10px;
+}
+.emoji {
+  font-size: 20px;
+  cursor: pointer;
+  margin: 0 5px;
+}
+.message-reactions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 5px;
+}
+.reaction {
+  font-size: 24px; 
+  margin-right: 10px; 
+  cursor: pointer;
+}
+.reaction:hover {
+  opacity: 0.7; 
 }
 .message-input-container {
   padding: 1rem;

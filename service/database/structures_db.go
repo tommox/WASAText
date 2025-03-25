@@ -33,6 +33,11 @@ type GroupMessage struct {
 	Timestamp       time.Time `json:"timestamp"`
 }
 
+type Reaction struct {
+	Emoji   string `json:"emoji"`
+	User_id int    `json:"user_id"`
+}
+
 // Group rappresenta un gruppo nel sistema.
 type Group struct {
 	Group_id   int       `json:"group_id"`

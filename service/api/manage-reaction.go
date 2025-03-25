@@ -34,10 +34,10 @@ func (rt *_router) manageReactionHandler(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	// Decodifica il corpo della richiesta
 	var body struct {
-		Emoji string `json:"emoji"`
-		Add   bool   `json:"add"`
+		Emoji   string `json:"emoji"`
+		Add     bool   `json:"add"`
+		IsGroup bool   `json:"isGroup"`
 	}
 	err = json.NewDecoder(r.Body).Decode(&body)
 	if err != nil || body.Emoji == "" {
@@ -47,16 +47,14 @@ func (rt *_router) manageReactionHandler(w http.ResponseWriter, r *http.Request,
 	}
 
 	if body.Add {
-		// Aggiungi o sostituisci la reazione
-		err = rt.db.AddReaction(messageId, userId, body.Emoji)
+		err = rt.db.AddReaction(messageId, userId, body.Emoji, body.IsGroup)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			ctx.Logger.WithError(err).Error("manageReaction: error adding/updating reaction")
 			return
 		}
 	} else {
-		// Rimuovi la reazione
-		err = rt.db.RemoveReaction(messageId, userId)
+		err = rt.db.RemoveReaction(messageId, userId, body.IsGroup)
 		if err != nil {
 			if errors.Is(err, database.ErrReactionNotFound) {
 				w.WriteHeader(http.StatusNotFound)

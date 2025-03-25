@@ -56,10 +56,11 @@ type AppDatabase interface {
 	CreateMessage(senderId int, conversationId int, messageContent string, timestamp time.Time) (int, error)
 	GetMessage(messageId int) (Message, error)
 	DeleteMessage(messageId int) error
+	GetReactionsForMessage(messageId int, isGroup bool) ([]Reaction, error)
 	UpdateOrCreateConversation(sender int, recipient int, messageId int, timestamp time.Time) (int, error)
 	// Reactions
-	AddReaction(messageId int, userId int, emoji string) error
-	RemoveReaction(messageId int, userId int) error
+	AddReaction(messageId int, userId int, emoji string, isGroup bool) error
+	RemoveReaction(messageId int, userId int, isGroup bool) error
 
 	// Groups
 	CreateGroup(groupName string, creatorId int, createdAt time.Time) (int, error)
@@ -139,7 +140,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 		// Creating DB for Reactions if not existing
 		reactions := `CREATE TABLE IF NOT EXISTS Reactions 
 								   (Reaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
-									Message_id INTEGER NOT NULL,                  
+									Message_id INTEGER NOT NULL,            
 									User_id INTEGER NOT NULL,                     
 									Emoji TEXT NOT NULL,
 									UNIQUE(Message_id, User_id),
@@ -191,6 +192,20 @@ func New(db *sql.DB) (AppDatabase, error) {
 		_, err = db.Exec(groupMessages)
 		if err != nil {
 			return nil, fmt.Errorf("error creating GroupMessages structure: %w", err)
+		}
+
+		// Creating DB for Reactions if not existing
+		groupReactions := `CREATE TABLE IF NOT EXISTS GroupReactions 
+									(Reaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
+									GroupMessage_id INTEGER NOT NULL,             
+									User_id INTEGER NOT NULL,                     
+									Emoji TEXT NOT NULL,
+									UNIQUE(GroupMessage_id, User_id), 
+									FOREIGN KEY (GroupMessage_id) REFERENCES GroupMessages (GroupMessage_id) ON DELETE CASCADE,  -- Correzione qui
+									FOREIGN KEY (User_id) REFERENCES Users (User_id));`
+		_, err = db.Exec(groupReactions)
+		if err != nil {
+			return nil, fmt.Errorf("error creating database structure: Reactions %w", err)
 		}
 
 		// Creating DB for Conversations if not existing

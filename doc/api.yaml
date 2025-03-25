@@ -1308,6 +1308,64 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error500'
+
+    get:
+    tags: ["messages"]
+    summary: Get reactions
+    description: Retrieves all reactions for a specific message.
+    operationId: getReactions
+    parameters:
+      - name: Message_id
+        in: path
+        required: true
+        description: "ID of the message to get reactions for."
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100000
+    responses:
+      '200':
+        description: Reactions retrieved successfully.
+        content:
+          application/json:
+            schema:
+              type: array
+              description: List of reactions for the specified message.
+              items:
+                type: object
+                properties:
+                  Emoji:
+                    type: string
+                    description: "The emoji or symbol representing the reaction."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+                  User_id:
+                    type: integer
+                    description: "ID of the user who reacted."
+                    minimum: 1
+                    maximum: 100000
+                    
+      '404':
+        description: Message not found.
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Schema for resource not found errors.
+              properties:
+                error:
+                  type: string
+                  description: "The specified message ID does not exist."
+                  pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                  minLength: 3
+                  maxLength: 1000
+      '500':
+        description: Server error.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error500'
                 
 
   # -------------------------------------------------------
