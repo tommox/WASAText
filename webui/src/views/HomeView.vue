@@ -40,6 +40,7 @@
               <div class="chat-name">{{ chat.name }}</div>
               <div class="chat-last-message">{{ chat.lastMessage || 'Nessun messaggio' }}</div>
             </div>
+            <div class="chat-last-time">{{ formatTime(chat.lastMessageTimestamp) }}</div> 
           </div>
           <!-- Chat di gruppo -->
           <div
@@ -53,6 +54,7 @@
               <div class="chat-name">{{ group.group_name }}</div>
               <div class="group-chat-last-message">{{ group.group_lastMessage || 'Nessun messaggio' }}</div>
             </div>
+            <div class="group-chat-last-time">{{ formatTime(group.group_lastMessageTimestamp) }}</div> 
           </div>
         </div>
       </div>
@@ -442,6 +444,7 @@ export default {
               }
             }
             let lastMessage = "Nessun messaggio";
+            let lastMessageTimestamp = null;
             if (chat.last_message_id) {
               try {
                 const msgResponse = await axios.get(
@@ -450,6 +453,7 @@ export default {
                 );
                 if (msgResponse.data && msgResponse.data.message_content) {
                   lastMessage = msgResponse.data.message_content;
+                  lastMessageTimestamp = msgResponse.data.timestamp;
                 }
               } catch (error) {
                 console.error("Errore nel recupero dell'ultimo messaggio", error);
@@ -460,7 +464,8 @@ export default {
               recipient_id: recipientId,
               name: recipient ? recipient.Nickname : "Utente Sconosciuto",
               avatarUrl,
-              lastMessage
+              lastMessage,
+              lastMessageTimestamp, // Aggiungi l'orario dell'ultimo messaggio
             };
           }));
           chats = chats.filter(chat => chat !== null);
@@ -483,6 +488,7 @@ export default {
           groupChats = await Promise.all(response.data.group_conversations.map(async group => {
             const groupConversationId = group.group_conversation_id;
             let lastMessage = "Nessun messaggio";
+            let lastMessageTimestamp = null;
             let avatarUrl = defaultAvatar;
             if (group.last_message_id) {
               try {
@@ -492,6 +498,7 @@ export default {
                 );
                 if (msgResponse.data && msgResponse.data.message_content) {
                   lastMessage = msgResponse.data.message_content;
+                  lastMessageTimestamp = msgResponse.data.timestamp;
                 }
               } catch (error) {
                 console.error("Errore nel recupero dell'ultimo messaggio per il gruppo", error);
@@ -517,6 +524,7 @@ export default {
               group_name: group.group_name || "Gruppo Sconosciuto",
               group_avatarUrl: avatarUrl,
               group_lastMessage: lastMessage,
+              group_lastMessageTimestamp: lastMessageTimestamp,
             };
           }));
         }
@@ -1409,6 +1417,12 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.chat-last-time, .group-chat-last-time {
+  font-size: 12px; 
+  color: #888;
+  margin-left: auto; 
+  text-align: right; 
 }
 .error-message {
   color: red;

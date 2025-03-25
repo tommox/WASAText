@@ -21,14 +21,14 @@ func (rt *_router) setGroupPhotoHandler(w http.ResponseWriter, r *http.Request, 
 	}
 
 	// Estrai l'utente loggato dal Bearer Token
-	adminIdStr, err := extractBearerToken(r, w)
+	userIdStr, err := extractBearerToken(r, w)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
 		ctx.Logger.WithError(err).Error("setGroupPhoto: unauthorized user")
 		return
 	}
 
-	adminId, err := strconv.Atoi(adminIdStr)
+	userId, err := strconv.Atoi(userIdStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		ctx.Logger.WithError(err).Error("setGroupPhoto: invalid admin ID")
@@ -36,8 +36,8 @@ func (rt *_router) setGroupPhotoHandler(w http.ResponseWriter, r *http.Request, 
 	}
 
 	// Controlla che l'utente sia admin del gruppo
-	isAdmin, err := rt.db.IsGroupAdmin(groupId, adminId)
-	if err != nil || !isAdmin {
+	isMember, err := rt.db.IsGroupMember(groupId, userId)
+	if err != nil || !isMember {
 		w.WriteHeader(http.StatusForbidden)
 		ctx.Logger.WithError(err).Error("setGroupPhoto: user is not an admin")
 		return
