@@ -116,7 +116,7 @@ paths:
                     type: integer
                     description: "A unique identifier for the user"
                     minimum: 1
-                    maximum: 100000
+                    maximum: 1000
                   Nickname:
                     $ref: '#/components/schemas/Name'
         '200':
@@ -131,7 +131,7 @@ paths:
                     type: integer
                     description: "A unique identifier for the user."
                     minimum: 1
-                    maximum: 100000
+                    maximum: 1000
                   Nickname:
                     $ref: '#/components/schemas/Name'                    
         '400':
@@ -174,7 +174,7 @@ paths:
                       type: integer
                       description: ID univoco dell'utente.
                       minimum: 1
-                      maximum: 100000
+                      maximum: 1000
                     nickname:
                       type: string
                       description: Il nome utente dell'utente
@@ -203,7 +203,7 @@ paths:
             type: integer
             description: "The unique identifier of the user whose nickname is being updated"
             minimum: 1
-            maximum: 100000
+            maximum: 1000
       requestBody: 
         required: true
         description: "Update Nickname"
@@ -277,7 +277,7 @@ paths:
             type: integer
             description: "The unique ID of the user."
             minimum: 1
-            maximum: 100000
+            maximum: 1000
       requestBody:
         description: The photo to be uploaded or updated.
         required: true
@@ -393,7 +393,7 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100000
+            maximum: 1000
             description: ID dell'utente di cui recuperare la foto
       responses:
         "200":
@@ -492,7 +492,7 @@ paths:
                           type: integer
                           description: The unique identifier for the conversation.
                           minimum: 1
-                          maximum: 100000
+                          maximum: 1000
                         title:
                           type: string
                           description: The title or name of the conversation.
@@ -518,7 +518,7 @@ paths:
                     type: integer
                     description: The total number of conversations.
                     minimum: 0
-                    maximum: 100000
+                    maximum: 1000
 
   /conversations/{Conversation_id}:
     get:
@@ -535,7 +535,7 @@ paths:
             type: integer
             description: "Schema for having a specific conversation"
             minimum: 1
-            maximum: 100000
+            maximum: 1000
       responses:
         '200':
           description: Conversation successfully returned
@@ -555,7 +555,7 @@ paths:
                     type: integer
                     description: The unique identifier for the conversation.
                     minimum: 1
-                    maximum: 100000
+                    maximum: 1000
                   title:
                     type: string
                     description: The title or name of the conversation.
@@ -695,7 +695,7 @@ paths:
                   type: integer
                   description: "The ID of the recipient user with whom the conversation should be checked or created."
                   minimum: 1
-                  maximum: 100000
+                  maximum: 1000
       responses:
         "200":
           description: "Conversation found or successfully created"
@@ -709,7 +709,7 @@ paths:
                     type: integer
                     description: "The ID of the existing or newly created conversation."                   
                     minimum: 1
-                    maximum: 100000
+                    maximum: 1000
         "400":
           description: "Invalid request or missing `recipient_id` in the body"
           content:
@@ -801,7 +801,7 @@ paths:
                     type: integer
                     description: "The unique identifier assigned to the message."
                     minimum: 1
-                    maximum: 100000
+                    maximum: 1000
                   status:
                     type: string
                     description: "The current status of the message (unsent, sent, read)."
@@ -858,7 +858,7 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100000
+            maximum: 1000
       responses:
         '200':
           description: Message retrieved successfully.
@@ -879,17 +879,17 @@ paths:
                     type: integer
                     description: "The unique identifier of the message."
                     minimum: 1
-                    maximum: 100000
+                    maximum: 1000
                   Sender_id:
                     type: integer
                     description: "The ID of the user who sent the message."
                     minimum: 1
-                    maximum: 100000
+                    maximum: 1000
                   Conversation_id:
                     type: integer
                     description: "The ID of the user who received the message."
                     minimum: 1
-                    maximum: 100000
+                    maximum: 1000
                   MessageContent:
                     type: string
                     description: "The content of the message."
@@ -972,7 +972,7 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100000
+            maximum: 1000
       responses:
         '200':
           description: Message deleted successfully.
@@ -1055,7 +1055,7 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100000
+            maximum: 1000
       requestBody:
         description: Details for forwarding the message.
         required: true
@@ -1072,7 +1072,7 @@ paths:
                   type: integer
                   description: "The unique identifier of the conversation."
                   minimum: 1
-                  maximum: 100000
+                  maximum: 1000
                 Timestamp:
                   type: string
                   format: date-time
@@ -1095,7 +1095,7 @@ paths:
                   Message_id:
                     type: integer
                     minimum: 1
-                    maximum: 100000
+                    maximum: 1000
                     description: "The new forwarded message ID."
                   status:
                     type: string
@@ -1169,7 +1169,7 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100000
+            maximum: 1000
       requestBody:
         description: Details of the reaction to add.
         required: true
@@ -1203,7 +1203,7 @@ paths:
                     type: integer
                     description: "Unique identifier of the added reaction."
                     minimum: 1
-                    maximum: 100000
+                    maximum: 1000
                   status:
                     $ref: '#/components/schemas/Status'
         '400':
@@ -1254,7 +1254,7 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100000
+            maximum: 1000
       responses:
         '200':
           description: Reaction removed successfully.
@@ -1270,7 +1270,7 @@ paths:
                   Reaction_id:
                     type: integer
                     minimum: 1
-                    maximum: 100000
+                    maximum: 1000
                     description: "The unique identifier of the removed reaction."
                   status:
                     $ref: '#/components/schemas/Status'
@@ -1322,7 +1322,7 @@ paths:
         schema:
           type: integer
           minimum: 1
-          maximum: 100000
+          maximum: 1000
     responses:
       '200':
         description: Reactions retrieved successfully.
@@ -1344,7 +1344,7 @@ paths:
                     type: integer
                     description: "ID of the user who reacted."
                     minimum: 1
-                    maximum: 100000
+                    maximum: 1000
                     
       '404':
         description: Message not found.
@@ -1412,7 +1412,7 @@ paths:
                     type: integer
                     description: "The unique ID of the created group."
                     minimum: 1
-                    maximum: 100000
+                    maximum: 1000
                   group_name:
                     type: string
                     description: "The name of the created group."
@@ -1423,7 +1423,7 @@ paths:
                     type: integer
                     description: "The ID of the group creator."
                     minimum: 1
-                    maximum: 100000
+                    maximum: 1000
         '400':
           description: Invalid data for group creation.
           content:
@@ -1461,7 +1461,7 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100000
+            maximum: 1000
       responses:
         "200":
           description: List of users in the group successfully retrieved.
@@ -1479,17 +1479,17 @@ paths:
                       type: integer
                       description: Internal ID of the group member record
                       minimum: 1
-                      maximum: 100000
+                      maximum: 1000
                     group_id:
                       type: integer
                       description: ID of the group
                       minimum: 1
-                      maximum: 100000
+                      maximum: 1000
                     user_id:
                       type: integer
                       description: ID of the user
                       minimum: 1
-                      maximum: 100000
+                      maximum: 1000
                     nickname:
                       type: string
                       description: Nickname of the user
@@ -1538,7 +1538,7 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100000
+            maximum: 1000
             description: "The ID of the group."
         - name: User_id
           description: The integer that describes the User_id
@@ -1547,7 +1547,7 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100000
+            maximum: 1000
             description: "The ID of the user."
       requestBody:
         description: Details of the user to add remove or promote
@@ -1565,7 +1565,7 @@ paths:
                   type: integer
                   description: "ID of the user to add or remove."
                   minimum: 1
-                  maximum: 100000
+                  maximum: 1000
                 action:
                   type: string
                   description: "Action to perform: 'add', 'remove' or 'promote'."
@@ -1649,7 +1649,7 @@ paths:
             type: integer
             description: "The unique ID of the group."
             minimum: 1
-            maximum: 100000
+            maximum: 1000
       requestBody:
         description: The new name for the group.
         required: true
@@ -1683,7 +1683,7 @@ paths:
                     type: integer
                     description: "The unique ID of the group."
                     minimum: 1
-                    maximum: 100000
+                    maximum: 1000
                   groupName:
                     type: string
                     description: "The updated name of the group."
@@ -1738,7 +1738,7 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100000
+            maximum: 1000
       responses:
         '200':
           description: Group deleted successfully.
@@ -1810,7 +1810,7 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100000
+            maximum: 1000
       requestBody:
         description: The group photo to upload.
         required: true
@@ -1913,7 +1913,7 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 100000
+            maximum: 1000
       responses:
         '200':
           description: Group photo returned successfully.
@@ -1981,13 +1981,13 @@ paths:
       parameters:
         - name: Group_id
           in: path
-          description: The unique ID of the group to send the message to. Must be an integer between 1 and 100000.
+          description: The unique ID of the group to send the message to. Must be an integer between 1 and 1000.
           required: true
           schema:
             type: integer
             description: The unique group identifier.
             minimum: 1
-            maximum: 100000
+            maximum: 1000
       requestBody:
         description: The message content to send to the group.
         required: true
@@ -2085,7 +2085,7 @@ paths:
             type: integer
             description: "The unique ID of the user."
             minimum: 1
-            maximum: 100000
+            maximum: 1000
       requestBody:
         description: The action for which permission needs to be checked.
         required: true
