@@ -7,7 +7,7 @@ func (db *appdbimpl) GetMessage(messageId int) (Message, error) {
 
 	// Recupera i dettagli principali del messaggio
 	query := `
-        SELECT Message_id, Sender_id, Conversation_id, MessageContent, Timestamp
+        SELECT Message_id, Sender_id, Conversation_id, MessageContent, ImageData, Timestamp
         FROM Messages
         WHERE Message_id = ?;
     `
@@ -16,6 +16,7 @@ func (db *appdbimpl) GetMessage(messageId int) (Message, error) {
 		&msg.Sender_id,
 		&msg.Conversation_id,
 		&msg.MessageContent,
+		&msg.ImageData,
 		&msg.Timestamp,
 	)
 	if err != nil {
@@ -30,7 +31,7 @@ func (db *appdbimpl) GetGroupMessage(groupId, messageId int) (GroupMessage, erro
 
 	// Recupera i dettagli principali del messaggio di gruppo
 	query := `
-        SELECT GroupMessage_id, Sender_id, Group_id, MessageContent, Timestamp
+        SELECT GroupMessage_id, Sender_id, Group_id, MessageContent, ImageData, Timestamp
         FROM GroupMessages
         WHERE Group_id = ? AND GroupMessage_id = ?;
     `
@@ -39,6 +40,7 @@ func (db *appdbimpl) GetGroupMessage(groupId, messageId int) (GroupMessage, erro
 		&msg.Sender_id,
 		&msg.Group_id,
 		&msg.MessageContent,
+		&msg.ImageData,
 		&msg.Timestamp,
 	)
 	if err != nil {

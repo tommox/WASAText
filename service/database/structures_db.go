@@ -21,6 +21,7 @@ type Message struct {
 	Sender_id       int       `json:"sender_id"`
 	Conversation_id int       `json:"conversation_id"`
 	MessageContent  string    `json:"message_content"`
+	ImageData       []byte    `json:"image_data"`
 	Timestamp       time.Time `json:"timestamp"`
 }
 
@@ -30,6 +31,7 @@ type GroupMessage struct {
 	Sender_id       int       `json:"sender_id"`
 	Group_id        int       `json:"group_id"`
 	MessageContent  string    `json:"message_content"`
+	ImageData       []byte    `json:"image_data"`
 	Timestamp       time.Time `json:"timestamp"`
 }
 

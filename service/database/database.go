@@ -56,7 +56,9 @@ type AppDatabase interface {
 	CreateMessage(senderId int, conversationId int, messageContent string, timestamp time.Time) (int, error)
 	GetMessage(messageId int) (Message, error)
 	DeleteMessage(messageId int) error
+	GetMessageImage(messageId int) ([]byte, error)
 	GetReactionsForMessage(messageId int, isGroup bool) ([]Reaction, error)
+	CreateImageMessage(senderId int, conversationId int, imageContent []byte, timestamp time.Time) (int, error)
 	UpdateOrCreateConversation(sender int, recipient int, messageId int, timestamp time.Time) (int, error)
 	// Reactions
 	AddReaction(messageId int, userId int, emoji string, isGroup bool) error
@@ -76,8 +78,10 @@ type AppDatabase interface {
 	GetGroupMessage(groupId, messageId int) (GroupMessage, error)
 	ChangeGroupName(groupId int, newGroupName string) error
 	GetGroupPhoto(groupId int) ([]byte, error)
+	GetMessageGroupImage(groupId int) ([]byte, error)
 	UpdateGroupPhoto(groupId int, photoData []byte) error
-	CreateGroupMessage(groupId int, senderId int, messageContent string) (int, error)
+	CreateGroupImageMessage(groupId int, senderId int, imageData []byte, timestamp time.Time) (int, error)
+	CreateGroupMessage(groupId int, senderId int, messageContent string, timestamp time.Time) (int, error)
 	updateOrCreateGroupConversation(groupconversation_id int, groupId int, senderId int, messageId int, timestamp time.Time) error
 	DeleteAllMessagesFromUserInGroup(groupId int, userId int) error
 
@@ -126,9 +130,10 @@ func New(db *sql.DB) (AppDatabase, error) {
 		// Creating DB for Messages if not existing
 		messages := `CREATE TABLE IF NOT EXISTS Messages
 									   (Message_id       INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-									    Sender_id  INTEGER NOT NULL,
-										Conversation_id     INTEGER NOT NULL, 
-										MessageContent   VARCHAR(1000) NOT NULL,
+									    Sender_id  		 INTEGER NOT NULL,
+										Conversation_id  INTEGER NOT NULL, 
+										ImageData		 BLOB,
+										MessageContent   VARCHAR(1000),
 										Timestamp        DATETIME NOT NULL);`
 
 		_, err = db.Exec(messages)
@@ -185,7 +190,8 @@ func New(db *sql.DB) (AppDatabase, error) {
 								   (GroupMessage_id INTEGER PRIMARY KEY AUTOINCREMENT,
 									Group_id INTEGER NOT NULL,
 									Sender_id INTEGER NOT NULL,
-									MessageContent TEXT NOT NULL,
+									MessageContent TEXT,
+									ImageData BLOB,
 									Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
 									FOREIGN KEY (Group_id) REFERENCES Groups (Group_id) ON DELETE CASCADE,
 									FOREIGN KEY (Sender_id) REFERENCES Users (User_id) ON DELETE CASCADE);`

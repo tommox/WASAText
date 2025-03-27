@@ -229,7 +229,15 @@
               <template v-if="selectedChatType === 'group'">
                 <strong>{{ message.sender === 'me' ? 'Tu' : userMap[message.rawSenderId] || 'Utente' }}</strong><br />
               </template>
-              <span>{{ message.text }}</span>
+              <template v-if="message.imageData">
+                <div class="message-image">
+                  <img :src="message.imageData" alt="Messaggio immagine" class="message-img" />
+                </div>
+              </template>
+              
+              <template v-else>
+                <span>{{ message.text }}</span>
+              </template>
               <div class="message-time" @click="openMessageMenu(message.id, message.sender)">
                 {{ formatTime(message.timestamp) }}
               </div>
@@ -305,7 +313,7 @@
           />
           <label class="image-upload-btn">
             📷
-            <input type="file" accept="image/*" @change="uploadImageMessage" style="display: none" ref="imageInput" />
+            <input type="file" accept="image/*" @change="sendPhotoMessage" style="display: none" ref="imageInput" />
           </label>
           <button @click="sendCurrentMessage">➤</button>
         </div>
@@ -738,6 +746,70 @@ export default {
         console.error("Errore nell'invio del messaggio:", error);
       }
       this.newMessage = "";
+    },
+    async sendPhotoMessage(event) { 
+      const file = event.target.files[0];
+      if (!file || !this.selectedChat) return;
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("photo", file);
+      formData.append("timestamp", new Date().toISOString());
+
+      if (this.selectedChatType === "private") {
+        formData.append("conversation_id", this.selectedChat.conversation_id);
+      }
+      try {
+        let response;
+        if (this.selectedChatType === "private") {
+          response = await axios.post(`${__API_URL__}/messages`, formData, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          });
+        } else if (this.selectedChatType === "group") {
+          response = await axios.post(`${__API_URL__}/groups/${this.selectedChat.group_conversation_id}/messages`, formData, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          });
+        }
+        const messageId = response.data.message_id; 
+        const getMessageResponse = await axios.get(`${__API_URL__}/messages/${messageId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: "blob",
+          params: {
+            type: this.selectedChatType 
+          }
+        });
+        const base64data = await blobToBase64(getMessageResponse.data);
+        this.messages.push({
+          id: response.data.message_id,
+          imageData: base64data,
+          sender: "me",
+          timestamp: new Date(response.data.timestamp),
+          reactions: [],
+        });
+        if (this.selectedChatType === "private") {
+          this.selectedChat.lastMessage = "📷 Foto";
+          const idx = this.chats.findIndex(chat => chat.conversation_id === this.selectedChat.conversation_id);
+          if (idx !== -1) {
+            this.chats[idx].lastMessage = "📷 Foto";
+          }
+        } else if (this.selectedChatType === "group") {
+          this.selectedChat.lastMessage = "📷 Foto";
+          const idx = this.groupChats.findIndex(group => group.group_conversation_id === this.selectedChat.group_conversation_id);
+          if (idx !== -1) {
+            this.groupChats[idx].group_lastMessage = "📷 Foto";
+          }
+        }
+
+        this.scrollToBottom();
+      } catch (error) {
+        console.error("Errore nell'invio della foto:", error);
+        alert("Errore durante l'invio dell'immagine.");
+      }
     },
     async deleteMessage(messageId) {
       if (!messageId) return;

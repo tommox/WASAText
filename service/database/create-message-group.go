@@ -5,27 +5,23 @@ import (
 	"time"
 )
 
-// CreateGroupMessage salva un messaggio di gruppo nel database.
-func (db *appdbimpl) CreateGroupMessage(groupId int, senderId int, messageContent string) (int, error) {
-	// Query per inserire un messaggio nella tabella GroupMessages
+func (db *appdbimpl) CreateGroupMessage(groupId int, senderId int, messageContent string, timestamp time.Time) (int, error) {
+
 	query := `
-        INSERT INTO GroupMessages (Group_id, Sender_id, MessageContent) 
-        VALUES (?, ?, ?)
+        INSERT INTO GroupMessages (Group_id, Sender_id, MessageContent, Timestamp) 
+        VALUES (?, ?, ?, ?)
     `
-	// Esegui la query
-	result, err := db.c.Exec(query, groupId, senderId, messageContent)
+	result, err := db.c.Exec(query, groupId, senderId, messageContent, timestamp)
 	if err != nil {
 		return 0, fmt.Errorf("CreateGroupMessage: %w", err)
 	}
 
-	// Recupera l'ID dell'ultimo messaggio inserito
 	messageId, err := result.LastInsertId()
 	if err != nil {
 		return 0, fmt.Errorf("CreateGroupMessage: failed to retrieve message ID: %w", err)
 	}
 
-	// Aggiorna la conversazione di gruppo
-	err = db.updateOrCreateGroupConversation(groupId, groupId, senderId, int(messageId), time.Now())
+	err = db.updateOrCreateGroupConversation(groupId, groupId, senderId, int(messageId), timestamp)
 	if err != nil {
 		return 0, fmt.Errorf("CreateGroupMessage: failed to update group conversation: %w", err)
 	}

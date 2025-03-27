@@ -33,7 +33,6 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 		return
 	}
 
-	// 🏷️ Controllo che il tipo sia valido
 	messageType := r.URL.Query().Get("type")
 	if messageType != "private" && messageType != "group" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -63,8 +62,22 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(toDatabaseMessage(dbMsg))
+		if dbMsg.ImageData != nil {
+			imageData, err := rt.db.GetMessageImage(messageId)
+			fmt.Println("imageData", imageData)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				ctx.Logger.WithError(err).Error("getMessage: error retrieving image")
+				return
+			}
+
+			w.Header().Set("Content-Type", "image/*")
+			w.WriteHeader(http.StatusOK)
+			w.Write(imageData)
+		} else {
+			w.WriteHeader(http.StatusOK)
+			_ = json.NewEncoder(w).Encode(toDatabaseMessage(dbMsg))
+		}
 		return
 	}
 
@@ -84,14 +97,27 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 		}
 
 		lastGroupMessage, err := rt.db.GetGroupMessage(groupConv.Group_id, messageId)
-		fmt.Println("message:", lastGroupMessage)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			ctx.Logger.WithError(err).Error("getMessage: error retrieving group messages")
 			return
 		}
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(lastGroupMessage)
+
+		if lastGroupMessage.ImageData != nil {
+			imageData, err := rt.db.GetMessageGroupImage(groupConv.Group_id)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				ctx.Logger.WithError(err).Error("getMessage: error retrieving group image")
+				return
+			}
+
+			w.Header().Set("Content-Type", "image/*")
+			w.WriteHeader(http.StatusOK)
+			w.Write(imageData)
+		} else {
+			w.WriteHeader(http.StatusOK)
+			_ = json.NewEncoder(w).Encode(lastGroupMessage)
+		}
 		return
 	}
 }
