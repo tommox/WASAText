@@ -2,10 +2,10 @@ package database
 
 import "fmt"
 
-// GetGroupConversationMessages recupera tutti i messaggi associati a una conversazione di gruppo
+// GetGroupConversationMessages recupera tutti i messaggi (testo e immagini) associati a una conversazione di gruppo
 func (db *appdbimpl) GetGroupConversationMessages(groupConversationId int) ([]GroupMessage, error) {
 	query := `
-		SELECT gm.GroupMessage_id, gm.Sender_id, gm.Group_id, gm.MessageContent, gm.Timestamp
+		SELECT gm.GroupMessage_id, gm.Sender_id, gm.Group_id, gm.MessageContent, gm.ImageData, gm.Timestamp
 		FROM GroupMessages gm
 		WHERE gm.Group_id = (
 			SELECT GroupConversation_id
@@ -29,6 +29,7 @@ func (db *appdbimpl) GetGroupConversationMessages(groupConversationId int) ([]Gr
 			&msg.Sender_id,
 			&msg.Group_id,
 			&msg.MessageContent,
+			&msg.ImageData,
 			&msg.Timestamp,
 		)
 		if err != nil {

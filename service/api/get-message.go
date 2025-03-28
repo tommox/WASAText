@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -64,13 +63,11 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 
 		if dbMsg.ImageData != nil {
 			imageData, err := rt.db.GetMessageImage(messageId)
-			fmt.Println("imageData", imageData)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("getMessage: error retrieving image")
 				return
 			}
-
 			w.Header().Set("Content-Type", "image/*")
 			w.WriteHeader(http.StatusOK)
 			w.Write(imageData)
@@ -104,13 +101,12 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 		}
 
 		if lastGroupMessage.ImageData != nil {
-			imageData, err := rt.db.GetMessageGroupImage(groupConv.Group_id)
+			imageData, err := rt.db.GetGroupMessageImage(messageId)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("getMessage: error retrieving group image")
 				return
 			}
-
 			w.Header().Set("Content-Type", "image/*")
 			w.WriteHeader(http.StatusOK)
 			w.Write(imageData)

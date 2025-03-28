@@ -86,9 +86,7 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 		})
 
 	} else if strings.HasPrefix(contentType, "multipart/form-data") {
-		// 🖼️ Messaggio con immagine
 
-		// Estrai immagine
 		file, _, err := r.FormFile("photo")
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -106,7 +104,6 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 
 		// Estrai campi form
 		conversationIdStr := r.FormValue("conversation_id")
-		timestampStr := r.FormValue("timestamp")
 
 		conversationId, err := strconv.Atoi(conversationIdStr)
 		if err != nil {
@@ -128,21 +125,8 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 			return
 		}
 
-		// Timestamp
-		var msgTime time.Time
-		if timestampStr == "" {
-			msgTime = time.Now()
-		} else {
-			msgTime, err = time.Parse(time.RFC3339, timestampStr)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				ctx.Logger.WithError(err).Error("sendMessage: invalid timestamp format")
-				return
-			}
-		}
-
 		// Salva immagine
-		messageId, err := rt.db.CreateImageMessage(senderId, conversationId, imageData, msgTime)
+		messageId, err := rt.db.CreateImageMessage(senderId, conversationId, imageData, time.Now())
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			ctx.Logger.WithError(err).Error("sendMessage: failed to create image message")
@@ -154,7 +138,7 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"message_id": messageId,
 			"status":     "sent",
-			"timestamp":  msgTime,
+			"timestamp":  time.Now(),
 		})
 
 	} else {

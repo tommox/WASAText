@@ -78,7 +78,7 @@ type AppDatabase interface {
 	GetGroupMessage(groupId, messageId int) (GroupMessage, error)
 	ChangeGroupName(groupId int, newGroupName string) error
 	GetGroupPhoto(groupId int) ([]byte, error)
-	GetMessageGroupImage(groupId int) ([]byte, error)
+	GetGroupMessageImage(messageId int) ([]byte, error)
 	UpdateGroupPhoto(groupId int, photoData []byte) error
 	CreateGroupImageMessage(groupId int, senderId int, imageData []byte, timestamp time.Time) (int, error)
 	CreateGroupMessage(groupId int, senderId int, messageContent string, timestamp time.Time) (int, error)

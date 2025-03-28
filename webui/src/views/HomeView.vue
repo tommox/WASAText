@@ -459,8 +459,12 @@ export default {
                   `${__API_URL__}/messages/${chat.last_message_id}?type=private`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
-                if (msgResponse.data && msgResponse.data.message_content) {
-                  lastMessage = msgResponse.data.message_content;
+                if (msgResponse.data) {
+                  if (msgResponse.data.message_content && msgResponse.data.message_content.trim() !== "") {
+                    lastMessage = msgResponse.data.message_content;
+                  } else {
+                    lastMessage = "📷 Foto";
+                  }
                   lastMessageTimestamp = msgResponse.data.timestamp;
                 }
               } catch (error) {
@@ -473,7 +477,7 @@ export default {
               name: recipient ? recipient.Nickname : "Utente Sconosciuto",
               avatarUrl,
               lastMessage,
-              lastMessageTimestamp, // Aggiungi l'orario dell'ultimo messaggio
+              lastMessageTimestamp, 
             };
           }));
           chats = chats.filter(chat => chat !== null);
@@ -504,8 +508,12 @@ export default {
                   `${__API_URL__}/messages/${group.last_message_id}?type=group`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
-                if (msgResponse.data && msgResponse.data.message_content) {
-                  lastMessage = msgResponse.data.message_content;
+                if (msgResponse.data) {
+                  if (msgResponse.data.message_content && msgResponse.data.message_content.trim() !== "") {
+                    lastMessage = msgResponse.data.message_content;
+                  } else {
+                    lastMessage = "📷 Foto";
+                  }
                   lastMessageTimestamp = msgResponse.data.timestamp;
                 }
               } catch (error) {
@@ -633,14 +641,15 @@ export default {
           );
           if (Array.isArray(response.data)) {
             this.messages = await Promise.all(response.data.map(async (msg) => {
-              const message = {
+              return {
                 id: msg.message_id,
-                text: msg.message_content,
+                text: msg.image_data ? "" : (msg.message_content || ""),
+                imageData: msg.image_data ? `data:image/jpeg;base64,${msg.image_data}` : null,
                 sender: msg.sender_id === Number(token) ? "me" : "other",
+                rawSenderId: msg.sender_id,
                 timestamp: new Date(msg.timestamp),
-                reactions: await this.fetchReactionsForMessage(msg.message_id), 
+                reactions: await this.fetchReactionsForMessage(msg.message_id),
               };
-              return message;
             }));
           } else {
             this.messages = [];
@@ -652,15 +661,15 @@ export default {
           );
           if (Array.isArray(response.data)) {
             this.messages = await Promise.all(response.data.map(async (msg) => {
-              const message = {
+              return {
                 id: msg.message_id,
-                text: msg.message_content,
+                text: msg.image_data ? "" : (msg.message_content || ""),
+                imageData: msg.image_data ? `data:image/jpeg;base64,${msg.image_data}` : null,
                 sender: msg.sender_id === Number(token) ? "me" : "other",
                 rawSenderId: msg.sender_id,
                 timestamp: new Date(msg.timestamp),
                 reactions: await this.fetchReactionsForMessage(msg.message_id),
               };
-              return message;
             }));
           } else {
             this.messages = [];
@@ -780,7 +789,7 @@ export default {
           headers: { Authorization: `Bearer ${token}` },
           responseType: "blob",
           params: {
-            type: this.selectedChatType 
+            type: this.selectedChatType
           }
         });
         const base64data = await blobToBase64(getMessageResponse.data);
@@ -804,7 +813,6 @@ export default {
             this.groupChats[idx].group_lastMessage = "📷 Foto";
           }
         }
-
         this.scrollToBottom();
       } catch (error) {
         console.error("Errore nell'invio della foto:", error);

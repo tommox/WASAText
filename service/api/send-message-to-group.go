@@ -88,9 +88,7 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 		})
 
 	} else if strings.HasPrefix(contentType, "multipart/form-data") {
-		// 🖼️ Messaggio con immagine
 
-		// Estrai immagine
 		file, _, err := r.FormFile("photo")
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -106,23 +104,8 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		// Estrai campi form
-		timestampStr := r.FormValue("timestamp")
-
-		var msgTime time.Time
-		if timestampStr == "" {
-			msgTime = time.Now()
-		} else {
-			msgTime, err = time.Parse(time.RFC3339, timestampStr)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				ctx.Logger.WithError(err).Error("sendMessageToGroup: invalid timestamp format")
-				return
-			}
-		}
-
 		// Salva immagine
-		messageId, err := rt.db.CreateGroupImageMessage(groupId, senderId, imageData, msgTime)
+		messageId, err := rt.db.CreateGroupImageMessage(groupId, senderId, imageData, time.Now())
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			ctx.Logger.WithError(err).Error("sendMessageToGroup: error saving image message to database")
@@ -134,7 +117,7 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"message_id": messageId,
 			"status":     "sent",
-			"timestamp":  msgTime,
+			"timestamp":  time.Now(),
 		})
 
 	} else {
