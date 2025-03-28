@@ -726,7 +726,6 @@ export default {
             { headers: { Authorization: `Bearer ${token}` } }
           );
         }
-        console.log("1",response.data);
         this.messages.push({
           id: response.data.message_id,
           text: this.newMessage,

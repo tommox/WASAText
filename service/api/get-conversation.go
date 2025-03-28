@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -44,7 +43,6 @@ func (rt *_router) getConversationHandler(w http.ResponseWriter, r *http.Request
 		}
 		if isGroup {
 			messages, err := rt.db.GetGroupConversationMessages(conversationId)
-			fmt.Println("group", messages)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("getConversation: failed to retrieve group messages")
@@ -66,7 +64,6 @@ func (rt *_router) getConversationHandler(w http.ResponseWriter, r *http.Request
 		}
 		if isPrivate {
 			messages, err := rt.db.GetConversationMessages(conversationId)
-			fmt.Println("priv:", messages)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("getConversation: failed to retrieve private messages")
