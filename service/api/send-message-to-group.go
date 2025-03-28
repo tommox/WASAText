@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
@@ -43,10 +44,10 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Controlla il tipo di contenuto della richiesta
-	switch r.Header.Get("Content-Type") {
-	case "application/json":
-		// Gestisci i messaggi di testo
+	contentType := r.Header.Get("Content-Type")
+
+	if strings.HasPrefix(contentType, "application/json") {
+		// ✉️ Messaggio testuale
 		var body struct {
 			MessageContent string `json:"message_content"`
 			Timestamp      string `json:"timestamp,omitempty"`
@@ -57,7 +58,7 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		// Converti il timestamp o usa quello corrente
+		// Timestamp
 		var msgTime time.Time
 		if body.Timestamp == "" {
 			msgTime = time.Now()
@@ -70,7 +71,7 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 			}
 		}
 
-		// Crea il messaggio di testo nel gruppo
+		// Salva messaggio testuale
 		messageId, err := rt.db.CreateGroupMessage(groupId, senderId, body.MessageContent, msgTime)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -78,7 +79,7 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		// Rispondi con successo
+		// Successo
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"message_id": messageId,
@@ -86,9 +87,10 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 			"timestamp":  msgTime,
 		})
 
-	case "multipart/form-data":
-		// Gestisci i messaggi con foto
-		// Estrai il file immagine dalla richiesta multipart
+	} else if strings.HasPrefix(contentType, "multipart/form-data") {
+		// 🖼️ Messaggio con immagine
+
+		// Estrai immagine
 		file, _, err := r.FormFile("photo")
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -97,7 +99,6 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 		}
 		defer file.Close()
 
-		// Leggi i dati del file immagine direttamente nel database come BLOB
 		imageData, err := io.ReadAll(file)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -105,22 +106,14 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		// Decodifica il corpo della richiesta per il messaggio
-		var body struct {
-			Timestamp string `json:"timestamp,omitempty"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			ctx.Logger.WithError(err).Error("sendMessageToGroup: invalid request body")
-			return
-		}
+		// Estrai campi form
+		timestampStr := r.FormValue("timestamp")
 
-		// Converti il timestamp o usa quello corrente
 		var msgTime time.Time
-		if body.Timestamp == "" {
+		if timestampStr == "" {
 			msgTime = time.Now()
 		} else {
-			msgTime, err = time.Parse(time.RFC3339, body.Timestamp)
+			msgTime, err = time.Parse(time.RFC3339, timestampStr)
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				ctx.Logger.WithError(err).Error("sendMessageToGroup: invalid timestamp format")
@@ -128,7 +121,7 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 			}
 		}
 
-		// Crea il messaggio con l'immagine nel gruppo
+		// Salva immagine
 		messageId, err := rt.db.CreateGroupImageMessage(groupId, senderId, imageData, msgTime)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -136,7 +129,7 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		// Rispondi con successo
+		// Successo
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"message_id": messageId,
@@ -144,7 +137,8 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 			"timestamp":  msgTime,
 		})
 
-	default:
+	} else {
+		// ❌ Tipo non supportato
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 		ctx.Logger.Error("sendMessageToGroup: unsupported content type")
 	}

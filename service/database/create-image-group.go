@@ -7,13 +7,19 @@ import (
 
 // CreateGroupImageMessage salva un messaggio di gruppo con immagine nel database, inclusi il timestamp.
 func (db *appdbimpl) CreateGroupImageMessage(groupId int, senderId int, imageData []byte, timestamp time.Time) (int, error) {
+
+	messageContent := ""
+	if len(imageData) > 0 {
+		messageContent = ""
+	}
+
 	// Query per inserire un messaggio con immagine (BLOB) nella tabella GroupMessages
 	query := `
-        INSERT INTO GroupMessages (Group_id, Sender_id, ImageData, Timestamp) 
-        VALUES (?, ?, ?, ?)
+        INSERT INTO GroupMessages (Group_id, Sender_id, MessageContent, ImageData, Timestamp) 
+        VALUES (?, ?, ?, ?, ?)
     `
 	// Esegui la query
-	result, err := db.c.Exec(query, groupId, senderId, imageData, timestamp)
+	result, err := db.c.Exec(query, groupId, senderId, messageContent, imageData, timestamp)
 	if err != nil {
 		return 0, fmt.Errorf("CreateGroupImageMessage: %w", err)
 	}

@@ -190,7 +190,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 								   (GroupMessage_id INTEGER PRIMARY KEY AUTOINCREMENT,
 									Group_id INTEGER NOT NULL,
 									Sender_id INTEGER NOT NULL,
-									MessageContent TEXT,
+									MessageContent VARCHAR(1000),
 									ImageData BLOB,
 									Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
 									FOREIGN KEY (Group_id) REFERENCES Groups (Group_id) ON DELETE CASCADE,
