@@ -56,7 +56,7 @@ type AppDatabase interface {
 	CreateMessage(senderId int, conversationId int, messageContent string, timestamp time.Time) (int, error)
 	GetMessage(messageId int) (Message, error)
 	DeleteMessage(messageId int) error
-	GetMessageImage(messageId int) ([]byte, error)
+	GetMessageImage(messageId int) ([]byte, string, error)
 	GetReactionsForMessage(messageId int, isGroup bool) ([]Reaction, error)
 	CreateImageMessage(senderId int, conversationId int, imageContent []byte, timestamp time.Time) (int, error)
 	UpdateOrCreateConversation(sender int, recipient int, messageId int, timestamp time.Time) (int, error)
@@ -78,7 +78,7 @@ type AppDatabase interface {
 	GetGroupMessage(groupId, messageId int) (GroupMessage, error)
 	ChangeGroupName(groupId int, newGroupName string) error
 	GetGroupPhoto(groupId int) ([]byte, error)
-	GetGroupMessageImage(messageId int) ([]byte, error)
+	GetGroupMessageImage(messageId int) ([]byte, string, error)
 	UpdateGroupPhoto(groupId int, photoData []byte) error
 	CreateGroupImageMessage(groupId int, senderId int, imageData []byte, timestamp time.Time) (int, error)
 	CreateGroupMessage(groupId int, senderId int, messageContent string, timestamp time.Time) (int, error)

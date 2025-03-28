@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -40,13 +41,13 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 	}
 
 	if messageType == "private" {
+		// Verifica accesso
 		conversationId, err := rt.db.GetConversationIdByMessageId(messageId)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			ctx.Logger.WithError(err).Error("getMessage: conversation not found")
 			return
 		}
-
 		hasPermission, err := rt.db.CheckPrivateConversationAccess(userId, conversationId)
 		if err != nil || !hasPermission {
 			w.WriteHeader(http.StatusForbidden)
@@ -54,6 +55,7 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 			return
 		}
 
+		// Recupera messaggio
 		dbMsg, err := rt.db.GetMessage(messageId)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
@@ -61,20 +63,28 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 			return
 		}
 
+		// Se immagine, recupera anche imageData + timestamp
 		if dbMsg.ImageData != nil {
-			imageData, err := rt.db.GetMessageImage(messageId)
+			imageData, timestamp, err := rt.db.GetMessageImage(messageId)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("getMessage: error retrieving image")
 				return
 			}
-			w.Header().Set("Content-Type", "image/*")
+			response := map[string]interface{}{
+				"image_data": base64.StdEncoding.EncodeToString(imageData),
+				"timestamp":  timestamp,
+			}
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write(imageData)
-		} else {
-			w.WriteHeader(http.StatusOK)
-			_ = json.NewEncoder(w).Encode(toDatabaseMessage(dbMsg))
+			_ = json.NewEncoder(w).Encode(response)
+			return
 		}
+
+		// Altrimenti, messaggio di testo
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(toDatabaseMessage(dbMsg))
 		return
 	}
 
@@ -93,27 +103,33 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 			return
 		}
 
-		lastGroupMessage, err := rt.db.GetGroupMessage(groupConv.Group_id, messageId)
+		groupMsg, err := rt.db.GetGroupMessage(groupConv.Group_id, messageId)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			ctx.Logger.WithError(err).Error("getMessage: error retrieving group messages")
+			ctx.Logger.WithError(err).Error("getMessage: error retrieving group message")
 			return
 		}
 
-		if lastGroupMessage.ImageData != nil {
-			imageData, err := rt.db.GetGroupMessageImage(messageId)
+		if groupMsg.ImageData != nil {
+			imageData, timestamp, err := rt.db.GetGroupMessageImage(messageId)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("getMessage: error retrieving group image")
 				return
 			}
-			w.Header().Set("Content-Type", "image/*")
+			response := map[string]interface{}{
+				"image_data": base64.StdEncoding.EncodeToString(imageData),
+				"timestamp":  timestamp,
+			}
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write(imageData)
-		} else {
-			w.WriteHeader(http.StatusOK)
-			_ = json.NewEncoder(w).Encode(lastGroupMessage)
+			_ = json.NewEncoder(w).Encode(response)
+			return
 		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(groupMsg)
 		return
 	}
 }

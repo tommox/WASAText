@@ -459,13 +459,16 @@ export default {
                   `${__API_URL__}/messages/${chat.last_message_id}?type=private`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
-                if (msgResponse.data) {
-                  if (msgResponse.data.message_content && msgResponse.data.message_content.trim() !== "") {
-                    lastMessage = msgResponse.data.message_content;
-                  } else {
-                    lastMessage = "📷 Foto";
-                  }
+                if (msgResponse.data.message_content && msgResponse.data.message_content.trim() !== "") {
+                  lastMessage = msgResponse.data.message_content;
                   lastMessageTimestamp = msgResponse.data.timestamp;
+                } else {
+                  lastMessage = "📷 Foto";
+                  const imgMsgResponse = await axios.get(`${__API_URL__}/messages/${chat.last_message_id}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                    params: { type: "private" } 
+                  });
+                  lastMessageTimestamp = imgMsgResponse.data.timestamp;
                 }
               } catch (error) {
                 console.error("Errore nel recupero dell'ultimo messaggio", error);
@@ -508,12 +511,11 @@ export default {
                   `${__API_URL__}/messages/${group.last_message_id}?type=group`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
-                if (msgResponse.data) {
-                  if (msgResponse.data.message_content && msgResponse.data.message_content.trim() !== "") {
-                    lastMessage = msgResponse.data.message_content;
-                  } else {
-                    lastMessage = "📷 Foto";
-                  }
+                if (msgResponse.data.message_content && msgResponse.data.message_content.trim() !== "") {
+                  lastMessage = msgResponse.data.message_content;
+                  lastMessageTimestamp = msgResponse.data.timestamp;
+                } else {
+                  lastMessage = "📷 Foto";
                   lastMessageTimestamp = msgResponse.data.timestamp;
                 }
               } catch (error) {
@@ -724,11 +726,12 @@ export default {
             { headers: { Authorization: `Bearer ${token}` } }
           );
         }
+        console.log("1",response.data);
         this.messages.push({
           id: response.data.message_id,
           text: this.newMessage,
           sender: "me",
-          timestamp: new Date(),
+          timestamp: response.data.timestamp,
         });
         if (this.selectedChatType === "private") {
           this.selectedChat.lastMessage = this.newMessage;
@@ -751,6 +754,7 @@ export default {
         }
         this.scrollToBottom();
         this.fetchChats();
+        this.fetchGroupChats();
       } catch (error) {
         console.error("Errore nell'invio del messaggio:", error);
       }
@@ -762,7 +766,6 @@ export default {
       const token = localStorage.getItem("token");
       const formData = new FormData();
       formData.append("photo", file);
-      formData.append("timestamp", new Date().toISOString());
 
       if (this.selectedChatType === "private") {
         formData.append("conversation_id", this.selectedChat.conversation_id);
@@ -787,17 +790,16 @@ export default {
         const messageId = response.data.message_id; 
         const getMessageResponse = await axios.get(`${__API_URL__}/messages/${messageId}`, {
           headers: { Authorization: `Bearer ${token}` },
-          responseType: "blob",
           params: {
             type: this.selectedChatType
           }
         });
-        const base64data = await blobToBase64(getMessageResponse.data);
+        const data = getMessageResponse.data;
         this.messages.push({
           id: response.data.message_id,
-          imageData: base64data,
+          imageData: `data:image/jpeg;base64,${data.image_data}`,
           sender: "me",
-          timestamp: new Date(response.data.timestamp),
+          timestamp: data.timestamp,
           reactions: [],
         });
         if (this.selectedChatType === "private") {
@@ -814,6 +816,8 @@ export default {
           }
         }
         this.scrollToBottom();
+        this.fetchChats();
+        this.fetchGroupChats();
       } catch (error) {
         console.error("Errore nell'invio della foto:", error);
         alert("Errore durante l'invio dell'immagine.");
