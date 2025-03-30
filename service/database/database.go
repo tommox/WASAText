@@ -59,7 +59,7 @@ type AppDatabase interface {
 	GetMessageImage(messageId int) ([]byte, string, error)
 	GetReactionsForMessage(messageId int, isGroup bool) ([]Reaction, error)
 	CreateImageMessage(senderId int, conversationId int, imageContent []byte, timestamp time.Time) (int, error)
-	UpdateOrCreateConversation(sender int, recipient int, messageId int, timestamp time.Time) (int, error)
+	UpdateOrCreateConversation(sender int, recipient int, messageId int, timestamp time.Time, isRead bool, senderMsgId int) (int, error)
 	// Reactions
 	AddReaction(messageId int, userId int, emoji string, isGroup bool) error
 	RemoveReaction(messageId int, userId int, isGroup bool) error

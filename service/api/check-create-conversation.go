@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -28,7 +29,9 @@ func (rt *_router) checkOrCreateConversationHandler(w http.ResponseWriter, r *ht
 
 	// Leggi il `recipient_id` dal corpo della richiesta JSON
 	var requestData struct {
-		RecipientId int `json:"recipient_id"`
+		RecipientId int       `json:"recipient_id"`
+		MessageId   int       `json:"message_id"`
+		Timestamp   time.Time `json:"timestamp"`
 	}
 	err = json.NewDecoder(r.Body).Decode(&requestData)
 	if err != nil {
@@ -46,11 +49,21 @@ func (rt *_router) checkOrCreateConversationHandler(w http.ResponseWriter, r *ht
 	}
 
 	if conversationId == 0 {
+		fmt.Println("1")
 		// Se non esiste, crea la nuova conversazione
-		conversationId, err = rt.db.UpdateOrCreateConversation(userId, requestData.RecipientId, 0, time.Now())
+		conversationId, err = rt.db.UpdateOrCreateConversation(userId, requestData.RecipientId, 0, time.Now(), false, userId)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			ctx.Logger.WithError(err).Error("checkOrCreateConversation: error creating conversation")
+			return
+		}
+	} else if requestData.MessageId != 0 {
+		fmt.Println("2")
+		// Se invece la conversazione esiste, aggiorna l'ultimo messaggio
+		conversationId, err = rt.db.UpdateOrCreateConversation(userId, requestData.RecipientId, requestData.MessageId, requestData.Timestamp, false, userId)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			ctx.Logger.WithError(err).Error("checkOrCreateConversation: error updating conversation")
 			return
 		}
 	}

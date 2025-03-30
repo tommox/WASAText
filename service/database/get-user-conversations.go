@@ -15,6 +15,11 @@ func (db *appdbimpl) GetUserConversations(userId int) (map[string]interface{}, e
 		ORDER BY LastMessageTimestamp DESC;
 	`
 
+	type ConversationWithReadFlag struct {
+		Conversation
+		IsReadByMe bool `json:"last_message_is_read"`
+	}
+
 	rows, err := db.c.Query(queryUserConversations, userId, userId)
 	if err != nil {
 		return nil, fmt.Errorf("GetUserConversations: errore nel recuperare le conversazioni utente: %w", err)
@@ -22,7 +27,7 @@ func (db *appdbimpl) GetUserConversations(userId int) (map[string]interface{}, e
 	defer rows.Close()
 
 	// Array per le conversazioni private
-	var userConversations []Conversation
+	var userConversations []ConversationWithReadFlag
 	for rows.Next() {
 		var conv Conversation
 		var lastMessageID sql.NullInt64
@@ -55,7 +60,16 @@ func (db *appdbimpl) GetUserConversations(userId int) (map[string]interface{}, e
 			conv.LastMessageTimestamp = sql.NullTime{}.Time
 		}
 
-		userConversations = append(userConversations, conv)
+		// Mostriamo isReadByMe solo se l'utente è il destinatario
+		isReadByMe := true
+		if conv.Recipient_id == userId && conv.LastMessageSenderId != userId {
+			isReadByMe = conv.LastMessageIsRead
+		}
+
+		userConversations = append(userConversations, ConversationWithReadFlag{
+			Conversation: conv,
+			IsReadByMe:   isReadByMe,
+		})
 	}
 
 	// Recupera le conversazioni di gruppo in cui l'utente è membro
@@ -95,14 +109,12 @@ func (db *appdbimpl) GetUserConversations(userId int) (map[string]interface{}, e
 			return nil, fmt.Errorf("GetUserConversations: errore nella scansione delle conversazioni di gruppo: %w", err)
 		}
 
-		// Gestiamo `NULL` per LastMessage_id
 		if lastMessageID.Valid {
 			groupConv.LastMessage_id = int(lastMessageID.Int64)
 		} else {
 			groupConv.LastMessage_id = 0
 		}
 
-		// Gestiamo `NULL` per LastMessageTimestamp
 		if lastMessageTimestamp.Valid {
 			groupConv.LastMessageTimestamp = lastMessageTimestamp.Time
 		} else {

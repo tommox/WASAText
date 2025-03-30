@@ -16,14 +16,25 @@ func (db *appdbimpl) MarkConversationAsRead(conversationId int, userId int) erro
 		return fmt.Errorf("MarkConversationAsRead: %w", err)
 	}
 
-	// Aggiorniamo anche la flag nella tabella Conversations
-	_, err = db.c.Exec(`
-		UPDATE Conversations
-		SET LastMessageIsRead = TRUE
-		WHERE Conversation_id = ?;
-	`, conversationId)
+	// Controlliamo se l'ultimo messaggio è stato inviato da qualcun altro
+	var senderId int
+	err = db.c.QueryRow(`
+		SELECT LastMessageSenderId FROM Conversations WHERE Conversation_id = ?;
+	`, conversationId).Scan(&senderId)
 	if err != nil {
-		return fmt.Errorf("MarkConversationAsRead (conversation flag): %w", err)
+		return fmt.Errorf("MarkConversationAsRead - get sender: %w", err)
+	}
+
+	// Solo se l'utente è il destinatario, aggiorniamo il flag di lettura
+	if senderId != userId {
+		_, err = db.c.Exec(`
+			UPDATE Conversations
+			SET LastMessageIsRead = TRUE
+			WHERE Conversation_id = ?;
+		`, conversationId)
+		if err != nil {
+			return fmt.Errorf("MarkConversationAsRead - update conversation flag: %w", err)
+		}
 	}
 
 	return nil
