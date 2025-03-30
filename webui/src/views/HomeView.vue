@@ -40,7 +40,16 @@
               <div class="chat-name">{{ chat.name }}</div>
               <div class="chat-last-message">{{ chat.lastMessage || 'Nessun messaggio' }}</div>
             </div>
-            <div class="chat-last-time">{{ formatTime(chat.lastMessageTimestamp) }}</div> 
+            <div class="chat-last-time">
+              <template v-if="chat.lastMessage && chat.lastMessage !== 'Nessun messaggio' && chat.lastMessageSenderId === parseInt(token)">
+                <img
+                  class="checkmark-icon"
+                  :src="chat.lastMessageIsRead ? doubleCheckmark : checkmark"
+                  alt="Spunta"
+                />
+              </template>
+              {{ formatTime(chat.lastMessageTimestamp) }}
+            </div>
           </div>
           <!-- Chat di gruppo -->
           <div
@@ -54,7 +63,16 @@
               <div class="chat-name">{{ group.group_name }}</div>
               <div class="group-chat-last-message">{{ group.group_lastMessage || 'Nessun messaggio' }}</div>
             </div>
-            <div class="group-chat-last-time">{{ formatTime(group.group_lastMessageTimestamp) }}</div> 
+            <div class="group-chat-last-time">
+              <template v-if="group.group_lastMessage && group.group_lastMessage !== 'Nessun messaggio' && group.group_lastMessageSenderId === parseInt(token)">
+                <img
+                  class="checkmark-icon"
+                  :src="group.group_lastMessageIsRead ? doubleCheckmark : checkmark"
+                  alt="Spunta"
+                />
+              </template>
+              {{ formatTime(group.group_lastMessageTimestamp) }}
+            </div>
           </div>
         </div>
       </div>
@@ -238,8 +256,17 @@
               <template v-else>
                 <span>{{ message.text }}</span>
               </template>
-              <div class="message-time" @click="openMessageMenu(message.id, message.sender)">
-                {{ formatTime(message.timestamp) }}
+              <div class="message-footer">
+                <span class="message-time" @click="openMessageMenu(message.id, message.sender)">
+                  {{ formatTime(message.timestamp) }}
+                </span>
+                <span v-if="message.sender === 'me'">
+                  <img
+                    :src="message.isRead ? doubleCheckmark : checkmark"
+                    alt="Spunta"
+                    class="checkmark-icon"
+                  />
+                </span>
               </div>
               <div class="message-reactions">
                 <span 
@@ -329,6 +356,9 @@
 import axios from "axios";
 import eventBus from "@/eventBus";
 import defaultAvatar from "@/assets/images/user.png";
+import checkmark from "@/assets/images/checkmark.png";
+import doubleCheckmark from "@/assets/images/doublecheckmark.png";
+
 
 function blobToBase64(blob) {
   return new Promise((resolve, reject) => {
@@ -354,6 +384,8 @@ export default {
       chats: [],
       groupChats: [],
       userMap: {},
+      checkmark,
+      doubleCheckmark,
       // Selezione chat
       selectedChat: null,
       selectedChatType: "",
@@ -389,6 +421,9 @@ export default {
     };
   },
   computed: {
+    token() {
+      return parseInt(localStorage.getItem("token"));
+    },
     filteredChats() {
       return this.chats.filter(
         chat =>
@@ -453,23 +488,23 @@ export default {
             }
             let lastMessage = "Nessun messaggio";
             let lastMessageTimestamp = null;
+            let lastMessageSenderId = null; 
+            let lastMessageIsRead = false;  
             if (chat.last_message_id) {
               try {
                 const msgResponse = await axios.get(
                   `${__API_URL__}/messages/${chat.last_message_id}?type=private`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
+
                 if (msgResponse.data.message_content && msgResponse.data.message_content.trim() !== "") {
                   lastMessage = msgResponse.data.message_content;
-                  lastMessageTimestamp = msgResponse.data.timestamp;
                 } else {
                   lastMessage = "📷 Foto";
-                  const imgMsgResponse = await axios.get(`${__API_URL__}/messages/${chat.last_message_id}`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                    params: { type: "private" } 
-                  });
-                  lastMessageTimestamp = imgMsgResponse.data.timestamp;
                 }
+                lastMessageTimestamp = msgResponse.data.timestamp;
+                lastMessageSenderId = msgResponse.data.sender_id;
+                lastMessageIsRead = msgResponse.data.isRead === true;
               } catch (error) {
                 console.error("Errore nel recupero dell'ultimo messaggio", error);
               }
@@ -480,7 +515,9 @@ export default {
               name: recipient ? recipient.Nickname : "Utente Sconosciuto",
               avatarUrl,
               lastMessage,
-              lastMessageTimestamp, 
+              lastMessageTimestamp,
+              lastMessageSenderId,
+              lastMessageIsRead, 
             };
           }));
           chats = chats.filter(chat => chat !== null);
@@ -505,19 +542,18 @@ export default {
             let lastMessage = "Nessun messaggio";
             let lastMessageTimestamp = null;
             let avatarUrl = defaultAvatar;
+            let lastMessageSenderId = null;
+            let lastMessageIsRead = false;
             if (group.last_message_id) {
               try {
                 const msgResponse = await axios.get(
                   `${__API_URL__}/messages/${group.last_message_id}?type=group`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
-                if (msgResponse.data.message_content && msgResponse.data.message_content.trim() !== "") {
-                  lastMessage = msgResponse.data.message_content;
-                  lastMessageTimestamp = msgResponse.data.timestamp;
-                } else {
-                  lastMessage = "📷 Foto";
-                  lastMessageTimestamp = msgResponse.data.timestamp;
-                }
+                lastMessage = msgResponse.data.message_content?.trim() !== "" ? msgResponse.data.message_content : "📷 Foto";
+                lastMessageTimestamp = msgResponse.data.timestamp;
+                lastMessageSenderId = msgResponse.data.sender_id;
+                lastMessageIsRead = msgResponse.data.isRead === true;
               } catch (error) {
                 console.error("Errore nel recupero dell'ultimo messaggio per il gruppo", error);
               }
@@ -543,6 +579,8 @@ export default {
               group_avatarUrl: avatarUrl,
               group_lastMessage: lastMessage,
               group_lastMessageTimestamp: lastMessageTimestamp,
+              group_lastMessageSenderId: lastMessageSenderId,
+              group_lastMessageIsRead: lastMessageIsRead,
             };
           }));
         }
@@ -650,9 +688,11 @@ export default {
                 sender: msg.sender_id === Number(token) ? "me" : "other",
                 rawSenderId: msg.sender_id,
                 timestamp: new Date(msg.timestamp),
+                isRead: msg.isRead || false,
                 reactions: await this.fetchReactionsForMessage(msg.message_id),
               };
             }));
+            console.log("mes",this.messages);
           } else {
             this.messages = [];
           }
@@ -670,6 +710,7 @@ export default {
                 sender: msg.sender_id === Number(token) ? "me" : "other",
                 rawSenderId: msg.sender_id,
                 timestamp: new Date(msg.timestamp),
+                isRead: msg.isRead || false,
                 reactions: await this.fetchReactionsForMessage(msg.message_id),
               };
             }));
@@ -731,6 +772,7 @@ export default {
           text: this.newMessage,
           sender: "me",
           timestamp: response.data.timestamp,
+          isRead: response.data.isRead || false,
         });
         if (this.selectedChatType === "private") {
           this.selectedChat.lastMessage = this.newMessage;
@@ -799,6 +841,7 @@ export default {
           imageData: `data:image/jpeg;base64,${data.image_data}`,
           sender: "me",
           timestamp: data.timestamp,
+          isRead: response.data.isRead || false,
           reactions: [],
         });
         if (this.selectedChatType === "private") {
@@ -1645,7 +1688,19 @@ export default {
   border-radius: 50%;
   cursor: pointer;
 }
-
+.message-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  margin-top: 5px;
+  font-size: 10px;
+  color: gray;
+}
+.checkmark-icon {
+  width: 20px;
+  height: 20px;
+}
 /* Chat vuota */
 .empty-chat {
   display: flex;

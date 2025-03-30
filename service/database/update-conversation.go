@@ -7,7 +7,6 @@ import (
 
 func (db *appdbimpl) UpdateOrCreateConversation(sender int, recipient int, messageId int, timestamp time.Time, isRead bool, senderMsgId int) (int, error) {
 	var conversationId int
-	fmt.Println("isread", isRead)
 	query := `
         INSERT INTO Conversations (Sender_id, Recipient_id, LastMessage_id, LastMessageTimestamp, LastMessageIsRead, LastMessageSenderId)
         VALUES (?, ?, ?, ?, ?, ?)

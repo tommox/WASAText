@@ -70,7 +70,6 @@ func (rt *_router) getConversationHandler(w http.ResponseWriter, r *http.Request
 			return
 		}
 		if isPrivate {
-			fmt.Println("3")
 			err := rt.db.MarkConversationAsRead(conversationId, userId)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
@@ -78,7 +77,7 @@ func (rt *_router) getConversationHandler(w http.ResponseWriter, r *http.Request
 				return
 			}
 			messages, err := rt.db.GetConversationMessages(conversationId)
-			fmt.Println("4", messages)
+			fmt.Println("!1", messages)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("getConversation: failed to retrieve private messages")
