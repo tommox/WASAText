@@ -23,6 +23,7 @@ type Message struct {
 	MessageContent  string    `json:"message_content"`
 	ImageData       []byte    `json:"image_data"`
 	Timestamp       time.Time `json:"timestamp"`
+	IsRead          bool      `json:"isRead"`
 }
 
 // GroupMessage rappresenta la struttura di un messaggio inviata a un gruppo
@@ -33,6 +34,7 @@ type GroupMessage struct {
 	MessageContent  string    `json:"message_content"`
 	ImageData       []byte    `json:"image_data"`
 	Timestamp       time.Time `json:"timestamp"`
+	IsRead          bool      `json:"isRead"`
 }
 
 type Reaction struct {
@@ -64,6 +66,8 @@ type Conversation struct {
 	Recipient_id         int       `json:"recipient_id"`
 	LastMessage_id       int       `json:"last_message_id"`
 	LastMessageTimestamp time.Time `json:"last_message_timestamp"`
+	LastMessageIsRead    bool      `json:"last_message_isRead"`
+	LastMessageSenderId  int       `json:"last_message_sender_id"`
 }
 
 // Conversation rappresenta una conversazione di un utente in un gruppo.
@@ -74,4 +78,6 @@ type GroupConversation struct {
 	Sender_id            int       `json:"sender_id"`
 	LastMessage_id       int       `json:"last_message_id"`
 	LastMessageTimestamp time.Time `json:"last_message_timestamp"`
+	LastMessageIsRead    bool      `json:"last_message_isRead"`
+	LastMessageSenderId  int       `json:"last_message_sender_id"`
 }

@@ -42,6 +42,12 @@ func (rt *_router) getConversationHandler(w http.ResponseWriter, r *http.Request
 			return
 		}
 		if isGroup {
+			err := rt.db.MarkGroupConversationAsRead(conversationId, userId)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				ctx.Logger.WithError(err).Error("getConversation: failed to mark group messages as read")
+				return
+			}
 			messages, err := rt.db.GetGroupConversationMessages(conversationId)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
@@ -63,6 +69,12 @@ func (rt *_router) getConversationHandler(w http.ResponseWriter, r *http.Request
 			return
 		}
 		if isPrivate {
+			err := rt.db.MarkConversationAsRead(conversationId, userId)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				ctx.Logger.WithError(err).Error("getConversation: failed to mark messages as read")
+				return
+			}
 			messages, err := rt.db.GetConversationMessages(conversationId)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)

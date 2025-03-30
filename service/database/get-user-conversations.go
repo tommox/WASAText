@@ -9,7 +9,7 @@ import (
 func (db *appdbimpl) GetUserConversations(userId int) (map[string]interface{}, error) {
 	// Recupera le conversazioni private tra utenti
 	queryUserConversations := `
-		SELECT Conversation_id, Sender_id, Recipient_id, LastMessage_id, LastMessageTimestamp
+		SELECT Conversation_id, Sender_id, Recipient_id, LastMessage_id, LastMessageTimestamp, LastMessageIsRead, LastMessageSenderId
 		FROM Conversations
 		WHERE Sender_id = ? OR Recipient_id = ?
 		ORDER BY LastMessageTimestamp DESC;
@@ -34,6 +34,8 @@ func (db *appdbimpl) GetUserConversations(userId int) (map[string]interface{}, e
 			&conv.Recipient_id,
 			&lastMessageID,
 			&lastMessageTimestamp,
+			&conv.LastMessageIsRead,
+			&conv.LastMessageSenderId,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("GetUserConversations: errore nella scansione delle conversazioni utente: %w", err)
@@ -58,7 +60,7 @@ func (db *appdbimpl) GetUserConversations(userId int) (map[string]interface{}, e
 
 	// Recupera le conversazioni di gruppo in cui l'utente è membro
 	queryGroupConversations := `
-		SELECT gc.GroupConversation_id, gc.Group_id, g.Group_name, gc.LastMessage_id, gc.LastMessageTimestamp
+		SELECT gc.GroupConversation_id, gc.Group_id, g.Group_name, gc.LastMessage_id, gc.LastMessageTimestamp, gc.LastMessageIsRead, gc.LastMessageSenderId
 		FROM GroupConversations gc
 		INNER JOIN GroupMembers gm ON gc.Group_id = gm.Group_id
 		INNER JOIN Groups g ON gc.Group_id = g.Group_id
@@ -86,6 +88,8 @@ func (db *appdbimpl) GetUserConversations(userId int) (map[string]interface{}, e
 			&groupName,
 			&lastMessageID,
 			&lastMessageTimestamp,
+			&groupConv.LastMessageIsRead,
+			&groupConv.LastMessageSenderId,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("GetUserConversations: errore nella scansione delle conversazioni di gruppo: %w", err)

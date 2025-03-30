@@ -94,6 +94,8 @@ type AppDatabase interface {
 	CheckExistingConversation(userId int, recipientId int) (int, error)
 	GetConversationIdByMessageId(messageId int) (int, error)
 	DeleteConversation(conversationId int) error
+	MarkConversationAsRead(conversationId int, userId int) error
+	MarkGroupConversationAsRead(groupId int, userId int) error
 
 	// Authorization
 	CheckUserPermission(userId, messageId int) (bool, error)
@@ -134,7 +136,8 @@ func New(db *sql.DB) (AppDatabase, error) {
 										Conversation_id  INTEGER NOT NULL, 
 										ImageData		 BLOB,
 										MessageContent   VARCHAR(1000),
-										Timestamp        DATETIME NOT NULL);`
+										Timestamp        DATETIME NOT NULL,
+										IsRead           BOOLEAN DEFAULT FALSE);`
 
 		_, err = db.Exec(messages)
 		if err != nil {
@@ -193,6 +196,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 									MessageContent VARCHAR(1000),
 									ImageData BLOB,
 									Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+									IsRead BOOLEAN DEFAULT FALSE,
 									FOREIGN KEY (Group_id) REFERENCES Groups (Group_id) ON DELETE CASCADE,
 									FOREIGN KEY (Sender_id) REFERENCES Users (User_id) ON DELETE CASCADE);`
 		_, err = db.Exec(groupMessages)
@@ -211,7 +215,19 @@ func New(db *sql.DB) (AppDatabase, error) {
 									FOREIGN KEY (User_id) REFERENCES Users (User_id));`
 		_, err = db.Exec(groupReactions)
 		if err != nil {
-			return nil, fmt.Errorf("error creating database structure: Reactions %w", err)
+			return nil, fmt.Errorf("error creating database structure: GroupReactions %w", err)
+		}
+
+		groupMessagesRead := `CREATE TABLE IF NOT EXISTS GroupMessagesRead (
+									GroupMessage_id INTEGER NOT NULL,
+									User_id INTEGER NOT NULL,
+									PRIMARY KEY (GroupMessage_id, User_id),
+									FOREIGN KEY (GroupMessage_id) REFERENCES GroupMessages(GroupMessage_id) ON DELETE CASCADE,
+									FOREIGN KEY (User_id) REFERENCES Users(User_id) ON DELETE CASCADE
+								);`
+		_, err = db.Exec(groupMessagesRead)
+		if err != nil {
+			return nil, fmt.Errorf("error creating GroupMessagesRead structure: GroupMessagesRead %w", err)
 		}
 
 		// Creating DB for Conversations if not existing
@@ -221,6 +237,8 @@ func New(db *sql.DB) (AppDatabase, error) {
 									Recipient_id INTEGER NOT NULL,
 									LastMessage_id INTEGER DEFAULT NULL,
 									LastMessageTimestamp DATETIME DEFAULT NULL,
+									LastMessageIsRead BOOLEAN DEFAULT FALSE,
+									LastMessageSenderId INTEGER DEFAULT NULL,
 									FOREIGN KEY (Sender_id) REFERENCES Users (User_id) ON DELETE CASCADE,
 									FOREIGN KEY (Recipient_id) REFERENCES Users (User_id) ON DELETE CASCADE,
 									FOREIGN KEY (LastMessage_id) REFERENCES Messages (Message_id) ON DELETE SET NULL,
@@ -238,6 +256,8 @@ func New(db *sql.DB) (AppDatabase, error) {
 									Sender_id INTEGER NOT NULL,
 									LastMessage_id INTEGER DEFAULT NULL,
 									LastMessageTimestamp DATETIME DEFAULT NULL,
+									LastMessageIsRead BOOLEAN DEFAULT FALSE,
+									LastMessageSenderId INTEGER DEFAULT NULL,
 									FOREIGN KEY (Group_id) REFERENCES Groups (Group_id) ON DELETE CASCADE,
 									FOREIGN KEY (Sender_id) REFERENCES Users (User_id) ON DELETE SET NULL,
 									FOREIGN KEY (LastMessage_id) REFERENCES GroupMessages (GroupMessage_id) ON DELETE SET NULL,
