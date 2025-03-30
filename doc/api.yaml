@@ -277,21 +277,21 @@ paths:
                 $ref: '#/components/schemas/Error500'
 
   /users/{User_id}/photo:
+    parameters:
+          - name: User_id
+            description: Integer that represents User_id.
+            in: path
+            required: true
+            schema:
+              type: integer
+              description: "The unique ID of the user."
+              minimum: 1
+              maximum: 1000
     put:
       tags: ["users"]
       summary: Create or update the user's profile photo
       description: Upsert a single profile photo for the user.
       operationId: setMyPhoto
-      parameters:
-        - name: User_id
-          description: Integer that represents User_id.
-          in: path
-          required: true
-          schema:
-            type: integer
-            description: "The unique ID of the user."
-            minimum: 1
-            maximum: 1000
       requestBody:
         description: The photo to be uploaded or updated.
         required: true
@@ -307,8 +307,6 @@ paths:
                   format: binary
                   description: "The image file for the user's profile photo."
                   pattern: "^[01]+$"
-                  minLength: 1
-                  maxLength: 100
       responses:
         '200':
           description: Profile photo updated successfully.
@@ -399,16 +397,6 @@ paths:
       operationId: getPhoto
       description: Restituisce l'immagine profilo di un utente come BLOB dal database.
       tags: ["users"]
-      parameters:
-        - name: User_id
-          in: path
-          required: true
-          description: The integer that represents the user_id
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
-            description: ID dell'utente di cui recuperare la foto
       responses:
         "200":
           description: Foto profilo restituita con successo
@@ -535,21 +523,21 @@ paths:
                     maximum: 1000
 
   /conversations/{Conversation_id}:
+    parameters:
+          - name: Conversation_id
+            in: path
+            description: The unique identifier of the conversation to retrieve.
+            required: true
+            schema:
+              type: integer
+              description: "Schema for having a specific conversation"
+              minimum: 1
+              maximum: 1000
     get:
       tags: ["conversations"]
       summary: Get a conversation by its ID
       description: Return one specific conversation
       operationId: getConversation
-      parameters:
-        - name: Conversation_id
-          in: path
-          description: The unique identifier of the conversation to retrieve.
-          required: true
-          schema:
-            type: integer
-            description: "Schema for having a specific conversation"
-            minimum: 1
-            maximum: 1000
       responses:
         '200':
           description: Conversation successfully returned
@@ -614,16 +602,6 @@ paths:
       summary: Delete a conversation by its ID
       description: Permanently deletes a specific conversation along with all messages associated with it.
       operationId: deleteConversation
-      parameters:
-        - name: Conversation_id
-          in: path
-          description: The unique identifier of the conversation to delete.
-          required: true
-          schema:
-            type: integer
-            description: "Schema for identifying a specific conversation to delete"
-            minimum: 1
-            maximum: 1000
       responses:
         '200':
           description: Conversation successfully deleted
@@ -860,12 +838,7 @@ paths:
 
 
   /messages/{Message_id}:
-    get:
-      tags: ["messages"]
-      summary: Get a message
-      description: Retrieve the details of a specific message by its unique ID.
-      operationId: getMessage
-      parameters:
+    parameters:
         - name: Message_id
           in: path
           required: true
@@ -874,6 +847,11 @@ paths:
             type: integer
             minimum: 1
             maximum: 1000
+    get:
+      tags: ["messages"]
+      summary: Get a message
+      description: Retrieve the details of a specific message by its unique ID.
+      operationId: getMessage
       responses:
         '200':
           description: Message retrieved successfully.
@@ -978,15 +956,6 @@ paths:
       summary: Delete a message
       description: Delete a specific message
       operationId: deleteMessage
-      parameters:
-        - name: Message_id
-          in: path
-          required: true
-          description: "The unique identifier of the message to be deleted."
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
       responses:
         '200':
           description: Message deleted successfully.
@@ -1170,12 +1139,7 @@ paths:
 
   # Reactions come sottorisorsa
   /messages/{Message_id}/reactions:
-    post:
-      tags: ["messages"]
-      summary: Add a reaction
-      description: Adds a reaction to a specific message.
-      operationId: commentMessage
-      parameters:
+    parameters:
         - name: Message_id
           in: path
           required: true
@@ -1184,6 +1148,11 @@ paths:
             type: integer
             minimum: 1
             maximum: 1000
+    post:
+      tags: ["messages"]
+      summary: Add a reaction
+      description: Adds a reaction to a specific message.
+      operationId: commentMessage
       requestBody:
         description: Details of the reaction to add.
         required: true
@@ -1260,15 +1229,6 @@ paths:
       summary: Remove a reaction (or all reactions)
       description: Removes a reaction from a specific message. If the request body is empty or not provided, remove all reactions.
       operationId: uncommentMessage
-      parameters:
-        - name: Message_id
-          in: path
-          required: true
-          description: "ID of the message from which the reaction will be removed."
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
       responses:
         '200':
           description: Reaction removed successfully.
@@ -1328,15 +1288,6 @@ paths:
       summary: Get reactions
       description: Retrieves all reactions for a specific message.
       operationId: getReactions
-      parameters:
-        - name: Message_id
-          in: path
-          required: true
-          description: "ID of the message to get reactions for."
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
       responses:
         '200':
           description: Reactions retrieved successfully.
@@ -1345,6 +1296,8 @@ paths:
               schema:
                 type: array
                 description: List of reactions for the specified message.
+                minItems: 1
+                maxItems: 1000
                 items:
                   type: object
                   properties:
@@ -1649,12 +1602,7 @@ paths:
 
   
   /groups/{Group_id}:
-    patch:
-      tags: ["groups"]
-      summary: Update group name
-      description: Allows updating certain group fields (like the group name).
-      operationId: setGroupName
-      parameters:
+    parameters:
         - name: Group_id
           in: path
           description: Integer that represents Group_id
@@ -1664,6 +1612,11 @@ paths:
             description: "The unique ID of the group."
             minimum: 1
             maximum: 1000
+    patch:
+      tags: ["groups"]
+      summary: Update group name
+      description: Allows updating certain group fields (like the group name).
+      operationId: setGroupName
       requestBody:
         description: The new name for the group.
         required: true
@@ -1744,15 +1697,6 @@ paths:
       summary: Delete a group
       description: Allows the deletion of a group. Only the creator or an admin can delete the group.
       operationId: deleteGroup
-      parameters:
-        - name: Group_id
-          in: path
-          required: true
-          description: "The unique ID of the group to delete."
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
       responses:
         '200':
           description: Group deleted successfully.
@@ -1811,12 +1755,7 @@ paths:
                 $ref: '#/components/schemas/Error500'
               
   /groups/{Group_id}/photo: 
-    put:
-      tags: ["groups"]
-      summary: Add or update a group photo
-      description: Allows an admin or the creator to upload or update a group's profile photo.
-      operationId: addGroupPhoto
-      parameters:
+    parameters:
         - name: Group_id
           in: path
           required: true
@@ -1825,6 +1764,11 @@ paths:
             type: integer
             minimum: 1
             maximum: 1000
+    put:
+      tags: ["groups"]
+      summary: Add or update a group photo
+      description: Allows an admin or the creator to upload or update a group's profile photo.
+      operationId: addGroupPhoto
       requestBody:
         description: The group photo to upload.
         required: true
@@ -1843,8 +1787,6 @@ paths:
                   format: binary
                   description: "The image file for the group's profile photo."
                   pattern: "^[01]+$"
-                  minLength: 1
-                  maxLength: 100
       responses:
         '200':
           description: Group photo uploaded successfully.
@@ -1916,21 +1858,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
-
     get:
       tags: ["groups"]
       summary: Retrieve a group's profile photo
       description: Fetches the profile photo of a specified group.
       operationId: getGroupPhoto
-      parameters:
-        - name: Group_id
-          in: path
-          required: true
-          description: "The unique ID of the group."
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
       responses:
         '200':
           description: Group photo returned successfully.
