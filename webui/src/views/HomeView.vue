@@ -41,9 +41,6 @@
               <div class="chat-last-message">{{ chat.lastMessage || 'Nessun messaggio' }}</div>
             </div>
             <div class="chat-last-time">
-              <template v-if="chat.hasUnread">
-                <span class="unread-dot"></span>
-              </template>
               <template v-if="chat.lastMessage && chat.lastMessage !== 'Nessun messaggio' && chat.lastMessageSenderId === parseInt(token)">
                 <img
                   class="checkmark-icon"
@@ -67,9 +64,6 @@
               <div class="group-chat-last-message">{{ group.group_lastMessage || 'Nessun messaggio' }}</div>
             </div>
             <div class="group-chat-last-time">
-              <template v-if="group.group_hasUnread">
-                <span class="unread-dot"></span>
-              </template>
               <template v-if="group.group_lastMessage && group.group_lastMessage !== 'Nessun messaggio' && group.group_lastMessageSenderId === parseInt(token)">
                 <img
                   class="checkmark-icon"
@@ -313,12 +307,12 @@
                   <h2>Inoltra a...</h2>
                   <div class="user-list">
                     <div
-                      v-for="chat in chats"
-                      :key="'fwd-chat-' + chat.conversation_id"
+                      v-for="user in users"
+                      :key="'fwd-user-' + user.User_id"
                       class="user-item"
-                      @click="confirmForward('private', chat.conversation_id)"
+                      @click="confirmForward('private', user.User_id)"
                     >
-                      {{ chat.name }}
+                      {{ user.Nickname }}
                     </div>
                     <div
                       v-for="group in groupChats"
@@ -524,7 +518,6 @@ export default {
               lastMessageTimestamp,
               lastMessageSenderId,
               lastMessageIsRead, 
-              hasUnread: !!lastMessage && lastMessage !== "Nessun messaggio" && lastMessageSenderId !== parseInt(token) && !lastMessageIsRead,  
             };
           }));
           chats = chats.filter(chat => chat !== null);
@@ -588,7 +581,6 @@ export default {
               group_lastMessageTimestamp: lastMessageTimestamp,
               group_lastMessageSenderId: lastMessageSenderId,
               group_lastMessageIsRead: lastMessageIsRead,
-              group_hasUnread:!!lastMessage && lastMessage !== "Nessun messaggio" && lastMessageSenderId !== parseInt(token) && !lastMessageIsRead, 
             };
           }));
         }
@@ -670,12 +662,10 @@ export default {
       this.fetchMessages();
       if (type === "private") {
         this.fetchUserPhoto();
-        chat.hasUnread = false;
       } else if (type === "group") {
         this.fetchGroupPhoto();
         this.fetchGroupMembers(chat.group_conversation_id);
         this.editedGroupName = chat.group_name;
-        chat.group_hasUnread = false;
       }
     },
     async fetchMessages() {
@@ -1197,19 +1187,45 @@ export default {
         this.selectedUsers.push(userId);
       }
     },
-    forwardMessage(messageId) {
+    async forwardMessage(messageId) {
       this.forwardMessageId = messageId;
       this.forwardMessageType = this.selectedChatType;
       this.showOptions = false;
       this.forwardMode = true;
+      const token = localStorage.getItem("token");
+      try {
+        const response = await axios.get(`${__API_URL__}/users`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        this.users = response.data.filter(user => user.User_id.toString() !== token);
+      } catch (error) {
+        console.error("Errore nel recupero degli utenti per il forward:", error);
+      }
     },
     async confirmForward(type, destinationId) {
       const token = localStorage.getItem("token");
-      const payload =
-        type === "private"
-          ? { conversation_id: destinationId }
-          : { group_id: destinationId };
+      let payload = {};
+      let finalConversationId = destinationId;
       try {
+        if (type === "private") {
+          const existingChat = this.chats.find(chat =>
+            chat.recipient_id === destinationId || chat.sender_id === destinationId
+          );
+          if (existingChat) {
+            finalConversationId = existingChat.conversation_id;
+            payload = { conversation_id: finalConversationId };
+          } else {
+            const createResponse = await axios.post(
+              `${__API_URL__}/conversations/conversation`,
+              { recipient_id: destinationId },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            finalConversationId = createResponse.data.conversation_id;
+            payload = { conversation_id: finalConversationId };
+          }
+        } else if (type === "group") {
+          payload = { group_id: destinationId };
+        }
         await axios.post(
           `${__API_URL__}/messages/${this.forwardMessageId}/forwards?type=${this.forwardMessageType}`,
           payload,
@@ -1221,9 +1237,11 @@ export default {
           }
         );
         eventBus.emit("messageForwarded", {
-          type,
-          destinationId,
-        });
+              type,
+              destinationId,
+            });
+        await this.fetchChats();
+        await this.fetchGroupChats();
         this.forwardMode = false;
         this.forwardMessageId = null;
         this.forwardMessageType = "";
@@ -1846,14 +1864,6 @@ export default {
 }
 .dropdown-item:hover {
   background-color: #f5f5f5;
-}
-.unread-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  background-color: #069327; 
-  border-radius: 50%;
-  margin-right: 5px;
 }
 .badge {
   background-color: #069327;
