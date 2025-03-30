@@ -59,12 +59,10 @@ func (rt *_router) setMyNicknameHandler(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 	if exist {
-		// User already existing
-		w.WriteHeader(http.StatusBadRequest)
+		ctx.Logger.WithError(errors.New("nickname already exists")).Error("put-nickname: Error in Nickname section")
+		w.WriteHeader(http.StatusConflict)
 		return
 	}
-
-	// call ChangeNickname in DB
 	err = rt.db.ChangeNickname(User{User_id: user_id}.toDataBase(), newNickname.Nickname)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("put-nickname: Error executing query")

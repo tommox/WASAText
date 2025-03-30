@@ -1093,7 +1093,11 @@ export default {
           this.nickname = this.editableNickname.trim();
           localStorage.setItem("nickname", this.nickname);
         } catch (error) {
-          console.error("Errore nel salvataggio del nickname:", error);
+          if (error.response.status === 409) {
+            alert("Questo nickname è già stato utilizzato. Scegli un altro nome.");
+          } else {
+            console.error("Errore nel salvataggio del nickname:", error);
+          }
         }
       }
       this.isEditing = false;
