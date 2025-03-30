@@ -41,6 +41,9 @@
               <div class="chat-last-message">{{ chat.lastMessage || 'Nessun messaggio' }}</div>
             </div>
             <div class="chat-last-time">
+              <template v-if="chat.hasUnread">
+                <span class="unread-dot"></span>
+              </template>
               <template v-if="chat.lastMessage && chat.lastMessage !== 'Nessun messaggio' && chat.lastMessageSenderId === parseInt(token)">
                 <img
                   class="checkmark-icon"
@@ -64,6 +67,9 @@
               <div class="group-chat-last-message">{{ group.group_lastMessage || 'Nessun messaggio' }}</div>
             </div>
             <div class="group-chat-last-time">
+              <template v-if="group.group_hasUnread">
+                <span class="unread-dot"></span>
+              </template>
               <template v-if="group.group_lastMessage && group.group_lastMessage !== 'Nessun messaggio' && group.group_lastMessageSenderId === parseInt(token)">
                 <img
                   class="checkmark-icon"
@@ -518,6 +524,7 @@ export default {
               lastMessageTimestamp,
               lastMessageSenderId,
               lastMessageIsRead, 
+              hasUnread: !!lastMessage && lastMessage !== "Nessun messaggio" && lastMessageSenderId !== parseInt(token) && !lastMessageIsRead,  
             };
           }));
           chats = chats.filter(chat => chat !== null);
@@ -581,6 +588,7 @@ export default {
               group_lastMessageTimestamp: lastMessageTimestamp,
               group_lastMessageSenderId: lastMessageSenderId,
               group_lastMessageIsRead: lastMessageIsRead,
+              group_hasUnread:!!lastMessage && lastMessage !== "Nessun messaggio" && lastMessageSenderId !== parseInt(token) && !lastMessageIsRead, 
             };
           }));
         }
@@ -662,10 +670,12 @@ export default {
       this.fetchMessages();
       if (type === "private") {
         this.fetchUserPhoto();
+        chat.hasUnread = false;
       } else if (type === "group") {
         this.fetchGroupPhoto();
         this.fetchGroupMembers(chat.group_conversation_id);
         this.editedGroupName = chat.group_name;
+        chat.group_hasUnread = false;
       }
     },
     async fetchMessages() {
@@ -1836,6 +1846,14 @@ export default {
 }
 .dropdown-item:hover {
   background-color: #f5f5f5;
+}
+.unread-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background-color: #069327; 
+  border-radius: 50%;
+  margin-right: 5px;
 }
 .badge {
   background-color: #069327;
