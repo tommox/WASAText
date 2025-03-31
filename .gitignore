@@ -39,5 +39,4 @@ node_modules/
 # Foto
 foto/*
 
-# Exe
-*.exe
+webapi
