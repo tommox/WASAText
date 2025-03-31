@@ -151,7 +151,7 @@ paths:
   # -------------------------------------------------------
   # USERS
   # -------------------------------------------------------
-  /users/online:
+  /users:
     get:
       tags: ["users"]
       summary: Ottieni la lista degli utenti
@@ -1150,17 +1150,17 @@ paths:
             maximum: 1000
     post:
       tags: ["messages"]
-      summary: Add a reaction
-      description: Adds a reaction to a specific message.
+      summary: Add or remove a reaction
+      description: Adds or remove a reaction to a specific message.
       operationId: commentMessage
       requestBody:
-        description: Details of the reaction to add.
+        description: Details of the reaction to manage.
         required: true
         content:
           application/json:
             schema:
               type: object
-              description: Schema for adding a reaction to a message.
+              description: Schema for adding or removing a reaction to a message.
               required:
                 - emoji
               properties:
@@ -1172,11 +1172,11 @@ paths:
                   maxLength: 1000
       responses:
         '201':
-          description: Reaction added successfully.
+          description: Reaction added or removed successfully.
           content:
             application/json:
               schema:
-                description: Response structure for a successful reaction addition.
+                description: Response structure for a successful reaction add or remove.
                 type: object
                 required:
                   - Reaction_id
@@ -1184,7 +1184,7 @@ paths:
                 properties:
                   Reaction_id:
                     type: integer
-                    description: "Unique identifier of the added reaction."
+                    description: "Unique identifier of the added or removed reaction."
                     minimum: 1
                     maximum: 1000
                   status:
@@ -1224,64 +1224,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error500'
 
-    delete:
-      tags: ["messages"]
-      summary: Remove a reaction (or all reactions)
-      description: Removes a reaction from a specific message. If the request body is empty or not provided, remove all reactions.
-      operationId: uncommentMessage
-      responses:
-        '200':
-          description: Reaction removed successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Response structure for a successful reaction removal.
-                required:
-                  - Reaction_id
-                  - status
-                properties:
-                  Reaction_id:
-                    type: integer
-                    minimum: 1
-                    maximum: 1000
-                    description: "The unique identifier of the removed reaction."
-                  status:
-                    $ref: '#/components/schemas/Status'
-        '400':
-          description: Invalid data provided.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Response for an error caused by invalid data.
-                properties:
-                  error:
-                    type: string
-                    description: "Validation error details."
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
-        '404':
-          description: Message or reaction not found.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Response for an error caused by message not found.
-                properties:
-                  error:
-                    type: string
-                    description: "Specified message or reaction does not exist."
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
-        '500':
-          description: Server error.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error500'
 
     get:
       tags: ["messages"]
@@ -2011,91 +1953,6 @@ paths:
                     pattern: "^[a-zA-Z0-9 .,!?'-]+$"
         '500':
           description: Internal server error occurred.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error500'
-
-  # -------------------------------------------------------
-  # PERMISSIONS
-  # -------------------------------------------------------
-  /permissions/users/{User_id}:
-    post:
-      tags: ["users"]
-      summary: Check user permissions
-      description: Verifies if a user has the necessary permissions to perform a specific action.
-      operationId: checkUserPermissions
-      parameters:
-        - name: User_id
-          description: Integer that represents User_id
-          in: path
-          required: true
-          schema:
-            type: integer
-            description: "The unique ID of the user."
-            minimum: 1
-            maximum: 1000
-      requestBody:
-        description: The action for which permission needs to be checked.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              description: Schema for positive response of authorization
-              required:
-                - action
-              properties:
-                action:
-                  type: string
-                  description: "Action to verify (e.g., 'setGroupPhoto')."
-                  pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                  minLength: 3
-                  maxLength: 1000
-      responses:
-        '200':
-          description: Permission status verified successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Schema for positive status verification
-                required:
-                  - allowed
-                  - message
-                properties:
-                  allowed:
-                    type: boolean
-                    description: "If true, user is authorized to perform the action."
-                    example: true
-                  message:
-                    type: string
-                    description: "Additional info about the permission status."
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
-        '403':
-          description: Unauthorized action - user lacks the required permissions.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error403'
-        '400':
-          description: Bad request - invalid input data.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Schema for negative response caused by invalid input data
-                properties:
-                  error:
-                    type: string
-                    description: "Details about invalid request data."
-                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    minLength: 3
-                    maxLength: 1000
-        '500':
-          description: Internal server error.
           content:
             application/json:
               schema:
