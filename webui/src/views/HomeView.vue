@@ -1294,7 +1294,6 @@ export default {
         });
         const user = userResponse.data.find(user => user.User_id === userId);
         if (user) {
-          // Memorizza il nickname nel mappa
           this.userMap[userId] = user.Nickname;
           return user.Nickname;
         } else {
