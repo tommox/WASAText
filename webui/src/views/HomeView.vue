@@ -503,13 +503,16 @@ export default {
                 } else {
                   lastMessage = "📷 Foto";
                 }
+                console.log("0",msgResponse);
                 lastMessageTimestamp = msgResponse.data.timestamp;
                 lastMessageSenderId = msgResponse.data.sender_id;
                 lastMessageIsRead = msgResponse.data.isRead === true;
+                console.log("1",lastMessageIsRead);
               } catch (error) {
                 console.error("Errore nel recupero dell'ultimo messaggio", error);
               }
             }
+            console.log("2",lastMessageIsRead);
             return {
               ...chat,
               recipient_id: recipientId,

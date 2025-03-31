@@ -74,7 +74,7 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 			response := map[string]interface{}{
 				"image_data": base64.StdEncoding.EncodeToString(imageData),
 				"timestamp":  timestamp,
-				"is_read":    isRead,
+				"isRead":     isRead,
 				"sender_id":  senderId,
 			}
 			w.WriteHeader(http.StatusOK)
@@ -127,7 +127,7 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 			response := map[string]interface{}{
 				"image_data": base64.StdEncoding.EncodeToString(imageData),
 				"timestamp":  timestamp,
-				"is_read":    isRead,
+				"isRead":     isRead,
 				"sender_id":  senderId,
 			}
 			w.WriteHeader(http.StatusOK)
