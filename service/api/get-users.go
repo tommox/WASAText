@@ -22,5 +22,7 @@ func (rt *_router) getUsersHandler(w http.ResponseWriter, r *http.Request, _ htt
 	// Rispondi con la lista degli utenti online
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(users)
+	if err := json.NewEncoder(w).Encode(users); err != nil {
+		ctx.Logger.WithError(err).Error("getUsers: errore durante l'encoding JSON")
+	}
 }

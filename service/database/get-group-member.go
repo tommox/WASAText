@@ -24,6 +24,8 @@ func (db *appdbimpl) GetGroupMembers(groupId int) ([]GroupMember, error) {
 		}
 		members = append(members, member)
 	}
-
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetGroupMembers: errore iterando le righe: %w", err)
+	}
 	return members, nil
 }

@@ -64,8 +64,10 @@ func (rt *_router) deleteGroupHandler(w http.ResponseWriter, r *http.Request, ps
 
 	// Risposta di successo
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
 		"message": "Group deleted successfully",
-	})
+	}); err != nil {
+		ctx.Logger.WithError(err).Error("deleteGroup: errore durante l'encoding della risposta JSON")
+	}
 }

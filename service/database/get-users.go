@@ -23,5 +23,8 @@ func (db *appdbimpl) GetUsers() ([]User, error) {
 		}
 		users = append(users, user)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetUsers: errore iterando le righe: %w", err)
+	}
 	return users, nil
 }

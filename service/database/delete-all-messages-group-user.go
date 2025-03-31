@@ -26,5 +26,8 @@ func (db *appdbimpl) DeleteAllMessagesFromUserInGroup(groupId int, userId int) e
 			return fmt.Errorf("DeleteAllMessagesFromUserInGroup: errore nel cancellare messaggio %d: %w", msgId, err)
 		}
 	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("DeleteAllMessagesFromUserInGroup: errore iterando le righe: %w", err)
+	}
 	return nil
 }

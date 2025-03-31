@@ -29,6 +29,5 @@ func (db *appdbimpl) GetReactionsForMessage(messageId int, isGroup bool) ([]Reac
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("GetReactionsForMessage: error iterating rows: %w", err)
 	}
-
 	return reactions, nil
 }

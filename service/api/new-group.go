@@ -53,5 +53,7 @@ func (rt *_router) createGroupHandler(w http.ResponseWriter, r *http.Request, _ 
 		"created_at": time.Now(),
 	}
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		ctx.Logger.WithError(err).Error("createGroup: errore durante l'encoding JSON della risposta")
+	}
 }

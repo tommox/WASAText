@@ -35,5 +35,7 @@ func (rt *_router) getMyConversationsHandler(w http.ResponseWriter, r *http.Requ
 
 	// Risposta con successo
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(conversations)
+	if err := json.NewEncoder(w).Encode(conversations); err != nil {
+		ctx.Logger.WithError(err).Error("getMyConversations: errore durante l'encoding JSON")
+	}
 }

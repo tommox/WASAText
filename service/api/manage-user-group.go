@@ -10,7 +10,6 @@ import (
 )
 
 func (rt *_router) manageGroupUsersHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
-	// Estrai il Group_id dal percorso
 	groupId, err := strconv.Atoi(ps.ByName("Group_id"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -18,7 +17,6 @@ func (rt *_router) manageGroupUsersHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Estrai lo User_id dal percorso
 	userId, err := strconv.Atoi(ps.ByName("User_id"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -26,7 +24,6 @@ func (rt *_router) manageGroupUsersHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Estrai l'admin ID dal token Bearer
 	requestingUserIdStr, err := extractBearerToken(r, w)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
@@ -41,7 +38,6 @@ func (rt *_router) manageGroupUsersHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Estrai lo stato dall'URL (add, remove, promote)
 	state := r.URL.Query().Get("state")
 	if state != "add" && state != "remove" && state != "promote" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -49,9 +45,7 @@ func (rt *_router) manageGroupUsersHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Autorizzazione per l'operazione
 	if state == "remove" && requestingUserId == userId {
-		// Se l'utente sta rimuovendo sé stesso, bypassa il controllo admin
 		err = rt.db.RemoveUserFromGroup(groupId, userId)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -59,14 +53,15 @@ func (rt *_router) manageGroupUsersHandler(w http.ResponseWriter, r *http.Reques
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{
 			"success": true,
 			"message": "User removed themselves from the group successfully",
-		})
+		}); err != nil {
+			ctx.Logger.WithError(err).Error("manageGroupUsers: error encoding response (self remove)")
+		}
 		return
 	}
 
-	// Controlla i permessi dell'admin per tutte le altre operazioni
 	isAdmin, err := rt.db.IsGroupAdmin(groupId, requestingUserId)
 	if err != nil || !isAdmin {
 		w.WriteHeader(http.StatusForbidden)
@@ -74,9 +69,7 @@ func (rt *_router) manageGroupUsersHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Gestisci le diverse operazioni
 	if state == "promote" {
-		// Promuovi l'utente al ruolo di admin
 		err = rt.db.PromoteToAdmin(groupId, userId)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -84,14 +77,15 @@ func (rt *_router) manageGroupUsersHandler(w http.ResponseWriter, r *http.Reques
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{
 			"group_id": groupId,
 			"user_id":  userId,
 			"role":     "admin",
 			"message":  "User promoted to admin successfully",
-		})
+		}); err != nil {
+			ctx.Logger.WithError(err).Error("manageGroupUsers: error encoding response (promote)")
+		}
 	} else if state == "add" {
-		// Decodifica il corpo della richiesta per ottenere il ruolo
 		var body struct {
 			Role string `json:"role"`
 		}
@@ -102,7 +96,6 @@ func (rt *_router) manageGroupUsersHandler(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		// Aggiungi l'utente al gruppo
 		err = rt.db.AddUserToGroup(groupId, userId, body.Role)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -110,14 +103,15 @@ func (rt *_router) manageGroupUsersHandler(w http.ResponseWriter, r *http.Reques
 			return
 		}
 		w.WriteHeader(http.StatusCreated)
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{
 			"group_id": groupId,
 			"user_id":  userId,
 			"role":     body.Role,
 			"message":  "User added to group successfully",
-		})
+		}); err != nil {
+			ctx.Logger.WithError(err).Error("manageGroupUsers: error encoding response (add)")
+		}
 	} else if state == "remove" {
-		// Rimuovi l'utente dal gruppo
 		err = rt.db.RemoveUserFromGroup(groupId, userId)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -131,9 +125,11 @@ func (rt *_router) manageGroupUsersHandler(w http.ResponseWriter, r *http.Reques
 		}
 
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{
 			"success": true,
 			"message": "User removed from group successfully",
-		})
+		}); err != nil {
+			ctx.Logger.WithError(err).Error("manageGroupUsers: error encoding response (remove)")
+		}
 	}
 }

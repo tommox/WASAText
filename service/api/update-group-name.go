@@ -69,9 +69,11 @@ func (rt *_router) changeGroupNameHandler(w http.ResponseWriter, r *http.Request
 
 	// Risposta di successo
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"group_id":   groupId,
 		"group_name": body.GroupName,
 		"message":    "Group name updated successfully",
-	})
+	}); err != nil {
+		ctx.Logger.WithError(err).Error("changeGroupName: errore durante l'encoding della risposta JSON")
+	}
 }

@@ -147,6 +147,8 @@ func (db *appdbimpl) MarkGroupConversationAsRead(groupId int, userId int) error 
 			}
 		}
 	}
-
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("MarkGroupConversationAsRead: errore iterando i messaggi non letti: %w", err)
+	}
 	return nil
 }

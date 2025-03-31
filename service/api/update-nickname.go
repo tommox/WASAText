@@ -74,6 +74,7 @@ func (rt *_router) setMyNicknameHandler(w http.ResponseWriter, r *http.Request, 
 		"success": true,
 		"message": "Nickname successfully updated",
 	}
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		ctx.Logger.WithError(err).Error("put-nickname: errore durante l'encoding della risposta JSON")
+	}
 }

@@ -34,5 +34,8 @@ func (db *appdbimpl) GetConversationMessages(conversationId int) ([]Message, err
 		}
 		messages = append(messages, msg)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetConversationMessages: errore iterando le righe: %w", err)
+	}
 	return messages, nil
 }

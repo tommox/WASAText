@@ -38,6 +38,8 @@ func (db *appdbimpl) GetGroupConversationMessages(groupConversationId int) ([]Gr
 		}
 		groupMessages = append(groupMessages, msg)
 	}
-
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetGroupConversationMessages: errore iterando le righe: %w", err)
+	}
 	return groupMessages, nil
 }

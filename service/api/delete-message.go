@@ -34,13 +34,13 @@ func (rt *_router) deleteMessageHandler(w http.ResponseWriter, r *http.Request, 
 
 	// Controllo parametro tipo
 	messageType := r.URL.Query().Get("type")
-	if messageType != "private" && messageType != "group" {
+	if messageType != messageTypePrivate && messageType != messageTypeGroup {
 		w.WriteHeader(http.StatusBadRequest)
 		ctx.Logger.WithError(errors.New("invalid message type")).Error("deleteMessage: invalid type parameter")
 		return
 	}
 
-	if messageType == "private" {
+	if messageType == messageTypePrivate {
 		// 🔐 Controllo permessi per messaggi privati
 		hasPermission, err := rt.db.CheckUserPermission(userId, messageId)
 		if err != nil {
@@ -72,7 +72,7 @@ func (rt *_router) deleteMessageHandler(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	if messageType == "group" {
+	if messageType == messageTypeGroup {
 		groupConv, err := rt.db.GetGroupByMessageId(messageId)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)

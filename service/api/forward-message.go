@@ -33,7 +33,7 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 	}
 
 	messageType := r.URL.Query().Get("type")
-	if messageType != "private" && messageType != "group" {
+	if messageType != messageTypePrivate && messageType != messageTypeGroup {
 		w.WriteHeader(http.StatusBadRequest)
 		ctx.Logger.WithError(errors.New("invalid message type")).Error("forwardMessage: invalid type")
 		return
@@ -51,7 +51,7 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 	}
 
 	// ✅ Origine: Messaggio privato
-	if messageType == "private" {
+	if messageType == messageTypePrivate {
 		msg, err := rt.db.GetMessage(messageId)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
@@ -75,10 +75,12 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 				return
 			}
 			w.WriteHeader(http.StatusCreated)
-			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			if err := json.NewEncoder(w).Encode(map[string]interface{}{
 				"message_id": newMessageId,
 				"status":     "sent",
-			})
+			}); err != nil {
+				ctx.Logger.WithError(err).Error("forwardMessage: errore nell'encoding JSON (private → private)")
+			}
 			return
 		} else if body.GroupId != nil {
 			// ✅ Destinazione: gruppo
@@ -95,16 +97,18 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 				return
 			}
 			w.WriteHeader(http.StatusCreated)
-			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			if err := json.NewEncoder(w).Encode(map[string]interface{}{
 				"message_id": newMessageId,
 				"status":     "sent",
-			})
+			}); err != nil {
+				ctx.Logger.WithError(err).Error("forwardMessage: errore nell'encoding JSON (private → group)")
+			}
 			return
 		}
 	}
 
 	// ✅ Origine: Messaggio di gruppo
-	if messageType == "group" {
+	if messageType == messageTypeGroup {
 		group, err := rt.db.GetGroupByMessageId(messageId)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
@@ -141,10 +145,12 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 				return
 			}
 			w.WriteHeader(http.StatusCreated)
-			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			if err := json.NewEncoder(w).Encode(map[string]interface{}{
 				"message_id": newMessageId,
 				"status":     "sent",
-			})
+			}); err != nil {
+				ctx.Logger.WithError(err).Error("forwardMessage: errore nell'encoding JSON (group → private)")
+			}
 			return
 		} else if body.GroupId != nil {
 			// ✅ Destinazione: altro gruppo
@@ -161,10 +167,12 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 				return
 			}
 			w.WriteHeader(http.StatusCreated)
-			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			if err := json.NewEncoder(w).Encode(map[string]interface{}{
 				"message_id": newMessageId,
 				"status":     "sent",
-			})
+			}); err != nil {
+				ctx.Logger.WithError(err).Error("forwardMessage: errore nell'encoding JSON (group → group)")
+			}
 			return
 		}
 	}

@@ -32,5 +32,7 @@ func (rt *_router) getUsersOfGroupHandler(w http.ResponseWriter, r *http.Request
 	// Risposta JSON
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(users)
+	if err := json.NewEncoder(w).Encode(users); err != nil {
+		ctx.Logger.WithError(err).Error("getUsersOfGroupHandler: errore durante l'encoding JSON")
+	}
 }

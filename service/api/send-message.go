@@ -79,11 +79,13 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 
 		// Successo
 		w.WriteHeader(http.StatusCreated)
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{
 			"message_id": messageId,
 			"status":     "sent",
 			"timestamp":  msgTime,
-		})
+		}); err != nil {
+			ctx.Logger.WithError(err).Error("sendMessage: errore encoding JSON (text)")
+		}
 
 	} else if strings.HasPrefix(contentType, "multipart/form-data") {
 
@@ -135,11 +137,13 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 
 		// Successo
 		w.WriteHeader(http.StatusCreated)
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{
 			"message_id": messageId,
 			"status":     "sent",
 			"timestamp":  time.Now(),
-		})
+		}); err != nil {
+			ctx.Logger.WithError(err).Error("sendMessage: errore encoding JSON (image)")
+		}
 
 	} else {
 		// ❌ Tipo non supportato

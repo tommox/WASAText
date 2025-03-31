@@ -34,7 +34,7 @@ func (rt *_router) getConversationHandler(w http.ResponseWriter, r *http.Request
 
 	conversationType := r.URL.Query().Get("type")
 
-	if conversationType == "group" {
+	if conversationType == messageTypeGroup {
 		isGroup, err := rt.db.CheckGroupConversationAccess(userId, conversationId)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -55,13 +55,14 @@ func (rt *_router) getConversationHandler(w http.ResponseWriter, r *http.Request
 				return
 			}
 			w.WriteHeader(http.StatusOK)
-			_ = json.NewEncoder(w).Encode(messages)
+			if err := json.NewEncoder(w).Encode(messages); err != nil {
+				ctx.Logger.WithError(err).Error("getConversation: errore durante l'encoding JSON (group)")
+			}
 			return
 		}
 	}
 
-	// ⚡ Se è una conversazione privata, controlliamo le chat normali
-	if conversationType == "private" {
+	if conversationType == messageTypePrivate {
 		isPrivate, err := rt.db.CheckPrivateConversationAccess(userId, conversationId)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -82,7 +83,9 @@ func (rt *_router) getConversationHandler(w http.ResponseWriter, r *http.Request
 				return
 			}
 			w.WriteHeader(http.StatusOK)
-			_ = json.NewEncoder(w).Encode(messages)
+			if err := json.NewEncoder(w).Encode(messages); err != nil {
+				ctx.Logger.WithError(err).Error("getConversation: errore durante l'encoding JSON (private)")
+			}
 			return
 		}
 	}

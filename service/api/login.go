@@ -11,22 +11,19 @@ import (
 )
 
 func (rt *_router) doLoginHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
-
 	w.Header().Set("Content-Type", "application/json")
 
-	// Takes user r
 	var user User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	} else if !validIdentifier(user.Nickname) {
-		ctx.Logger.WithError(err).Error("session: Can't Create a User. Invalid nickname lenght")
+		ctx.Logger.WithError(err).Error("session: Can't Create a User. Invalid nickname length")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	// Check if user exists
 	temp_user, err := rt.db.CheckUser(user.toDataBase())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		ctx.Logger.WithError(err).Error("session: Error in CheckUser")
@@ -38,24 +35,22 @@ func (rt *_router) doLoginHandler(w http.ResponseWriter, r *http.Request, ps htt
 		user.Nickname = temp_user.Nickname
 
 		w.WriteHeader(http.StatusOK)
-		err = json.NewEncoder(w).Encode(user)
-		if err != nil {
+		if err := json.NewEncoder(w).Encode(user); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			ctx.Logger.WithError(err).Error("session: Can't create response json")
-			return
 		}
 		return
 	}
 
-	// Check if user is already in DB
 	err = rt.db.CreateUser(user.toDataBase())
 	if err != nil {
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(user)
+		if err := json.NewEncoder(w).Encode(user); err != nil {
+			ctx.Logger.WithError(err).Error("session: Can't create response json (new user)")
+		}
 		return
 	}
 
-	// Takes the ID saved in DB
 	id, err_fu := rt.db.FindUserId(user.toDataBase())
 	if err_fu != nil {
 		ctx.Logger.WithError(err_fu).Error("session: Error in FindUser_id()")
@@ -63,13 +58,11 @@ func (rt *_router) doLoginHandler(w http.ResponseWriter, r *http.Request, ps htt
 		return
 	}
 
-	user.User_id = id // Change the ID inside of the user variable
+	user.User_id = id
 
 	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(user)
-	if err != nil {
+	if err := json.NewEncoder(w).Encode(user); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		ctx.Logger.WithError(err).Error("session: can't create response json")
-		return
 	}
 }

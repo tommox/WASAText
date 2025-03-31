@@ -13,6 +13,11 @@ func validIdentifier(identifier string) bool {
 	return len(identifier) >= 3 && len(identifier) <= 16 && nospace_id != "" && !strings.ContainsAny(nospace_id, "?")
 }
 
+const (
+	messageTypePrivate = "private"
+	messageTypeGroup   = "group"
+)
+
 func extractBearerToken(req *http.Request, w http.ResponseWriter) (string, error) {
 
 	// Ottieni l'intestazione Authorization dalla richiesta

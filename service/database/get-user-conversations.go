@@ -71,6 +71,9 @@ func (db *appdbimpl) GetUserConversations(userId int) (map[string]interface{}, e
 			IsReadByMe:   isReadByMe,
 		})
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetUserConversations: errore iterando le conversazioni private: %w", err)
+	}
 
 	// Recupera le conversazioni di gruppo in cui l'utente è membro
 	queryGroupConversations := `
@@ -129,6 +132,8 @@ func (db *appdbimpl) GetUserConversations(userId int) (map[string]interface{}, e
 		"private_conversations": userConversations,
 		"group_conversations":   groupConversations,
 	}
-
+	if err := groupRows.Err(); err != nil {
+		return nil, fmt.Errorf("GetUserConversations: errore iterando le conversazioni di gruppo: %w", err)
+	}
 	return result, nil
 }

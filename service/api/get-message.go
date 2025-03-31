@@ -34,14 +34,13 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 	}
 
 	messageType := r.URL.Query().Get("type")
-	if messageType != "private" && messageType != "group" {
+	if messageType != messageTypePrivate && messageType != messageTypeGroup {
 		w.WriteHeader(http.StatusBadRequest)
 		ctx.Logger.WithError(errors.New("invalid message type")).Error("getMessage: invalid type parameter")
 		return
 	}
 
-	if messageType == "private" {
-		// Verifica accesso
+	if messageType == messageTypePrivate {
 		conversationId, err := rt.db.GetConversationIdByMessageId(messageId)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
@@ -55,7 +54,6 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 			return
 		}
 
-		// Recupera messaggio
 		dbMsg, err := rt.db.GetMessage(messageId)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
@@ -63,7 +61,7 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 			return
 		}
 
-		// Se immagine, recupera anche imageData + timestamp
+		w.Header().Set("Content-Type", "application/json")
 		if dbMsg.ImageData != nil {
 			imageData, timestamp, err := rt.db.GetMessageImage(messageId)
 			if err != nil {
@@ -75,20 +73,21 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 				"image_data": base64.StdEncoding.EncodeToString(imageData),
 				"timestamp":  timestamp,
 			}
-			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			_ = json.NewEncoder(w).Encode(response)
+			if err := json.NewEncoder(w).Encode(response); err != nil {
+				ctx.Logger.WithError(err).Error("getMessage: errore encoding JSON (image private)")
+			}
 			return
 		}
 
-		// Altrimenti, messaggio di testo
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(toDatabaseMessage(dbMsg))
+		if err := json.NewEncoder(w).Encode(toDatabaseMessage(dbMsg)); err != nil {
+			ctx.Logger.WithError(err).Error("getMessage: errore encoding JSON (text private)")
+		}
 		return
 	}
 
-	if messageType == "group" {
+	if messageType == messageTypeGroup {
 		groupConv, err := rt.db.GetGroupByMessageId(messageId)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
@@ -110,6 +109,7 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		if groupMsg.ImageData != nil {
 			imageData, timestamp, err := rt.db.GetGroupMessageImage(messageId)
 			if err != nil {
@@ -121,15 +121,17 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 				"image_data": base64.StdEncoding.EncodeToString(imageData),
 				"timestamp":  timestamp,
 			}
-			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			_ = json.NewEncoder(w).Encode(response)
+			if err := json.NewEncoder(w).Encode(response); err != nil {
+				ctx.Logger.WithError(err).Error("getMessage: errore encoding JSON (image group)")
+			}
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(groupMsg)
+		if err := json.NewEncoder(w).Encode(groupMsg); err != nil {
+			ctx.Logger.WithError(err).Error("getMessage: errore encoding JSON (text group)")
+		}
 		return
 	}
 }

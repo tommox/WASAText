@@ -67,7 +67,11 @@ func (rt *_router) checkOrCreateConversationHandler(w http.ResponseWriter, r *ht
 
 	// Risposta con l'ID della conversazione (sia esistente che appena creata)
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"conversation_id": conversationId,
-	})
+	}); err != nil {
+		ctx.Logger.WithError(err).Error("checkOrCreateConversation: errore nell'encoding della risposta JSON")
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }
