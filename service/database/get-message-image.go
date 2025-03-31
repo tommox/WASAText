@@ -1,29 +1,37 @@
 package database
 
-func (db *appdbimpl) GetMessageImage(messageId int) ([]byte, string, error) {
-	row := db.c.QueryRow("SELECT ImageData, Timestamp FROM Messages WHERE Message_id = ?", messageId)
+// Aggiorna la funzione GetMessageImage per includere IsRead
+// Aggiorna la funzione GetMessageImage per includere Sender_id, IsRead e altre informazioni
+func (db *appdbimpl) GetMessageImage(messageId int) (int, []byte, string, bool, error) {
+	row := db.c.QueryRow("SELECT Sender_id, ImageData, Timestamp, IsRead FROM Messages WHERE Message_id = ?", messageId)
 
+	var senderId int
 	var imageData []byte
 	var timestamp string
+	var isRead bool
 
-	err := row.Scan(&imageData, &timestamp)
+	err := row.Scan(&senderId, &imageData, &timestamp, &isRead)
 	if err != nil {
-		return nil, "", err
+		return 0, nil, "", false, err
 	}
 
-	return imageData, timestamp, nil
+	return senderId, imageData, timestamp, isRead, nil
 }
 
-func (db *appdbimpl) GetGroupMessageImage(messageId int) ([]byte, string, error) {
-	row := db.c.QueryRow("SELECT ImageData, Timestamp FROM GroupMessages WHERE GroupMessage_id = ?", messageId)
+// Aggiorna la funzione GetGroupMessageImage per includere IsRead
+// Aggiorna la funzione GetGroupMessageImage per includere Sender_id, IsRead e altre informazioni
+func (db *appdbimpl) GetGroupMessageImage(messageId int) (int, []byte, string, bool, error) {
+	row := db.c.QueryRow("SELECT Sender_id, ImageData, Timestamp, IsRead FROM GroupMessages WHERE GroupMessage_id = ?", messageId)
 
+	var senderId int
 	var imageData []byte
 	var timestamp string
+	var isRead bool
 
-	err := row.Scan(&imageData, &timestamp)
+	err := row.Scan(&senderId, &imageData, &timestamp, &isRead)
 	if err != nil {
-		return nil, "", err
+		return 0, nil, "", false, err
 	}
 
-	return imageData, timestamp, nil
+	return senderId, imageData, timestamp, isRead, nil
 }

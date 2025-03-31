@@ -6,17 +6,17 @@ import (
 )
 
 func (db *appdbimpl) CreateImageMessage(senderId int, conversationId int, imageData []byte, timestamp time.Time) (int, error) {
-
 	messageContent := ""
 	if len(imageData) > 0 {
 		messageContent = ""
 	}
 
 	query := `
-    INSERT INTO Messages (Sender_id, Conversation_id, ImageData, MessageContent, Timestamp) 
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO Messages (Sender_id, Conversation_id, ImageData, MessageContent, Timestamp, IsRead) 
+    VALUES (?, ?, ?, ?, ?, ?)
 `
-	result, err := db.c.Exec(query, senderId, conversationId, imageData, messageContent, timestamp)
+	// Inseriamo il messaggio con il campo IsRead = FALSE di default
+	result, err := db.c.Exec(query, senderId, conversationId, imageData, messageContent, timestamp, false)
 	if err != nil {
 		return 0, fmt.Errorf("CreateImageMessage: %w", err)
 	}

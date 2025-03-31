@@ -61,17 +61,21 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 			return
 		}
 
+		// Recupero anche il sender_id
+		senderId, imageData, timestamp, isRead, err := rt.db.GetMessageImage(messageId)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			ctx.Logger.WithError(err).Error("getMessage: error retrieving image")
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
 		if dbMsg.ImageData != nil {
-			imageData, timestamp, err := rt.db.GetMessageImage(messageId)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				ctx.Logger.WithError(err).Error("getMessage: error retrieving image")
-				return
-			}
 			response := map[string]interface{}{
 				"image_data": base64.StdEncoding.EncodeToString(imageData),
 				"timestamp":  timestamp,
+				"is_read":    isRead,
+				"sender_id":  senderId,
 			}
 			w.WriteHeader(http.StatusOK)
 			if err := json.NewEncoder(w).Encode(response); err != nil {
@@ -80,6 +84,7 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 			return
 		}
 
+		// Caso in cui il messaggio non ha un'immagine
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(toDatabaseMessage(dbMsg)); err != nil {
 			ctx.Logger.WithError(err).Error("getMessage: errore encoding JSON (text private)")
@@ -109,17 +114,21 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 			return
 		}
 
+		// Recupero anche il sender_id
+		senderId, imageData, timestamp, isRead, err := rt.db.GetGroupMessageImage(messageId)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			ctx.Logger.WithError(err).Error("getMessage: error retrieving group image")
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
 		if groupMsg.ImageData != nil {
-			imageData, timestamp, err := rt.db.GetGroupMessageImage(messageId)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				ctx.Logger.WithError(err).Error("getMessage: error retrieving group image")
-				return
-			}
 			response := map[string]interface{}{
 				"image_data": base64.StdEncoding.EncodeToString(imageData),
 				"timestamp":  timestamp,
+				"is_read":    isRead,
+				"sender_id":  senderId,
 			}
 			w.WriteHeader(http.StatusOK)
 			if err := json.NewEncoder(w).Encode(response); err != nil {
@@ -128,6 +137,7 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 			return
 		}
 
+		// Caso in cui il messaggio non ha un'immagine
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(groupMsg); err != nil {
 			ctx.Logger.WithError(err).Error("getMessage: errore encoding JSON (text group)")

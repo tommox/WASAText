@@ -551,7 +551,11 @@ export default {
                   `/messages/${group.last_message_id}?type=group`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
-                lastMessage = msgResponse.data.message_content?.trim() !== "" ? msgResponse.data.message_content : "📷 Foto";
+                if (msgResponse.data.message_content && msgResponse.data.message_content.trim() !== "") {
+                  lastMessage = msgResponse.data.message_content;
+                } else {
+                  lastMessage = "📷 Foto";
+                }
                 lastMessageTimestamp = msgResponse.data.timestamp;
                 lastMessageSenderId = msgResponse.data.sender_id;
                 lastMessageIsRead = msgResponse.data.isRead === true;
@@ -850,6 +854,7 @@ export default {
           isRead: response.data.isRead || false,
           reactions: [],
         });
+        console.log("sss",this.messages);
         if (this.selectedChatType === "private") {
           this.selectedChat.lastMessage = "📷 Foto";
           const idx = this.chats.findIndex(chat => chat.conversation_id === this.selectedChat.conversation_id);
