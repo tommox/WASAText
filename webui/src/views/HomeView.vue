@@ -271,9 +271,10 @@
               <div class="message-reactions">
                 <span 
                   v-for="reaction in message.reactions" 
-                  :key="reaction.userId" 
+                  :key="reaction.user_id" 
                   class="reaction"
-                  @click="removeReaction(message.id, reaction)">
+                  @click="removeReaction(message.id, reaction)"
+                  :title="userMap[reaction.user_id] || 'Utente Sconosciuto'">
                   {{ reaction.emoji }}
                 </span>
               </div>
@@ -457,10 +458,10 @@ export default {
       const token = localStorage.getItem("token");
       if (!token) return;
       try {
-        const response = await axios.get(`${__API_URL__}/conversations`, {
+        const response = await this.$axios.get(`/conversations`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        const userResponse = await axios.get(`${__API_URL__}/users`, {
+        const userResponse = await this.$axios.get(`/users`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const allUsers = userResponse.data;
@@ -474,7 +475,7 @@ export default {
             let avatarUrl = defaultAvatar;
             if (recipient) {
               try {
-                const photoResponse = await axios.get(`${__API_URL__}/users/${recipientId}/photo`, {
+                const photoResponse = await this.$axios.get(`/users/${recipientId}/photo`, {
                   headers: { Authorization: `Bearer ${token}` },
                   responseType: "blob",
                 });
@@ -492,8 +493,8 @@ export default {
             let lastMessageIsRead = false;  
             if (chat.last_message_id) {
               try {
-                const msgResponse = await axios.get(
-                  `${__API_URL__}/messages/${chat.last_message_id}?type=private`,
+                const msgResponse = await this.$axios.get(
+                  `/messages/${chat.last_message_id}?type=private`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
 
@@ -532,7 +533,7 @@ export default {
       const token = localStorage.getItem("token");
       if (!token) return;
       try {
-        const response = await axios.get(`${__API_URL__}/conversations`, {
+        const response = await this.$axios.get(`/conversations`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         let groupChats = [];
@@ -546,8 +547,8 @@ export default {
             let lastMessageIsRead = false;
             if (group.last_message_id) {
               try {
-                const msgResponse = await axios.get(
-                  `${__API_URL__}/messages/${group.last_message_id}?type=group`,
+                const msgResponse = await this.$axios.get(
+                  `/messages/${group.last_message_id}?type=group`,
                   { headers: { Authorization: `Bearer ${token}` } }
                 );
                 lastMessage = msgResponse.data.message_content?.trim() !== "" ? msgResponse.data.message_content : "📷 Foto";
@@ -559,8 +560,8 @@ export default {
               }
             }
             try {
-              const photoResponse = await axios.get(
-                `${__API_URL__}/groups/${groupConversationId}/photo`,
+              const photoResponse = await this.$axios.get(
+                `/groups/${groupConversationId}/photo`,
                 {
                   headers: { Authorization: `Bearer ${token}` },
                   responseType: "blob"
@@ -593,7 +594,7 @@ export default {
     async fetchGroupMembers(groupId) {
       const token = localStorage.getItem("token");
       try {
-        const response = await axios.get(`${__API_URL__}/groups/${groupId}/users`, {
+        const response = await this.$axios.get(`/groups/${groupId}/users`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -610,7 +611,7 @@ export default {
     async renameGroup() {
       const token = localStorage.getItem("token");
       try {
-        await axios.patch(`${__API_URL__}/groups/${this.selectedChat.group_conversation_id}`, {
+        await this.$axios.patch(`/groups/${this.selectedChat.group_conversation_id}`, {
           group_name: this.editedGroupName,
         }, {
           headers: { Authorization: `Bearer ${token}` },
@@ -632,7 +633,7 @@ export default {
     async promoteToAdmin(userId) {
       const token = localStorage.getItem("token");
       try {
-        await axios.post(`${__API_URL__}/groups/${this.selectedChat.group_conversation_id}/users/${userId}?state=promote`, null, {
+        await this.$axios.post(`/groups/${this.selectedChat.group_conversation_id}/users/${userId}?state=promote`, null, {
           headers: { Authorization: `Bearer ${token}` },
         });
         this.fetchGroupMembers(this.selectedChat.group_conversation_id);
@@ -644,7 +645,7 @@ export default {
     async removeFromGroup(userId) {
       const token = localStorage.getItem("token");
       try {
-        await axios.post(`${__API_URL__}/groups/${this.selectedChat.group_conversation_id}/users/${userId}?state=remove`, null, {
+        await this.$axios.post(`/groups/${this.selectedChat.group_conversation_id}/users/${userId}?state=remove`, null, {
           headers: { Authorization: `Bearer ${token}` },
         });
         this.fetchGroupMembers(this.selectedChat.group_conversation_id);
@@ -675,8 +676,8 @@ export default {
       try {
         let response;
         if (this.selectedChatType === "private" && this.selectedChat.conversation_id) {
-          response = await axios.get(
-            `${__API_URL__}/conversations/${this.selectedChat.conversation_id}?type=private`,
+          response = await this.$axios.get(
+            `/conversations/${this.selectedChat.conversation_id}?type=private`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           if (Array.isArray(response.data)) {
@@ -692,13 +693,12 @@ export default {
                 reactions: await this.fetchReactionsForMessage(msg.message_id),
               };
             }));
-            console.log("mes",this.messages);
           } else {
             this.messages = [];
           }
         } else if (this.selectedChatType === "group" && this.selectedChat.group_conversation_id) {
-          response = await axios.get(
-            `${__API_URL__}/conversations/${this.selectedChat.group_conversation_id}?type=group`,
+          response = await this.$axios.get(
+            `/conversations/${this.selectedChat.group_conversation_id}?type=group`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           if (Array.isArray(response.data)) {
@@ -729,13 +729,19 @@ export default {
       const token = localStorage.getItem("token");
       const isGroup = this.selectedChatType === 'group';
       try {
-        const response = await axios.get(
-          `${__API_URL__}/messages/${messageId}/reactions?isGroup=${isGroup}`,
+        const response = await this.$axios.get(
+          `/messages/${messageId}/reactions?isGroup=${isGroup}`,
           {
             headers: { Authorization: `Bearer ${token}` }
           }
         );
-        return response.data || [];
+        const reactions = response.data || [];
+        for (const reaction of reactions) {
+          if (!this.userMap[reaction.user_id]) {
+            this.userMap[reaction.user_id] = await this.getUserNickname(reaction.user_id);
+          }
+        }
+        return reactions;
       } catch (error) {
         console.error("Errore nel recupero delle reazioni:", error);
         return [];
@@ -752,8 +758,8 @@ export default {
       try {
         let response;
         if (this.selectedChatType === "private") {
-          response = await axios.post(
-            `${__API_URL__}/messages`,
+          response = await this.$axios.post(
+            `/messages`,
             {
               conversation_id: this.selectedChat.conversation_id,
               message_content: this.newMessage,
@@ -761,8 +767,8 @@ export default {
             { headers: { Authorization: `Bearer ${token}` } }
           );
         } else if (this.selectedChatType === "group") {
-          response = await axios.post(
-            `${__API_URL__}/groups/${this.selectedChat.group_conversation_id}/messages`,
+          response = await this.$axios.post(
+            `/groups/${this.selectedChat.group_conversation_id}/messages`,
             { message_content: this.newMessage },
             { headers: { Authorization: `Bearer ${token}` } }
           );
@@ -814,14 +820,14 @@ export default {
       try {
         let response;
         if (this.selectedChatType === "private") {
-          response = await axios.post(`${__API_URL__}/messages`, formData, {
+          response = await this.$axios.post(`/messages`, formData, {
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "multipart/form-data",
             },
           });
         } else if (this.selectedChatType === "group") {
-          response = await axios.post(`${__API_URL__}/groups/${this.selectedChat.group_conversation_id}/messages`, formData, {
+          response = await this.$axios.post(`/groups/${this.selectedChat.group_conversation_id}/messages`, formData, {
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "multipart/form-data",
@@ -829,7 +835,7 @@ export default {
           });
         }
         const messageId = response.data.message_id; 
-        const getMessageResponse = await axios.get(`${__API_URL__}/messages/${messageId}`, {
+        const getMessageResponse = await this.$axios.get(`/messages/${messageId}`, {
           headers: { Authorization: `Bearer ${token}` },
           params: {
             type: this.selectedChatType
@@ -870,7 +876,7 @@ export default {
       const token = localStorage.getItem("token");
       try {
         const type = this.selectedChatType;
-        await axios.delete(`${__API_URL__}/messages/${messageId}?type=${type}`, {
+        await this.$axios.delete(`/messages/${messageId}?type=${type}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         this.messages = this.messages.filter(msg => msg.id !== messageId);
@@ -918,7 +924,7 @@ export default {
       const token = localStorage.getItem("token");
       if (this.selectedChatType === "private" && this.selectedChat.conversation_id) {
         try {
-          await axios.delete(`${__API_URL__}/conversations/${this.selectedChat.conversation_id}`, {
+          await this.$axios.delete(`/conversations/${this.selectedChat.conversation_id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           this.chats = this.chats.filter(chat => chat.conversation_id !== this.selectedChat.conversation_id);
@@ -928,7 +934,7 @@ export default {
         }
       } else if (this.selectedChatType === "group" && this.selectedChat.group_conversation_id) {
         try {
-          await axios.delete(`${__API_URL__}/conversations/${this.selectedChat.group_conversation_id}`, {
+          await this.$axios.delete(`/conversations/${this.selectedChat.group_conversation_id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           this.groupChats = this.groupChats.filter(
@@ -946,7 +952,7 @@ export default {
       this.groupErrorMessage = ""; 
       try {
         const groupId = this.selectedChat.group_conversation_id;
-        await axios.delete(`${__API_URL__}/groups/${groupId}`, {
+        await this.$axios.delete(`/groups/${groupId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         this.groupChats = this.groupChats.filter(
@@ -968,7 +974,7 @@ export default {
       const recipientId = this.selectedChat.recipient_id;
       const token = localStorage.getItem("token");
       try {
-        const response = await axios.get(`${__API_URL__}/users/${recipientId}/photo`, {
+        const response = await this.$axios.get(`/users/${recipientId}/photo`, {
           headers: { Authorization: `Bearer ${token}` },
           responseType: "blob",
         });
@@ -986,8 +992,8 @@ export default {
     async fetchGroupPhoto() {
       if (!this.selectedChat || !this.selectedChat.group_conversation_id || this.selectedChatType !== "group") return;
       try {
-        const response = await axios.get(
-          `${__API_URL__}/groups/${this.selectedChat.group_conversation_id}/photo`,
+        const response = await this.$axios.get(
+          `/groups/${this.selectedChat.group_conversation_id}/photo`,
           { responseType: "blob" }
         );
         if (response.data.size === 0) {
@@ -1026,7 +1032,7 @@ export default {
       const formData = new FormData();
       formData.append("photo", file);
       try {
-        await axios.put(`${__API_URL__}/groups/${this.selectedChat.group_conversation_id}/photo`, formData, {
+        await this.$axios.put(`/groups/${this.selectedChat.group_conversation_id}/photo`, formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
@@ -1044,7 +1050,7 @@ export default {
       const formData = new FormData();
       formData.append("photo", file);
       try {
-        await axios.put(`${__API_URL__}/users/${token}/photo`, formData, {
+        await this.$axios.put(`/users/${token}/photo`, formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
@@ -1059,7 +1065,7 @@ export default {
       const token = localStorage.getItem("token");
       if (!token) return;
       try {
-        const response = await axios.get(`${__API_URL__}/users/${token}/photo`, {
+        const response = await this.$axios.get(`/users/${token}/photo`, {
           responseType: "blob",
         });
         if (response.data.size === 0) {
@@ -1084,7 +1090,7 @@ export default {
       if (this.editableNickname.trim() && this.editableNickname !== this.nickname) {
         const token = localStorage.getItem("token");
         try {
-          await axios.put(`${__API_URL__}/users/${token}`, { nickname: this.editableNickname.trim() }, {
+          await this.$axios.put(`/users/${token}`, { nickname: this.editableNickname.trim() }, {
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
@@ -1109,7 +1115,7 @@ export default {
       this.showChatOptions = false;
       const token = localStorage.getItem("token");
       try {
-        const response = await axios.get(`${__API_URL__}/users`, {
+        const response = await this.$axios.get(`/users`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (Array.isArray(response.data)) {
@@ -1127,7 +1133,7 @@ export default {
       this.showChatOptions = false;
       const token = localStorage.getItem("token");
       try {
-        const response = await axios.get(`${__API_URL__}/users`, {
+        const response = await this.$axios.get(`/users`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (Array.isArray(response.data)) {
@@ -1156,8 +1162,8 @@ export default {
       }
       const token = localStorage.getItem("token");
       try {
-        const response = await axios.post(
-          `${__API_URL__}/conversations/conversation`,
+        const response = await this.$axios.post(
+          `/conversations/conversation`,
           { recipient_id: user.User_id },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -1168,7 +1174,7 @@ export default {
           recipient_id: user.User_id,
           name: user.Nickname,
           // Imposta direttamente l'URL backend per la foto
-          avatarUrl: user.Avatar ? `${__API_URL__}/users/${user.User_id}/photo` : defaultAvatar,
+          avatarUrl: user.Avatar ? `/users/${user.User_id}/photo` : defaultAvatar,
           lastMessage: "",
         };
         this.chats.push(newChat);
@@ -1198,7 +1204,7 @@ export default {
       this.forwardMode = true;
       const token = localStorage.getItem("token");
       try {
-        const response = await axios.get(`${__API_URL__}/users`, {
+        const response = await this.$axios.get(`/users`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         this.users = response.data.filter(user => user.User_id.toString() !== token);
@@ -1219,8 +1225,8 @@ export default {
             finalConversationId = existingChat.conversation_id;
             payload = { conversation_id: finalConversationId };
           } else {
-            const createResponse = await axios.post(
-              `${__API_URL__}/conversations/conversation`,
+            const createResponse = await this.$axios.post(
+              `/conversations/conversation`,
               { recipient_id: destinationId },
               { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -1230,8 +1236,8 @@ export default {
         } else if (type === "group") {
           payload = { group_id: destinationId };
         }
-        await axios.post(
-          `${__API_URL__}/messages/${this.forwardMessageId}/forwards?type=${this.forwardMessageType}`,
+        await this.$axios.post(
+          `/messages/${this.forwardMessageId}/forwards?type=${this.forwardMessageType}`,
           payload,
           {
             headers: {
@@ -1280,15 +1286,34 @@ export default {
         this.messages = this.messages.filter(msg => msg.rawSenderId !== userId);
       }
     },
+    async getUserNickname(userId) {
+      const token = localStorage.getItem("token");
+      try {
+        const userResponse = await this.$axios.get(`/users`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const user = userResponse.data.find(user => user.User_id === userId);
+        if (user) {
+          // Memorizza il nickname nel mappa
+          this.userMap[userId] = user.Nickname;
+          return user.Nickname;
+        } else {
+          return "Utente Sconosciuto";
+        }
+      } catch (error) {
+        console.error("Errore nel recupero degli utenti:", error);
+        return "Utente Sconosciuto";
+      }
+    },
     async reactToMessage(messageId, reaction) {
       const token = localStorage.getItem("token");
       try {
         const body = {
           emoji: reaction,
           add: true,  
-          isGroup: this.selectedChatType === "group", 
+          isGroup: this.selectedChatType === "group",
         };
-        await axios.post(`${__API_URL__}/messages/${messageId}/reactions`, body, {
+        await this.$axios.post(`/messages/${messageId}/reactions`, body, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -1297,7 +1322,7 @@ export default {
         if (!message.reactions) {
           message.reactions = [];
         }
-        message.reactions.push({ reaction }); 
+        message.reactions.push({reaction});
         this.fetchMessages();  
         this.showOptions = false;
       } catch (error) {
@@ -1312,7 +1337,7 @@ export default {
           add: false,  
           isGroup: this.selectedChatType === "group", 
         };
-        await axios.post(`${__API_URL__}/messages/${messageId}/reactions`, body, {
+        await this.$axios.post(`/messages/${messageId}/reactions`, body, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -1330,10 +1355,10 @@ export default {
       if (!this.canCreateGroup) return;
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.post(`${__API_URL__}/groups`, { group_name: this.groupName }, { headers: { Authorization: `Bearer ${token}` } });
+        const response = await this.$axios.post(`/groups`, { group_name: this.groupName }, { headers: { Authorization: `Bearer ${token}` } });
         const groupId = response.data.group_id;
         for (const userId of this.selectedUsers) {
-          await axios.post(`${__API_URL__}/groups/${groupId}/users/${userId}?state=add`, { role: "member" }, { headers: { Authorization: `Bearer ${token}` } });
+          await this.$axios.post(`/groups/${groupId}/users/${userId}?state=add`, { role: "member" }, { headers: { Authorization: `Bearer ${token}` } });
         }
         const newGroup = {
           group_conversation_id: groupId,
@@ -1356,7 +1381,7 @@ export default {
     async fetchAvailableUsers() {
     const token = localStorage.getItem("token");
     try {
-      const response = await axios.get(`${__API_URL__}/users`, {
+      const response = await this.$axios.get(`/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const allUsers = response.data;
@@ -1369,8 +1394,8 @@ export default {
   async addUserToGroup(userId) {
     const token = localStorage.getItem("token");
     try {
-      await axios.post(
-      `${__API_URL__}/groups/${this.selectedChat.group_conversation_id}/users/${userId}?state=add`,
+      await this.$axios.post(
+      `/groups/${this.selectedChat.group_conversation_id}/users/${userId}?state=add`,
       { role: "member" }, 
       {
         headers: { Authorization: `Bearer ${token}` }
