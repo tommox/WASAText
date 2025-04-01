@@ -68,8 +68,12 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 
 		if body.ConversationId != nil {
 			// ✅ Destinazione: conversazione privata
-			// Quando inoltriamo un messaggio, non dobbiamo passare l'IsReply
-			newMessageId, err := rt.db.CreateMessage(userId, *body.ConversationId, msg.MessageContent, time.Now(), nil) // IsReply è NULL
+			var newMessageId int
+			if msg.ImageData != nil {
+				newMessageId, err = rt.db.CreateImageMessage(userId, *body.ConversationId, msg.ImageData, time.Now())
+			} else {
+				newMessageId, err = rt.db.CreateMessage(userId, *body.ConversationId, msg.MessageContent, time.Now(), nil)
+			}
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("forwardMessage: failed to forward private → private")
@@ -92,7 +96,12 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 				return
 			}
 			// Inoltra il messaggio al gruppo senza impostare l'IsReply
-			newMessageId, err := rt.db.CreateGroupMessage(*body.GroupId, userId, msg.MessageContent, time.Now(), nil) // IsReply è NULL
+			var newMessageId int
+			if msg.ImageData != nil {
+				newMessageId, err = rt.db.CreateGroupImageMessage(*body.GroupId, userId, msg.ImageData, time.Now())
+			} else {
+				newMessageId, err = rt.db.CreateGroupMessage(*body.GroupId, userId, msg.MessageContent, time.Now(), nil)
+			}
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("forwardMessage: failed to forward private → group")
@@ -140,8 +149,13 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 				ctx.Logger.WithError(err).Error("forwardMessage: no access to target private (group → private)")
 				return
 			}
-			// Inoltra il messaggio al gruppo senza impostare l'IsReply
-			newMessageId, err := rt.db.CreateMessage(userId, *body.ConversationId, msg.MessageContent, time.Now(), nil) // IsReply è NULL
+
+			var newMessageId int
+			if msg.ImageData != nil {
+				newMessageId, err = rt.db.CreateImageMessage(userId, *body.ConversationId, msg.ImageData, time.Now())
+			} else {
+				newMessageId, err = rt.db.CreateMessage(userId, *body.ConversationId, msg.MessageContent, time.Now(), nil)
+			}
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("forwardMessage: failed to forward group → private")
@@ -163,8 +177,13 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 				ctx.Logger.WithError(err).Error("forwardMessage: no access to target group")
 				return
 			}
-			// Inoltra il messaggio al gruppo senza impostare l'IsReply
-			newMessageId, err := rt.db.CreateGroupMessage(*body.GroupId, userId, msg.MessageContent, time.Now(), nil) // IsReply è NULL
+
+			var newMessageId int
+			if msg.ImageData != nil {
+				newMessageId, err = rt.db.CreateGroupImageMessage(*body.GroupId, userId, msg.ImageData, time.Now())
+			} else {
+				newMessageId, err = rt.db.CreateGroupMessage(*body.GroupId, userId, msg.MessageContent, time.Now(), nil)
+			}
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("forwardMessage: failed to forward group → group")

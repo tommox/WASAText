@@ -72,6 +72,7 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 		w.Header().Set("Content-Type", "application/json")
 		if dbMsg.ImageData != nil {
 			response := map[string]interface{}{
+				"message_id": messageId,
 				"image_data": base64.StdEncoding.EncodeToString(imageData),
 				"timestamp":  timestamp,
 				"isRead":     isRead,
@@ -126,6 +127,7 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 		w.Header().Set("Content-Type", "application/json")
 		if groupMsg.ImageData != nil {
 			response := map[string]interface{}{
+				"message_id": messageId,
 				"image_data": base64.StdEncoding.EncodeToString(imageData),
 				"timestamp":  timestamp,
 				"isRead":     isRead,

@@ -724,7 +724,7 @@ export default {
                 reactions: await this.fetchReactionsForMessage(msg.message_id),
               };
             }));
-            console.log("0",this.messages);
+            console.log("fetch_priv",this.messages);
           } else {
             this.messages = [];
           }
@@ -759,7 +759,7 @@ export default {
                 reactions: await this.fetchReactionsForMessage(msg.message_id),
               };
             }));
-            console.log("1",this.messages);
+            console.log("fetch_group",this.messages);
           } else {
             this.messages = [];
           }
@@ -857,7 +857,6 @@ export default {
           params: { type: this.selectedChatType }
         });
         const data = getMessageResponse.data;
-        console.log("1",data);
         this.messages.push({
           id: data.message_id,
           text: data.message_content || "",
@@ -869,6 +868,7 @@ export default {
           replyMessageText: this.replyMessageText || null,
           reactions: [],
         });
+        console.log("sendMess",this.messages);
         if (this.selectedChatType === "private") {
           this.selectedChat.lastMessage = this.newMessage || "📷 Foto";
           const idx = this.chats.findIndex(chat => chat.conversation_id === this.selectedChat.conversation_id);
@@ -1217,7 +1217,6 @@ export default {
           sender_id: parseInt(token),
           recipient_id: user.User_id,
           name: user.Nickname,
-          // Imposta direttamente l'URL backend per la foto
           avatarUrl: user.Avatar ? `/users/${user.User_id}/photo` : defaultAvatar,
           lastMessage: "",
         };
