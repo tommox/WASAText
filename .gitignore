@@ -28,6 +28,8 @@ coverage
 
 node_modules/
 
+webui/.yarn
+
 .yarn/*
 !.yarn/cache
 !.yarn/patches

@@ -7,8 +7,6 @@ COPY . .
 RUN go build -o /app/webapi ./cmd/webapi
 
 
-
-
 # Create final container
 FROM debian:bookworm
 # Inform Docker about which port is used
