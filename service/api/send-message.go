@@ -36,6 +36,7 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 			ConversationId int    `json:"conversation_id"`
 			MessageContent string `json:"message_content"`
 			Timestamp      string `json:"timestamp,omitempty"`
+			IsReply        *int   `json:"isReply,omitempty"` // Aggiunta gestione per la risposta
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.MessageContent == "" {
 			w.WriteHeader(http.StatusBadRequest)
@@ -70,11 +71,20 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 		}
 
 		// Salva messaggio
-		messageId, err := rt.db.CreateMessage(senderId, body.ConversationId, body.MessageContent, msgTime)
+		messageId, err := rt.db.CreateMessage(senderId, body.ConversationId, body.MessageContent, msgTime, body.IsReply)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			ctx.Logger.WithError(err).Error("sendMessage: failed to create message")
 			return
+		}
+
+		if body.IsReply != nil {
+			err := rt.db.MarkIsReply(messageId, *body.IsReply)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				ctx.Logger.WithError(err).Error("sendMessage: failed to update IsReply")
+				return
+			}
 		}
 
 		// Successo

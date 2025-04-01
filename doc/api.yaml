@@ -666,7 +666,7 @@ paths:
 
   /conversations/conversation:
     post:
-      operationId: Checkcreateconv
+      operationId: CheckCreateConversation
       summary: "Check or create a conversation"
       description: >
         This endpoint checks if a conversation between the authenticated user and the specified recipient exists. 
@@ -1710,7 +1710,7 @@ paths:
       tags: ["groups"]
       summary: Add or update a group photo
       description: Allows an admin or the creator to upload or update a group's profile photo.
-      operationId: addGroupPhoto
+      operationId: setGroupPhoto
       requestBody:
         description: The group photo to upload.
         required: true
@@ -1868,7 +1868,7 @@ paths:
       tags: ["groups"]
       summary: Send a message to a group
       description: Sends a message to the specified group if the sender is a member of the group.
-      operationId: SendMessageToGroup
+      operationId: sendMessageToGroup
       parameters:
         - name: Group_id
           in: path

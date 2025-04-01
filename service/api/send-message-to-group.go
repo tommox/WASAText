@@ -51,6 +51,7 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 		var body struct {
 			MessageContent string `json:"message_content"`
 			Timestamp      string `json:"timestamp,omitempty"`
+			IsReply        *int   `json:"isReply,omitempty"` // Aggiunta gestione per la risposta
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.MessageContent == "" {
 			w.WriteHeader(http.StatusBadRequest)
@@ -71,12 +72,21 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 			}
 		}
 
-		// Salva messaggio testuale
-		messageId, err := rt.db.CreateGroupMessage(groupId, senderId, body.MessageContent, msgTime)
+		// Salva messaggio
+		messageId, err := rt.db.CreateGroupMessage(groupId, senderId, body.MessageContent, msgTime, body.IsReply)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			ctx.Logger.WithError(err).Error("sendMessageToGroup: error saving text message to database")
+			ctx.Logger.WithError(err).Error("sendMessageToGroup: error saving message to database")
 			return
+		}
+
+		if body.IsReply != nil {
+			err := rt.db.MarkIsReply(messageId, *body.IsReply)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				ctx.Logger.WithError(err).Error("sendMessageToGroup: failed to update IsReply")
+				return
+			}
 		}
 
 		// Successo

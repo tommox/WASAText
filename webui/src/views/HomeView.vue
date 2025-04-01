@@ -244,6 +244,11 @@
             :class="{'message-me': message.sender === 'me', 'message-other': message.sender === 'other'}"
           >
             <div class="message-content">
+              <template v-if="message.isReply">
+                <div class="reply-indicator">
+                  <strong>Risposta a:</strong> <span>{{ message.replyMessageText }}</span>
+                </div>
+              </template>
               <template v-if="selectedChatType === 'group'">
                 <strong>{{ message.sender === 'me' ? 'Tu' : userMap[message.rawSenderId] || 'Utente' }}</strong><br />
               </template>
@@ -292,6 +297,9 @@
                     <div class="user-item" @click="forwardMessage(selectedMessageId)">
                       Inoltra
                     </div>
+                    <div class="user-item" @click="replyToMessage(selectedMessageId)">
+                      Rispondi
+                    </div>
                     <div class="emoji-container">
                       <span class="emoji" @click="reactToMessage(selectedMessageId, '👍')">👍</span>
                       <span class="emoji" @click="reactToMessage(selectedMessageId, '❤️')">❤️</span>
@@ -330,7 +338,9 @@
             </div>
           </div>
         </div>
-
+        <div v-if="isReplying" class="reply-indicator">
+          Risposta a: <strong>{{ replyMessageText }}</strong>
+        </div>
         <!-- Input per inviare messaggio -->
         <div class="message-input-container">
           <input
@@ -414,7 +424,10 @@ export default {
       forwardMessageType: "",
       loading: false,
       avatarUrl: defaultAvatar, 
-      groupImage: defaultAvatar, 
+      groupImage: defaultAvatar,
+      isReplying: false, 
+      replyMessageText: "", 
+      replyMessageId: null, 
       // Opzioni messaggio
       showOptions: false,
       selectedMessageId: null,
@@ -503,16 +516,13 @@ export default {
                 } else {
                   lastMessage = "📷 Foto";
                 }
-                console.log("0",msgResponse);
                 lastMessageTimestamp = msgResponse.data.timestamp;
                 lastMessageSenderId = msgResponse.data.sender_id;
                 lastMessageIsRead = msgResponse.data.isRead === true;
-                console.log("1",lastMessageIsRead);
               } catch (error) {
                 console.error("Errore nel recupero dell'ultimo messaggio", error);
               }
             }
-            console.log("2",lastMessageIsRead);
             return {
               ...chat,
               recipient_id: recipientId,
@@ -689,6 +699,17 @@ export default {
           );
           if (Array.isArray(response.data)) {
             this.messages = await Promise.all(response.data.map(async (msg) => {
+              let replyMessageText = null;
+              if (msg.isReply) {
+                try {
+                  const replyResponse = await this.$axios.get(`/messages/${msg.isReply}?type=private`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                  });
+                  replyMessageText = replyResponse.data.message_content;
+                } catch (error) {
+                  console.error("Errore nel recupero del messaggio di risposta", error);
+                }
+              }
               return {
                 id: msg.message_id,
                 text: msg.image_data ? "" : (msg.message_content || ""),
@@ -697,9 +718,12 @@ export default {
                 rawSenderId: msg.sender_id,
                 timestamp: new Date(msg.timestamp),
                 isRead: msg.isRead || false,
+                isReply: msg.isReply,
+                replyMessageText: replyMessageText,
                 reactions: await this.fetchReactionsForMessage(msg.message_id),
               };
             }));
+            console.log("0",this.messages);
           } else {
             this.messages = [];
           }
@@ -710,6 +734,17 @@ export default {
           );
           if (Array.isArray(response.data)) {
             this.messages = await Promise.all(response.data.map(async (msg) => {
+              let replyMessageText = null;
+              if (msg.isReply) {
+                try {
+                  const replyResponse = await this.$axios.get(`/messages/${msg.isReply}?type=group`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                  });
+                  replyMessageText = replyResponse.data.message_content;
+                } catch (error) {
+                  console.error("Errore nel recupero del messaggio di risposta", error);
+                }
+              }
               return {
                 id: msg.message_id,
                 text: msg.image_data ? "" : (msg.message_content || ""),
@@ -718,9 +753,12 @@ export default {
                 rawSenderId: msg.sender_id,
                 timestamp: new Date(msg.timestamp),
                 isRead: msg.isRead || false,
+                isReply: msg.isReply,
+                replyMessageText: replyMessageText,
                 reactions: await this.fetchReactionsForMessage(msg.message_id),
               };
             }));
+            console.log("1",this.messages);
           } else {
             this.messages = [];
           }
@@ -770,13 +808,14 @@ export default {
             {
               conversation_id: this.selectedChat.conversation_id,
               message_content: this.newMessage,
+              isReply: this.replyMessageId,
             },
             { headers: { Authorization: `Bearer ${token}` } }
           );
         } else if (this.selectedChatType === "group") {
           response = await this.$axios.post(
             `/groups/${this.selectedChat.group_conversation_id}/messages`,
-            { message_content: this.newMessage },
+            { message_content: this.newMessage, isReply: this.replyMessageId },
             { headers: { Authorization: `Bearer ${token}` } }
           );
         }
@@ -786,6 +825,8 @@ export default {
           sender: "me",
           timestamp: response.data.timestamp,
           isRead: response.data.isRead || false,
+          isReply: this.replyMessageId, 
+          replyMessageText: this.replyMessageText,
         });
         if (this.selectedChatType === "private") {
           this.selectedChat.lastMessage = this.newMessage;
@@ -813,6 +854,9 @@ export default {
         console.error("Errore nell'invio del messaggio:", error);
       }
       this.newMessage = "";
+      this.isReplying = false;
+      this.replyMessageText = "";
+      this.replyMessageId = null;
     },
     async sendPhotoMessage(event) { 
       const file = event.target.files[0];
@@ -857,7 +901,6 @@ export default {
           isRead: response.data.isRead || false,
           reactions: [],
         });
-        console.log("sss",this.messages);
         if (this.selectedChatType === "private") {
           this.selectedChat.lastMessage = "📷 Foto";
           const idx = this.chats.findIndex(chat => chat.conversation_id === this.selectedChat.conversation_id);
@@ -894,6 +937,14 @@ export default {
       }
       this.fetchChats();
       this.fetchGroupChats();
+    },
+    replyToMessage(messageId) {
+      this.selectedMessageId = messageId;
+      const message = this.messages.find(msg => msg.id === messageId);
+      this.replyMessageText = message.text;
+      this.isReplying = true;
+      this.replyMessageId = messageId;
+      this.showOptions = false; 
     },
     openMessageMenu(messageId, messageSender) {
       this.selectedMessageId = messageId;
@@ -1900,6 +1951,14 @@ export default {
 }
 .dropdown-item:hover {
   background-color: #f5f5f5;
+}
+.reply-indicator {
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 8px;
+  padding: 5px;
+  background-color: #f9f9f9;
+  border-radius: 5px;
 }
 .badge {
   background-color: #069327;

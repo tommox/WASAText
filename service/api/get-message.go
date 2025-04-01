@@ -62,7 +62,7 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 		}
 
 		// Recupero anche il sender_id
-		senderId, imageData, timestamp, isRead, err := rt.db.GetMessageImage(messageId)
+		senderId, imageData, timestamp, isRead, isReply, err := rt.db.GetMessageImage(messageId)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			ctx.Logger.WithError(err).Error("getMessage: error retrieving image")
@@ -76,6 +76,7 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 				"timestamp":  timestamp,
 				"isRead":     isRead,
 				"sender_id":  senderId,
+				"isReply":    isReply,
 			}
 			w.WriteHeader(http.StatusOK)
 			if err := json.NewEncoder(w).Encode(response); err != nil {
@@ -115,7 +116,7 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 		}
 
 		// Recupero anche il sender_id
-		senderId, imageData, timestamp, isRead, err := rt.db.GetGroupMessageImage(messageId)
+		senderId, imageData, timestamp, isRead, isReply, err := rt.db.GetGroupMessageImage(messageId)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			ctx.Logger.WithError(err).Error("getMessage: error retrieving group image")
@@ -129,6 +130,7 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 				"timestamp":  timestamp,
 				"isRead":     isRead,
 				"sender_id":  senderId,
+				"isReply":    isReply,
 			}
 			w.WriteHeader(http.StatusOK)
 			if err := json.NewEncoder(w).Encode(response); err != nil {

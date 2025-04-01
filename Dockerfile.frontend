@@ -1,17 +1,12 @@
-# 🏗️ Builder container con Node + Yarn
+# Use latest Node LTS to build
 FROM node:lts as builder
-# Abilita Corepack per usare yarn 4
-RUN corepack enable
-WORKDIR /app
-# Copia solo package.json e yarn.lock per installare le dipendenze
-COPY ./webui/package.json ./webui/yarn.lock ./
-# Installa le dipendenze (inclusi devDependencies)
-RUN yarn install
-# Copia tutto il progetto Vue.js nel container
-COPY ./webui .
-# Costruisci il frontend in modalità produzione
-RUN yarn build-prod
-# 📦 Container finale con Nginx
+# Copy Vue.js code
+WORKDIR /src/
+COPY ./webui ./webui
+WORKDIR /src/webui/
+### Build Vue.js into plain HTML/CSS/JS
+RUN yarn run build-prod
+### Create final container
 FROM nginx:stable
-# Copia il contenuto costruito nella cartella di Nginx
-COPY --from=builder /app/dist /usr/share/nginx/html
+### Copy the (built) app from the builder image
+COPY --from=builder /src/webui/dist /usr/share/nginx/html

@@ -24,6 +24,7 @@ type Message struct {
 	ImageData       []byte    `json:"image_data"`
 	Timestamp       time.Time `json:"timestamp"`
 	IsRead          bool      `json:"isRead"`
+	IsReply         *int      `json:"isReply,omitempty"`
 }
 
 // GroupMessage rappresenta la struttura di un messaggio inviata a un gruppo
@@ -35,6 +36,7 @@ type GroupMessage struct {
 	ImageData       []byte    `json:"image_data"`
 	Timestamp       time.Time `json:"timestamp"`
 	IsRead          bool      `json:"isRead"`
+	IsReply         *int      `json:"isReply,omitempty"`
 }
 
 type Reaction struct {

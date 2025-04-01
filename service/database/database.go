@@ -53,11 +53,12 @@ type AppDatabase interface {
 	GetUserPhoto(userID int) ([]byte, error)
 
 	// Messages
-	CreateMessage(senderId int, conversationId int, messageContent string, timestamp time.Time) (int, error)
+	CreateMessage(senderId int, conversationId int, messageContent string, timestamp time.Time, isReply *int) (int, error)
 	GetMessage(messageId int) (Message, error)
 	DeleteMessage(messageId int) error
-	GetMessageImage(messageId int) (int, []byte, string, bool, error)
+	GetMessageImage(messageId int) (int, []byte, string, bool, *int, error)
 	GetReactionsForMessage(messageId int, isGroup bool) ([]Reaction, error)
+	MarkIsReply(messageId int, replyMessageId int) error
 	CreateImageMessage(senderId int, conversationId int, imageContent []byte, timestamp time.Time) (int, error)
 	UpdateOrCreateConversation(sender int, recipient int, messageId int, timestamp time.Time, isRead bool, senderMsgId int) (int, error)
 	// Reactions
@@ -78,10 +79,10 @@ type AppDatabase interface {
 	GetGroupMessage(groupId, messageId int) (GroupMessage, error)
 	ChangeGroupName(groupId int, newGroupName string) error
 	GetGroupPhoto(groupId int) ([]byte, error)
-	GetGroupMessageImage(messageId int) (int, []byte, string, bool, error)
+	GetGroupMessageImage(messageId int) (int, []byte, string, bool, *int, error)
 	UpdateGroupPhoto(groupId int, photoData []byte) error
 	CreateGroupImageMessage(groupId int, senderId int, imageData []byte, timestamp time.Time) (int, error)
-	CreateGroupMessage(groupId int, senderId int, messageContent string, timestamp time.Time) (int, error)
+	CreateGroupMessage(groupId int, senderId int, messageContent string, timestamp time.Time, isReply *int) (int, error)
 	updateOrCreateGroupConversation(groupconversation_id int, groupId int, senderId int, messageId int, timestamp time.Time) error
 	DeleteAllMessagesFromUserInGroup(groupId int, userId int) error
 
@@ -137,7 +138,8 @@ func New(db *sql.DB) (AppDatabase, error) {
 										ImageData		 BLOB,
 										MessageContent   VARCHAR(1000),
 										Timestamp        DATETIME NOT NULL,
-										IsRead           BOOLEAN DEFAULT FALSE);`
+										IsRead           BOOLEAN DEFAULT FALSE,
+										IsReply 		 INTEGER DEFAULT NULL);`
 
 		_, err = db.Exec(messages)
 		if err != nil {
@@ -197,6 +199,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 									ImageData BLOB,
 									Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
 									IsRead BOOLEAN DEFAULT FALSE,
+									IsReply INTEGER DEFAULT NULL,
 									FOREIGN KEY (Group_id) REFERENCES Groups (Group_id) ON DELETE CASCADE,
 									FOREIGN KEY (Sender_id) REFERENCES Users (User_id) ON DELETE CASCADE);`
 		_, err = db.Exec(groupMessages)

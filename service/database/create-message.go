@@ -5,12 +5,12 @@ import (
 	"time"
 )
 
-func (db *appdbimpl) CreateMessage(senderId int, conversationId int, messageContent string, timestamp time.Time) (int, error) {
+func (db *appdbimpl) CreateMessage(senderId int, conversationId int, messageContent string, timestamp time.Time, isReply *int) (int, error) {
 	query := `
-        INSERT INTO Messages (Sender_id, Conversation_id, MessageContent, Timestamp) 
-        VALUES (?, ?, ?, ?)
+        INSERT INTO Messages (Sender_id, Conversation_id, MessageContent, Timestamp, IsReply) 
+        VALUES (?, ?, ?, ?, ?)
     `
-	result, err := db.c.Exec(query, senderId, conversationId, messageContent, timestamp)
+	result, err := db.c.Exec(query, senderId, conversationId, messageContent, timestamp, isReply)
 	if err != nil {
 		return 0, fmt.Errorf("CreateMessage: %w", err)
 	}

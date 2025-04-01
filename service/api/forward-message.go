@@ -68,7 +68,8 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 
 		if body.ConversationId != nil {
 			// ✅ Destinazione: conversazione privata
-			newMessageId, err := rt.db.CreateMessage(userId, *body.ConversationId, msg.MessageContent, time.Now())
+			// Quando inoltriamo un messaggio, non dobbiamo passare l'IsReply
+			newMessageId, err := rt.db.CreateMessage(userId, *body.ConversationId, msg.MessageContent, time.Now(), nil) // IsReply è NULL
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("forwardMessage: failed to forward private → private")
@@ -90,7 +91,8 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 				ctx.Logger.WithError(err).Error("forwardMessage: no access to target group (private → group)")
 				return
 			}
-			newMessageId, err := rt.db.CreateGroupMessage(*body.GroupId, userId, msg.MessageContent, time.Now())
+			// Inoltra il messaggio al gruppo senza impostare l'IsReply
+			newMessageId, err := rt.db.CreateGroupMessage(*body.GroupId, userId, msg.MessageContent, time.Now(), nil) // IsReply è NULL
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("forwardMessage: failed to forward private → group")
@@ -138,7 +140,8 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 				ctx.Logger.WithError(err).Error("forwardMessage: no access to target private (group → private)")
 				return
 			}
-			newMessageId, err := rt.db.CreateMessage(userId, *body.ConversationId, msg.MessageContent, time.Now())
+			// Inoltra il messaggio al gruppo senza impostare l'IsReply
+			newMessageId, err := rt.db.CreateMessage(userId, *body.ConversationId, msg.MessageContent, time.Now(), nil) // IsReply è NULL
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("forwardMessage: failed to forward group → private")
@@ -160,7 +163,8 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 				ctx.Logger.WithError(err).Error("forwardMessage: no access to target group")
 				return
 			}
-			newMessageId, err := rt.db.CreateGroupMessage(*body.GroupId, userId, msg.MessageContent, time.Now())
+			// Inoltra il messaggio al gruppo senza impostare l'IsReply
+			newMessageId, err := rt.db.CreateGroupMessage(*body.GroupId, userId, msg.MessageContent, time.Now(), nil) // IsReply è NULL
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("forwardMessage: failed to forward group → group")
