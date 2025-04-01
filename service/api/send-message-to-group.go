@@ -124,6 +124,18 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
+		isReplyStr := r.FormValue("isReply")
+		if isReplyStr != "" {
+			if replyId, err := strconv.Atoi(isReplyStr); err == nil {
+				err := rt.db.MarkIsReplyGroup(messageId, replyId)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					ctx.Logger.WithError(err).Error("sendMessageToGroup: failed to update IsReply for image")
+					return
+				}
+			}
+		}
+
 		// Successo
 		w.WriteHeader(http.StatusCreated)
 		if err := json.NewEncoder(w).Encode(map[string]interface{}{

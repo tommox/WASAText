@@ -405,6 +405,7 @@ export default {
       showUserList: false,
       showGroupUserList: false,
       userSearch: "",
+      selectedImage: null,
       users: [],
       groupName: "",
       selectedUsers: [],
@@ -793,7 +794,7 @@ export default {
       }
     },
     async sendCurrentMessage() {
-      if (this.newMessage.trim() === "" || !this.selectedChat) return;
+      if ((this.newMessage.trim() === "" && !this.selectedImage) || !this.selectedChat) return;
       const token = localStorage.getItem("token");
       if (!token) {
         alert("Sessione scaduta. Effettua nuovamente il login.");
@@ -803,48 +804,88 @@ export default {
       try {
         let response;
         if (this.selectedChatType === "private") {
-          response = await this.$axios.post(
-            `/messages`,
-            {
-              conversation_id: this.selectedChat.conversation_id,
-              message_content: this.newMessage,
-              isReply: this.replyMessageId,
-            },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
+          if (this.selectedImage) {
+            const formData = new FormData();
+            formData.append("photo", this.selectedImage);
+            formData.append("conversation_id", this.selectedChat.conversation_id);
+            if (this.replyMessageId) {
+              formData.append("isReply", this.replyMessageId);
+            }
+            response = await this.$axios.post(`/messages`, formData, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "multipart/form-data",
+              },
+            });
+            this.selectedImage = null; 
+          } else {
+            response = await this.$axios.post(
+              `/messages`,
+              {
+                conversation_id: this.selectedChat.conversation_id,
+                message_content: this.newMessage,
+                isReply: this.replyMessageId,
+              },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+          }
         } else if (this.selectedChatType === "group") {
-          response = await this.$axios.post(
-            `/groups/${this.selectedChat.group_conversation_id}/messages`,
-            { message_content: this.newMessage, isReply: this.replyMessageId },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
+          if (this.selectedImage) {
+            const formData = new FormData();
+            formData.append("photo", this.selectedImage);
+            formData.append("group_conversation_id", this.selectedChat.group_conversation_id);
+            if (this.replyMessageId) {
+              formData.append("isReply", this.replyMessageId);
+            }
+            response = await this.$axios.post(`/groups/${this.selectedChat.group_conversation_id}/messages`, formData, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "multipart/form-data",
+              },
+            });
+            this.selectedImage = null; 
+          } else {
+            response = await this.$axios.post(
+              `/groups/${this.selectedChat.group_conversation_id}/messages`,
+              { message_content: this.newMessage, isReply: this.replyMessageId },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+          }
         }
+        const getMessageResponse = await this.$axios.get(`/messages/${response.data.message_id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { type: this.selectedChatType }
+        });
+        const data = getMessageResponse.data;
+        console.log("1",data);
         this.messages.push({
-          id: response.data.message_id,
-          text: this.newMessage,
+          id: data.message_id,
+          text: data.message_content || "",
           sender: "me",
-          timestamp: response.data.timestamp,
-          isRead: response.data.isRead || false,
-          isReply: this.replyMessageId, 
-          replyMessageText: this.replyMessageText,
+          timestamp: new Date(data.timestamp),
+          imageData: data.image_data ? `data:image/jpeg;base64,${data.image_data}` : null,
+          isRead: data.isRead || false,
+          isReply: data.isReply || null,
+          replyMessageText: this.replyMessageText || null,
+          reactions: [],
         });
         if (this.selectedChatType === "private") {
-          this.selectedChat.lastMessage = this.newMessage;
+          this.selectedChat.lastMessage = this.newMessage || "📷 Foto";
           const idx = this.chats.findIndex(chat => chat.conversation_id === this.selectedChat.conversation_id);
           if (idx !== -1) {
             this.chats[idx] = {
-            ...this.chats[idx],
-            lastMessage: this.newMessage,
-          };
+              ...this.chats[idx],
+              lastMessage: this.newMessage || "📷 Foto",
+            };
           }
         } else if (this.selectedChatType === "group") {
-          this.selectedChat.lastMessage = this.newMessage;
+          this.selectedChat.lastMessage = this.newMessage || "📷 Foto";
           const idx = this.groupChats.findIndex(group => group.group_conversation_id === this.selectedChat.group_conversation_id);
           if (idx !== -1) {
             this.groupChats[idx] = {
-            ...this.groupChats[idx],
-            group_lastMessage: this.newMessage,
-          };
+              ...this.groupChats[idx],
+              group_lastMessage: this.newMessage || "📷 Foto",
+            };
           }
         }
         this.scrollToBottom();
@@ -858,68 +899,12 @@ export default {
       this.replyMessageText = "";
       this.replyMessageId = null;
     },
-    async sendPhotoMessage(event) { 
-      const file = event.target.files[0];
-      if (!file || !this.selectedChat) return;
-      const token = localStorage.getItem("token");
-      const formData = new FormData();
-      formData.append("photo", file);
 
-      if (this.selectedChatType === "private") {
-        formData.append("conversation_id", this.selectedChat.conversation_id);
-      }
-      try {
-        let response;
-        if (this.selectedChatType === "private") {
-          response = await this.$axios.post(`/messages`, formData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          });
-        } else if (this.selectedChatType === "group") {
-          response = await this.$axios.post(`/groups/${this.selectedChat.group_conversation_id}/messages`, formData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          });
-        }
-        const messageId = response.data.message_id; 
-        const getMessageResponse = await this.$axios.get(`/messages/${messageId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          params: {
-            type: this.selectedChatType
-          }
-        });
-        const data = getMessageResponse.data;
-        this.messages.push({
-          id: response.data.message_id,
-          imageData: `data:image/jpeg;base64,${data.image_data}`,
-          sender: "me",
-          timestamp: data.timestamp,
-          isRead: response.data.isRead || false,
-          reactions: [],
-        });
-        if (this.selectedChatType === "private") {
-          this.selectedChat.lastMessage = "📷 Foto";
-          const idx = this.chats.findIndex(chat => chat.conversation_id === this.selectedChat.conversation_id);
-          if (idx !== -1) {
-            this.chats[idx].lastMessage = "📷 Foto";
-          }
-        } else if (this.selectedChatType === "group") {
-          this.selectedChat.lastMessage = "📷 Foto";
-          const idx = this.groupChats.findIndex(group => group.group_conversation_id === this.selectedChat.group_conversation_id);
-          if (idx !== -1) {
-            this.groupChats[idx].group_lastMessage = "📷 Foto";
-          }
-        }
-        this.scrollToBottom();
-        this.fetchChats();
-        this.fetchGroupChats();
-      } catch (error) {
-        console.error("Errore nell'invio della foto:", error);
-        alert("Errore durante l'invio dell'immagine.");
+    sendPhotoMessage(event) {
+      const file = event.target.files[0];
+      if (file) {
+        this.selectedImage = file;
+        this.sendCurrentMessage();
       }
     },
     async deleteMessage(messageId) {

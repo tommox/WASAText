@@ -145,6 +145,18 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 			return
 		}
 
+		isReplyStr := r.FormValue("isReply")
+		if isReplyStr != "" {
+			if replyId, err := strconv.Atoi(isReplyStr); err == nil {
+				err := rt.db.MarkIsReply(messageId, replyId)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					ctx.Logger.WithError(err).Error("sendMessage: failed to update IsReply for image")
+					return
+				}
+			}
+		}
+
 		// Successo
 		w.WriteHeader(http.StatusCreated)
 		if err := json.NewEncoder(w).Encode(map[string]interface{}{
