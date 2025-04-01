@@ -71,7 +71,7 @@ func (rt *_router) sendMessageHandler(w http.ResponseWriter, r *http.Request, ps
 		}
 
 		// Salva messaggio
-		messageId, err := rt.db.CreateMessage(senderId, body.ConversationId, body.MessageContent, msgTime, body.IsReply)
+		messageId, err := rt.db.CreateMessage(senderId, body.ConversationId, body.MessageContent, msgTime, body.IsReply, false)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			ctx.Logger.WithError(err).Error("sendMessage: failed to create message")

@@ -73,7 +73,7 @@ func (rt *_router) sendMessageToGroupHandler(w http.ResponseWriter, r *http.Requ
 		}
 
 		// Salva messaggio
-		messageId, err := rt.db.CreateGroupMessage(groupId, senderId, body.MessageContent, msgTime, body.IsReply)
+		messageId, err := rt.db.CreateGroupMessage(groupId, senderId, body.MessageContent, msgTime, body.IsReply, false)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			ctx.Logger.WithError(err).Error("sendMessageToGroup: error saving message to database")

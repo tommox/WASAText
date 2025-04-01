@@ -42,6 +42,7 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 	var body struct {
 		ConversationId *int `json:"conversation_id,omitempty"`
 		GroupId        *int `json:"group_id,omitempty"`
+		IsForward      bool `json:"isForward,omitempty"`
 	}
 	err = json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
@@ -72,12 +73,20 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 			if msg.ImageData != nil {
 				newMessageId, err = rt.db.CreateImageMessage(userId, *body.ConversationId, msg.ImageData, time.Now())
 			} else {
-				newMessageId, err = rt.db.CreateMessage(userId, *body.ConversationId, msg.MessageContent, time.Now(), nil)
+				newMessageId, err = rt.db.CreateMessage(userId, *body.ConversationId, msg.MessageContent, time.Now(), nil, body.IsForward)
 			}
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("forwardMessage: failed to forward private → private")
 				return
+			}
+			if body.IsForward {
+				err := rt.db.MarkIsForward(newMessageId, body.IsForward)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					ctx.Logger.WithError(err).Error("forwardMessage: failed to mark message as forwarded")
+					return
+				}
 			}
 			w.WriteHeader(http.StatusCreated)
 			if err := json.NewEncoder(w).Encode(map[string]interface{}{
@@ -100,12 +109,20 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 			if msg.ImageData != nil {
 				newMessageId, err = rt.db.CreateGroupImageMessage(*body.GroupId, userId, msg.ImageData, time.Now())
 			} else {
-				newMessageId, err = rt.db.CreateGroupMessage(*body.GroupId, userId, msg.MessageContent, time.Now(), nil)
+				newMessageId, err = rt.db.CreateGroupMessage(*body.GroupId, userId, msg.MessageContent, time.Now(), nil, body.IsForward)
 			}
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("forwardMessage: failed to forward private → group")
 				return
+			}
+			if body.IsForward {
+				err := rt.db.MarkIsForwardGroup(newMessageId, body.IsForward)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					ctx.Logger.WithError(err).Error("forwardMessage: failed to mark message as forwarded for group")
+					return
+				}
 			}
 			w.WriteHeader(http.StatusCreated)
 			if err := json.NewEncoder(w).Encode(map[string]interface{}{
@@ -154,12 +171,20 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 			if msg.ImageData != nil {
 				newMessageId, err = rt.db.CreateImageMessage(userId, *body.ConversationId, msg.ImageData, time.Now())
 			} else {
-				newMessageId, err = rt.db.CreateMessage(userId, *body.ConversationId, msg.MessageContent, time.Now(), nil)
+				newMessageId, err = rt.db.CreateMessage(userId, *body.ConversationId, msg.MessageContent, time.Now(), nil, body.IsForward)
 			}
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("forwardMessage: failed to forward group → private")
 				return
+			}
+			if body.IsForward {
+				err := rt.db.MarkIsForward(newMessageId, body.IsForward)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					ctx.Logger.WithError(err).Error("forwardMessage: failed to mark message as forwarded for private")
+					return
+				}
 			}
 			w.WriteHeader(http.StatusCreated)
 			if err := json.NewEncoder(w).Encode(map[string]interface{}{
@@ -182,12 +207,20 @@ func (rt *_router) forwardMessageHandler(w http.ResponseWriter, r *http.Request,
 			if msg.ImageData != nil {
 				newMessageId, err = rt.db.CreateGroupImageMessage(*body.GroupId, userId, msg.ImageData, time.Now())
 			} else {
-				newMessageId, err = rt.db.CreateGroupMessage(*body.GroupId, userId, msg.MessageContent, time.Now(), nil)
+				newMessageId, err = rt.db.CreateGroupMessage(*body.GroupId, userId, msg.MessageContent, time.Now(), nil, body.IsForward)
 			}
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				ctx.Logger.WithError(err).Error("forwardMessage: failed to forward group → group")
 				return
+			}
+			if body.IsForward {
+				err := rt.db.MarkIsForwardGroup(newMessageId, body.IsForward)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					ctx.Logger.WithError(err).Error("forwardMessage: failed to mark message as forwarded for group")
+					return
+				}
 			}
 			w.WriteHeader(http.StatusCreated)
 			if err := json.NewEncoder(w).Encode(map[string]interface{}{

@@ -34,6 +34,7 @@ type Message struct {
 	Timestamp       time.Time `json:"timestamp"`
 	IsRead          bool      `json:"isRead"`
 	IsReply         *int      `json:"isReply,omitempty"`
+	IsForward       bool      `json:"isForward"`
 }
 
 // GroupMessage rappresenta la struttura di un messaggio inviata a un gruppo
@@ -46,6 +47,7 @@ type GroupMessage struct {
 	Timestamp       time.Time `json:"timestamp"`
 	IsRead          bool      `json:"isRead"`
 	IsReply         *int      `json:"isReply,omitempty"`
+	IsForward       bool      `json:"isForward"`
 }
 
 // Group rappresenta un gruppo nel sistema.
@@ -108,5 +110,6 @@ func toDatabaseMessage(dbMsg database.Message) Message {
 		Timestamp:       dbMsg.Timestamp,
 		IsRead:          dbMsg.IsRead,
 		IsReply:         dbMsg.IsReply,
+		IsForward:       dbMsg.IsForward,
 	}
 }

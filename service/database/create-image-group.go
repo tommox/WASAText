@@ -14,11 +14,11 @@ func (db *appdbimpl) CreateGroupImageMessage(groupId int, senderId int, imageDat
 
 	// Query per inserire un messaggio di gruppo con immagine (BLOB) e IsRead
 	query := `
-        INSERT INTO GroupMessages (Group_id, Sender_id, MessageContent, ImageData, Timestamp, IsRead) 
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO GroupMessages (Group_id, Sender_id, MessageContent, ImageData, Timestamp, IsRead, IsForward) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     `
 	// Eseguiamo la query con IsRead = FALSE di default
-	result, err := db.c.Exec(query, groupId, senderId, messageContent, imageData, timestamp, false)
+	result, err := db.c.Exec(query, groupId, senderId, messageContent, imageData, timestamp, false, false)
 	if err != nil {
 		return 0, fmt.Errorf("CreateGroupImageMessage: %w", err)
 	}

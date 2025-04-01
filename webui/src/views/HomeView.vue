@@ -249,6 +249,11 @@
                   <strong>Risposta a:</strong> <span>{{ message.replyMessageText }}</span>
                 </div>
               </template>
+              <template v-if="message.isForward">
+                <div class="reply-indicator">
+                  <strong>Inoltrato</strong>
+                </div>
+              </template>
               <template v-if="selectedChatType === 'group'">
                 <strong>{{ message.sender === 'me' ? 'Tu' : userMap[message.rawSenderId] || 'Utente' }}</strong><br />
               </template>
@@ -701,7 +706,7 @@ export default {
           if (Array.isArray(response.data)) {
             this.messages = await Promise.all(response.data.map(async (msg) => {
               let replyMessageText = null;
-              if (msg.isReply) {
+              if (msg.isReply || msg.IsForward) {
                 try {
                   const replyResponse = await this.$axios.get(`/messages/${msg.isReply}?type=private`, {
                     headers: { Authorization: `Bearer ${token}` }
@@ -720,11 +725,11 @@ export default {
                 timestamp: new Date(msg.timestamp),
                 isRead: msg.isRead || false,
                 isReply: msg.isReply,
+                isForward: msg.isForward,
                 replyMessageText: replyMessageText,
                 reactions: await this.fetchReactionsForMessage(msg.message_id),
               };
             }));
-            console.log("fetch_priv",this.messages);
           } else {
             this.messages = [];
           }
@@ -755,11 +760,11 @@ export default {
                 timestamp: new Date(msg.timestamp),
                 isRead: msg.isRead || false,
                 isReply: msg.isReply,
+                isForward: msg.isForward,
                 replyMessageText: replyMessageText,
                 reactions: await this.fetchReactionsForMessage(msg.message_id),
               };
             }));
-            console.log("fetch_group",this.messages);
           } else {
             this.messages = [];
           }
@@ -868,7 +873,6 @@ export default {
           replyMessageText: this.replyMessageText || null,
           reactions: [],
         });
-        console.log("sendMess",this.messages);
         if (this.selectedChatType === "private") {
           this.selectedChat.lastMessage = this.newMessage || "📷 Foto";
           const idx = this.chats.findIndex(chat => chat.conversation_id === this.selectedChat.conversation_id);
@@ -1266,7 +1270,10 @@ export default {
           );
           if (existingChat) {
             finalConversationId = existingChat.conversation_id;
-            payload = { conversation_id: finalConversationId };
+            payload = { 
+                    conversation_id: finalConversationId, 
+                    isForward: true  
+                };
           } else {
             const createResponse = await this.$axios.post(
               `/conversations/conversation`,
@@ -1274,12 +1281,18 @@ export default {
               { headers: { Authorization: `Bearer ${token}` } }
             );
             finalConversationId = createResponse.data.conversation_id;
-            payload = { conversation_id: finalConversationId };
+            payload = { 
+                    conversation_id: finalConversationId, 
+                    isForward: true 
+                };
           }
         } else if (type === "group") {
-          payload = { group_id: destinationId };
+          payload = { 
+                group_id: destinationId, 
+                isForward: true  
+            };
         }
-        await this.$axios.post(
+        const response = await this.$axios.post(
           `/messages/${this.forwardMessageId}/forwards?type=${this.forwardMessageType}`,
           payload,
           {
@@ -1289,6 +1302,18 @@ export default {
             },
           }
         );
+        const forwardedMessage = response.data; 
+        this.messages.push({
+          id: forwardedMessage.message_id,
+          text: forwardedMessage.message_content || "",
+          sender: "me",
+          timestamp: new Date(forwardedMessage.timestamp),
+          imageData: forwardedMessage.image_data ? `data:image/jpeg;base64,${forwardedMessage.image_data}` : null,
+          isRead: forwardedMessage.isRead || false,
+          isForward: true,  
+          replyMessageText: this.replyMessageText || null,
+          reactions: [],
+        });
         eventBus.emit("messageForwarded", {
               type,
               destinationId,

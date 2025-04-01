@@ -25,6 +25,7 @@ type Message struct {
 	Timestamp       time.Time `json:"timestamp"`
 	IsRead          bool      `json:"isRead"`
 	IsReply         *int      `json:"isReply,omitempty"`
+	IsForward       bool      `json:"isForward"`
 }
 
 // GroupMessage rappresenta la struttura di un messaggio inviata a un gruppo
@@ -37,6 +38,7 @@ type GroupMessage struct {
 	Timestamp       time.Time `json:"timestamp"`
 	IsRead          bool      `json:"isRead"`
 	IsReply         *int      `json:"isReply,omitempty"`
+	IsForward       bool      `json:"isForward"`
 }
 
 type Reaction struct {

@@ -5,12 +5,12 @@ import (
 	"time"
 )
 
-func (db *appdbimpl) CreateGroupMessage(groupId int, senderId int, messageContent string, timestamp time.Time, isReply *int) (int, error) {
+func (db *appdbimpl) CreateGroupMessage(groupId int, senderId int, messageContent string, timestamp time.Time, isReply *int, isForward bool) (int, error) {
 	query := `
-        INSERT INTO GroupMessages (Group_id, Sender_id, MessageContent, Timestamp, IsReply) 
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO GroupMessages (Group_id, Sender_id, MessageContent, Timestamp, IsReply, IsForward) 
+        VALUES (?, ?, ?, ?, ?, ?)
     `
-	result, err := db.c.Exec(query, groupId, senderId, messageContent, timestamp, isReply)
+	result, err := db.c.Exec(query, groupId, senderId, messageContent, timestamp, isReply, isForward)
 	if err != nil {
 		return 0, fmt.Errorf("CreateGroupMessage: %w", err)
 	}

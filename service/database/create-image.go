@@ -12,11 +12,11 @@ func (db *appdbimpl) CreateImageMessage(senderId int, conversationId int, imageD
 	}
 
 	query := `
-    INSERT INTO Messages (Sender_id, Conversation_id, ImageData, MessageContent, Timestamp, IsRead) 
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO Messages (Sender_id, Conversation_id, ImageData, MessageContent, Timestamp, IsRead, IsForward) 
+    VALUES (?, ?, ?, ?, ?, ?, ?)
 `
 	// Inseriamo il messaggio con il campo IsRead = FALSE di default
-	result, err := db.c.Exec(query, senderId, conversationId, imageData, messageContent, timestamp, false)
+	result, err := db.c.Exec(query, senderId, conversationId, imageData, messageContent, timestamp, false, false)
 	if err != nil {
 		return 0, fmt.Errorf("CreateImageMessage: %w", err)
 	}

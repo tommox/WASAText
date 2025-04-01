@@ -5,7 +5,7 @@ import "fmt"
 // GetConversationMessages recupera tutti i messaggi (testo e immagini) associati a una conversazione tra due utenti
 func (db *appdbimpl) GetConversationMessages(conversationId int) ([]Message, error) {
 	query := `
-		SELECT m.Message_id, m.Sender_id, m.Conversation_id, m.MessageContent, m.ImageData, m.Timestamp, m.IsRead, m.IsReply
+		SELECT m.Message_id, m.Sender_id, m.Conversation_id, m.MessageContent, m.ImageData, m.Timestamp, m.IsRead, m.IsReply, m.IsForward
 		FROM Messages m
 		WHERE m.Conversation_id = ?
 		ORDER BY m.Timestamp ASC;
@@ -29,6 +29,7 @@ func (db *appdbimpl) GetConversationMessages(conversationId int) ([]Message, err
 			&msg.Timestamp,
 			&msg.IsRead,
 			&msg.IsReply,
+			&msg.IsForward,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("GetConversationMessages: %w", err)

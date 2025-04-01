@@ -53,10 +53,11 @@ type AppDatabase interface {
 	GetUserPhoto(userID int) ([]byte, error)
 
 	// Messages
-	CreateMessage(senderId int, conversationId int, messageContent string, timestamp time.Time, isReply *int) (int, error)
+	CreateMessage(senderId int, conversationId int, messageContent string, timestamp time.Time, isReply *int, isForward bool) (int, error)
 	GetMessage(messageId int) (Message, error)
+	MarkIsForward(messageId int, isForward bool) error
 	DeleteMessage(messageId int) error
-	GetMessageImage(messageId int) (int, []byte, string, bool, *int, error)
+	GetMessageImage(messageId int) (int, []byte, string, bool, *int, bool, error)
 	GetReactionsForMessage(messageId int, isGroup bool) ([]Reaction, error)
 	MarkIsReply(messageId int, replyMessageId int) error
 	CreateImageMessage(senderId int, conversationId int, imageContent []byte, timestamp time.Time) (int, error)
@@ -72,6 +73,7 @@ type AppDatabase interface {
 	PromoteToAdmin(groupId int, userId int) error
 	DeleteGroupMessage(messageId int) error
 	GetGroupByMessageId(messageId int) (Group, error)
+	MarkIsForwardGroup(messageId int, isForward bool) error
 	GetGroupMembers(groupId int) ([]GroupMember, error)
 	IsGroupAdmin(groupId int, userId int) (bool, error)
 	IsGroupMember(groupId int, userId int) (bool, error)
@@ -79,10 +81,10 @@ type AppDatabase interface {
 	GetGroupMessage(groupId, messageId int) (GroupMessage, error)
 	ChangeGroupName(groupId int, newGroupName string) error
 	GetGroupPhoto(groupId int) ([]byte, error)
-	GetGroupMessageImage(messageId int) (int, []byte, string, bool, *int, error)
+	GetGroupMessageImage(messageId int) (int, []byte, string, bool, *int, bool, error)
 	UpdateGroupPhoto(groupId int, photoData []byte) error
 	CreateGroupImageMessage(groupId int, senderId int, imageData []byte, timestamp time.Time) (int, error)
-	CreateGroupMessage(groupId int, senderId int, messageContent string, timestamp time.Time, isReply *int) (int, error)
+	CreateGroupMessage(groupId int, senderId int, messageContent string, timestamp time.Time, isReply *int, isForward bool) (int, error)
 	updateOrCreateGroupConversation(groupconversation_id int, groupId int, senderId int, messageId int, timestamp time.Time) error
 	DeleteAllMessagesFromUserInGroup(groupId int, userId int) error
 	MarkIsReplyGroup(messageId int, replyMessageId int) error
@@ -140,7 +142,8 @@ func New(db *sql.DB) (AppDatabase, error) {
 										MessageContent   VARCHAR(1000),
 										Timestamp        DATETIME NOT NULL,
 										IsRead           BOOLEAN DEFAULT FALSE,
-										IsReply 		 INTEGER DEFAULT NULL);`
+										IsReply 		 INTEGER DEFAULT NULL,
+										IsForward 		 BOOLEAN DEFAULT FALSE);`
 
 		_, err = db.Exec(messages)
 		if err != nil {
@@ -201,6 +204,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 									Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
 									IsRead BOOLEAN DEFAULT FALSE,
 									IsReply INTEGER DEFAULT NULL,
+									IsForward BOOLEAN DEFAULT FALSE,
 									FOREIGN KEY (Group_id) REFERENCES Groups (Group_id) ON DELETE CASCADE,
 									FOREIGN KEY (Sender_id) REFERENCES Users (User_id) ON DELETE CASCADE);`
 		_, err = db.Exec(groupMessages)
