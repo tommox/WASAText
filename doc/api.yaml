@@ -56,16 +56,6 @@ components:
           pattern: "^[a-zA-Z0-9 .,!?'-]+$"
           minLength: 3
           maxLength: 1000
-    Error403:
-      type: object
-      description: "Schema for forbidden access (403)."
-      properties:
-        error:
-          type: string
-          description: "The code of the error"
-          pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-          minLength: 3
-          maxLength: 1000
     Status:
       type: string
       description: Represents the status of the operation.
@@ -306,7 +296,6 @@ paths:
                   type: string
                   format: binary
                   description: "The image file for the user's profile photo."
-                  pattern: "^[01]+$"
       responses:
         '200':
           description: Profile photo updated successfully.
@@ -1728,7 +1717,6 @@ paths:
                   type: string
                   format: binary
                   description: "The image file for the group's profile photo."
-                  pattern: "^[01]+$"
       responses:
         '200':
           description: Group photo uploaded successfully.

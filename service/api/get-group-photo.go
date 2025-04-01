@@ -34,5 +34,7 @@ func (rt *_router) getGroupPhotoHandler(w http.ResponseWriter, r *http.Request, 
 
 	w.Header().Set("Content-Type", "image/*")
 	w.WriteHeader(http.StatusOK)
-	w.Write(photoData)
+	if _, err := w.Write(photoData); err != nil {
+		ctx.Logger.WithError(err).Error("getGroupPhoto: error writing image to response")
+	}
 }

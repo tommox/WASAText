@@ -26,5 +26,7 @@ func (rt *_router) getUserPhotoHandler(w http.ResponseWriter, r *http.Request, p
 
 	w.Header().Set("Content-Type", "image/*")
 	w.WriteHeader(http.StatusOK)
-	w.Write(imageBytes)
+	if _, err := w.Write(imageBytes); err != nil {
+		ctx.Logger.WithError(err).Error("Error writing image to response")
+	}
 }

@@ -45,15 +45,6 @@ func (rt *_router) deleteConversationHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	/*
-		// Se la conversazione è di gruppo, non permettiamo l'eliminazione diretta
-		if isGroup {
-			w.WriteHeader(http.StatusForbidden)
-			ctx.Logger.Error("deleteConversation: cannot delete a group conversation directly")
-			return
-		}
-	*/
-
 	// Elimina la conversazione dal database
 	err = rt.db.DeleteConversation(conversationId)
 	if err != nil {
