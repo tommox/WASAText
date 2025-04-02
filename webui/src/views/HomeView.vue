@@ -698,6 +698,7 @@ export default {
       const token = localStorage.getItem("token");
       try {
         let response;
+
         if (this.selectedChatType === "private" && this.selectedChat.conversation_id) {
           response = await this.$axios.get(
             `/conversations/${this.selectedChat.conversation_id}?type=private`,
@@ -706,12 +707,13 @@ export default {
           if (Array.isArray(response.data)) {
             this.messages = await Promise.all(response.data.map(async (msg) => {
               let replyMessageText = null;
-              if (msg.isReply || msg.IsForward) {
+              if (msg.isReply) {
                 try {
                   const replyResponse = await this.$axios.get(`/messages/${msg.isReply}?type=private`, {
                     headers: { Authorization: `Bearer ${token}` }
                   });
-                  replyMessageText = replyResponse.data.message_content;
+                  const content = replyResponse.data.message_content;
+                  replyMessageText = content?.trim() ? content : "📷 Foto";
                 } catch (error) {
                   console.error("Errore nel recupero del messaggio di risposta", error);
                 }
@@ -733,7 +735,9 @@ export default {
           } else {
             this.messages = [];
           }
-        } else if (this.selectedChatType === "group" && this.selectedChat.group_conversation_id) {
+        }
+
+        else if (this.selectedChatType === "group" && this.selectedChat.group_conversation_id) {
           response = await this.$axios.get(
             `/conversations/${this.selectedChat.group_conversation_id}?type=group`,
             { headers: { Authorization: `Bearer ${token}` } }
@@ -746,7 +750,8 @@ export default {
                   const replyResponse = await this.$axios.get(`/messages/${msg.isReply}?type=group`, {
                     headers: { Authorization: `Bearer ${token}` }
                   });
-                  replyMessageText = replyResponse.data.message_content;
+                  const content = replyResponse.data.message_content;
+                  replyMessageText = content?.trim() ? content : "📷 Foto";
                 } catch (error) {
                   console.error("Errore nel recupero del messaggio di risposta", error);
                 }
@@ -870,7 +875,7 @@ export default {
           imageData: data.image_data ? `data:image/jpeg;base64,${data.image_data}` : null,
           isRead: data.isRead || false,
           isReply: data.isReply || null,
-          replyMessageText: this.replyMessageText || null,
+          replyMessageText: this.replyMessageText?.trim() ? this.replyMessageText : "📷 Foto",
           reactions: [],
         });
         if (this.selectedChatType === "private") {
@@ -930,7 +935,7 @@ export default {
     replyToMessage(messageId) {
       this.selectedMessageId = messageId;
       const message = this.messages.find(msg => msg.id === messageId);
-      this.replyMessageText = message.text;
+      this.replyMessageText = message.text?.trim() ? message.text : "📷 Foto";
       this.isReplying = true;
       this.replyMessageId = messageId;
       this.showOptions = false; 
