@@ -296,6 +296,8 @@ paths:
                   type: string
                   format: binary
                   description: "The image file for the user's profile photo."
+                  minLength: 1
+                  maxLength: 100000
       responses:
         '200':
           description: Profile photo updated successfully.
@@ -1827,8 +1829,6 @@ paths:
         content:
           multipart/form-data:
             schema:
-              minLength: 1
-              maxLength: 1000
               type: object
               required:
                 - photo
@@ -1838,6 +1838,8 @@ paths:
                   type: string
                   format: binary
                   description: "The image file for the group's profile photo."
+                  minLength: 1
+                  maxLength: 100000
       responses:
         '200':
           description: Group photo uploaded successfully.
