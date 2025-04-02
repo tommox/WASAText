@@ -369,7 +369,6 @@
 </template>
 
 <script>
-import axios from "axios";
 import eventBus from "@/eventBus";
 import defaultAvatar from "@/assets/images/user.png";
 import checkmark from "@/assets/images/checkmark.png";
