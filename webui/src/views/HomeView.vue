@@ -1387,7 +1387,6 @@ export default {
       try {
         const body = {
           emoji: reaction,
-          add: true,  
           isGroup: this.selectedChatType === "group",
         };
         await this.$axios.post(`/messages/${messageId}/reactions`, body, {
@@ -1410,18 +1409,18 @@ export default {
       const token = localStorage.getItem("token");
       try {
         const body = {
-          emoji: reaction.emoji,  
-          add: false,  
+          emoji: reaction.emoji,
           isGroup: this.selectedChatType === "group", 
         };
-        await this.$axios.post(`/messages/${messageId}/reactions`, body, {
+        await this.$axios.delete(`/messages/${messageId}/reactions`, {
+          data: body,
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         const message = this.messages.find(msg => msg.id === messageId);
         if (message) {
-          message.reactions = message.reactions.filter(r => r.reaction !== reaction.reaction);
+          message.reactions = message.reactions.filter(r => r.emoji !== reaction.emoji || r.user_id !== reaction.user_id);
         }
         this.fetchMessages(); 
       } catch (error) {
