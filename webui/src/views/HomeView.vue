@@ -1493,6 +1493,13 @@ export default {
     this.fetchProfilePhoto();
     this.fetchUserPhoto();
     this.fetchGroupPhoto();
+    this.refreshInterval = setInterval(() => {
+      this.fetchChats();
+      this.fetchGroupChats();
+      if (this.selectedChat) {
+        this.fetchMessages();
+      }
+    }, 5000);
     eventBus.on("conversationDeleted", conversationId => {
       this.chats = this.chats.filter(chat => chat.conversation_id !== conversationId);
       this.groupChats = this.groupChats.filter(group => group.group_conversation_id !== conversationId);
