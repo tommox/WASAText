@@ -1303,6 +1303,11 @@ export default {
           }
         );
         const forwardedMessage = response.data; 
+        const isCurrentChatDestination =
+          (type === "private" && this.selectedChatType === "private" && this.selectedChat?.conversation_id === finalConversationId) ||
+          (type === "group" && this.selectedChatType === "group" && this.selectedChat?.group_conversation_id === destinationId);
+
+        if (isCurrentChatDestination) {
         this.messages.push({
           id: forwardedMessage.message_id,
           text: forwardedMessage.message_content || "",
@@ -1314,6 +1319,7 @@ export default {
           replyMessageText: this.replyMessageText || null,
           reactions: [],
         });
+      }
         eventBus.emit("messageForwarded", {
               type,
               destinationId,
