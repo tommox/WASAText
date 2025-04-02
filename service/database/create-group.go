@@ -32,8 +32,8 @@ func (db *appdbimpl) CreateGroup(groupName string, creatorId int, createdAt time
 		return 0, fmt.Errorf("CreateGroup: errore nella creazione della conversazione di gruppo: %w", err)
 	}
 
-	// Aggiunge il creatore come membro del gruppo con ruolo "admin"
-	err = db.AddUserToGroup(int(groupId), creatorId, "admin")
+	// Aggiunge il creatore come membro del gruppo
+	err = db.AddUserToGroup(int(groupId), creatorId)
 	if err != nil {
 		return 0, fmt.Errorf("CreateGroup: errore nell'aggiunta del creatore al gruppo: %w", err)
 	}

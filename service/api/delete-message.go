@@ -94,14 +94,7 @@ func (rt *_router) deleteMessageHandler(w http.ResponseWriter, r *http.Request, 
 			return
 		}
 
-		isAdmin, err := rt.db.IsGroupAdmin(groupConv.Group_id, userId)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			ctx.Logger.WithError(err).Error("deleteMessage: error checking admin")
-			return
-		}
-
-		if userId != groupMsg.Sender_id && !isAdmin {
+		if userId != groupMsg.Sender_id {
 			w.WriteHeader(http.StatusForbidden)
 			ctx.Logger.WithError(errors.New("user not allowed to delete group message")).Error("deleteMessage: permission denied")
 			return

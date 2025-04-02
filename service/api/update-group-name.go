@@ -31,15 +31,15 @@ func (rt *_router) changeGroupNameHandler(w http.ResponseWriter, r *http.Request
 	userId, err := strconv.Atoi(userIdStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		ctx.Logger.WithError(err).Error("changeGroupName: invalid admin ID")
+		ctx.Logger.WithError(err).Error("changeGroupName: invalid user ID")
 		return
 	}
 
-	// Controlla che l'utente sia admin o creatore del gruppo
+	// Controlla che l'utente sia membro
 	isMember, err := rt.db.IsGroupMember(groupId, userId)
 	if err != nil || !isMember {
 		w.WriteHeader(http.StatusForbidden)
-		ctx.Logger.WithError(err).Error("changeGroupName: user is not an admin")
+		ctx.Logger.WithError(err).Error("changeGroupName: user is not an member")
 		return
 	}
 

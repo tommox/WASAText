@@ -147,7 +147,7 @@
                 <h2>Azioni gruppo</h2>
                 <div class="user-list">
                   <div class="user-item" @click="openRenameGroup"> Cambia nome al gruppo</div>
-                  <div class="user-item" @click="openManageMembers"> Gestisci membri del gruppo</div>
+                  <div class="user-item" @click="openManageMembers"> Guarda membri del gruppo</div>
                 </div>
                 <button @click="showGroupMenu = false" class="cancel-btn">Chiudi</button>
               </div>
@@ -194,7 +194,7 @@
           <div v-if="showManageMembersModal" class="modal-overlay">
             <div class="modal-content">
               <div class="modal-header-with-button">
-                <h2>Gestisci membri del gruppo</h2>
+                <h2>Guarda membri del gruppo</h2>
                 <button @click="openAddMembersModal" class="new-chat-btn" title="Aggiungi membro">➕</button>
               </div>
               <div v-if="groupMembers.length === 0" class="loading-text">Caricamento membri...</div>
@@ -205,19 +205,17 @@
                   class="user-item"
                 >
                   {{ user.nickname }}
-                  <span v-if="user.role === 'admin'" class="badge">Admin</span>
-                  <button
-                    v-if="user.role !== 'admin'"
-                    class="small-btn"
-                    @click="promoteToAdmin(user.user_id)">
-                    Promuovi
-                  </button>
-                  <button class="small-btn" @click="removeFromGroup(user.user_id)">Rimuovi</button>
                 </div>
               </div>
               <button class="cancel-btn" @click="showManageMembersModal = false">Chiudi</button>
             </div>
           </div>
+          <button
+            v-if="selectedChatType === 'group' && groupMembers.length > 1"
+            @click="leaveGroup(token)"
+            class="leave-btn">
+            🚪
+          </button>
           <button
             @click="selectedChatType === 'private' ? deleteConversation() : deleteGroupConversation()"
             class="delete-btn">
@@ -652,29 +650,20 @@ export default {
         alert("Errore nella modifica del nome.");
       }
     },
-    async promoteToAdmin(userId) {
+    async leaveGroup(userId) {
       const token = localStorage.getItem("token");
       try {
-        await this.$axios.post(`/groups/${this.selectedChat.group_conversation_id}/users/${userId}?state=promote`, null, {
+        await this.$axios.delete(`/groups/${this.selectedChat.group_conversation_id}/users/${userId}`, null, {
           headers: { Authorization: `Bearer ${token}` },
         });
         this.fetchGroupMembers(this.selectedChat.group_conversation_id);
-      } catch (err) {
-        console.error("Errore nella promozione:", err);
-      }
-    },
-
-    async removeFromGroup(userId) {
-      const token = localStorage.getItem("token");
-      try {
-        await this.$axios.post(`/groups/${this.selectedChat.group_conversation_id}/users/${userId}?state=remove`, null, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        this.fetchGroupMembers(this.selectedChat.group_conversation_id);
+        this.fetchGroupChats();
         eventBus.emit("userRemovedFromGroup", {
           groupId: this.selectedChat.group_conversation_id,
           userId: userId,
         });
+        this.selectedChat = null;
+        this.selectedChatType = "";
       } catch (err) {
         console.error("Errore nella rimozione dal gruppo:", err);
       }
@@ -1012,12 +1001,7 @@ export default {
         );
         this.selectedChat = null;
       } catch (error) {
-        if (error.response && error.response.status === 403) {
-          this.groupErrorMessage = "Non puoi eliminare il gruppo in quanto non sei admin.";
-        } else {
-          this.groupErrorMessage = "Si è verificato un errore durante l'eliminazione del gruppo.";
           console.error("Errore nella cancellazione del gruppo:", error);
-        }
         this.showGroupErrorModal = true;
       }
     },
@@ -1434,7 +1418,7 @@ export default {
         const response = await this.$axios.post(`/groups`, { group_name: this.groupName }, { headers: { Authorization: `Bearer ${token}` } });
         const groupId = response.data.group_id;
         for (const userId of this.selectedUsers) {
-          await this.$axios.post(`/groups/${groupId}/users/${userId}?state=add`, { role: "member" }, { headers: { Authorization: `Bearer ${token}` } });
+          await this.$axios.post(`/groups/${groupId}/users/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
         }
         const newGroup = {
           group_conversation_id: groupId,
@@ -1471,8 +1455,7 @@ export default {
     const token = localStorage.getItem("token");
     try {
       await this.$axios.post(
-      `/groups/${this.selectedChat.group_conversation_id}/users/${userId}?state=add`,
-      { role: "member" }, 
+      `/groups/${this.selectedChat.group_conversation_id}/users/${userId}`,
       {
         headers: { Authorization: `Bearer ${token}` }
       }
@@ -1738,8 +1721,13 @@ export default {
   color: white;
   margin-left: auto;
 }
-.delete-btn:hover {
-  color: red;
+.leave-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: white;
+  margin-left: 30px;
 }
 .chat-messages {
   margin-top: 60px;

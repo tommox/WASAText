@@ -59,7 +59,6 @@ type GroupMember struct {
 	GroupMember_id int    `json:"group_member_id"`
 	Group_id       int    `json:"group_id"`
 	User_id        int    `json:"user_id"`
-	Role           string `json:"role"`
 	Nickname       string `json:"nickname"`
 }
 

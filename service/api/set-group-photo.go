@@ -31,15 +31,15 @@ func (rt *_router) setGroupPhotoHandler(w http.ResponseWriter, r *http.Request, 
 	userId, err := strconv.Atoi(userIdStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		ctx.Logger.WithError(err).Error("setGroupPhoto: invalid admin ID")
+		ctx.Logger.WithError(err).Error("setGroupPhoto: invalid user ID")
 		return
 	}
 
-	// Controlla che l'utente sia admin del gruppo
+	// Controlla che l'utente sia memebro del gruppo
 	isMember, err := rt.db.IsGroupMember(groupId, userId)
 	if err != nil || !isMember {
 		w.WriteHeader(http.StatusForbidden)
-		ctx.Logger.WithError(err).Error("setGroupPhoto: user is not an admin")
+		ctx.Logger.WithError(err).Error("setGroupPhoto: user is not an user")
 		return
 	}
 

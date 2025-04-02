@@ -2,12 +2,12 @@ package database
 
 import "fmt"
 
-func (db *appdbimpl) AddUserToGroup(groupId int, userId int, role string) error {
+func (db *appdbimpl) AddUserToGroup(groupId int, userId int) error {
 	query := `
-        INSERT INTO GroupMembers (Group_id, User_id, Role)
-        VALUES (?, ?, ?);
+        INSERT INTO GroupMembers (Group_id, User_id)
+        VALUES (?, ?);
     `
-	_, err := db.c.Exec(query, groupId, userId, role)
+	_, err := db.c.Exec(query, groupId, userId)
 	if IsUniqueConstraintError(err) {
 		return ErrUserAlreadyInGroup
 	}

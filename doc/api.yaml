@@ -1407,7 +1407,7 @@ paths:
       summary: Get group members
       description: >
         Returns the list of users who are members of a specific group, identified by its unique ID.
-        Each member includes their user ID, nickname, and role in the group (e.g., "member", "admin").
+        Each member includes their user ID, nickname.
       operationId: getGroupMembers
       parameters:
         - name: Group_id
@@ -1452,13 +1452,6 @@ paths:
                       minLength: 3
                       maxLength: 100
                       pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                    role:
-                      type: string
-                      description: Role of the user in the group
-                      enum: ["member", "admin"]
-                      minLength: 3
-                      maxLength: 100
-                      pattern: "^[a-zA-Z0-9 .,!?'-]+$"
         '404':
             description: Group or user not found.
             content:
@@ -1483,9 +1476,9 @@ paths:
   /groups/{Group_id}/users/{User_id}:
     post:
       tags: ["groups"]
-      summary: Add, remove or promote a user in a group
-      description: Adds, removes or promotes a user in a specific group.
-      operationId: manageGroupUsers
+      summary: Add a user in a group
+      description: Adds a user in a specific group.
+      operationId: addToGroup
       parameters:
         - name: Group_id
           description: The integer that describes the Group_id.
@@ -1506,7 +1499,7 @@ paths:
             maximum: 1000
             description: "The ID of the user."
       requestBody:
-        description: Details of the user to add remove or promote
+        description: Details of the user to add 
         required: true
         content:
           application/json:
@@ -1519,22 +1512,92 @@ paths:
               properties:
                 User_id:
                   type: integer
-                  description: "ID of the user to add or remove."
+                  description: "ID of the user to add"
                   minimum: 1
                   maximum: 1000
-                action:
-                  type: string
-                  description: "Action to perform: 'add', 'remove' or 'promote'."
-                  enum: ["add", "remove", "promote"]
-                role:
-                  type: string
-                  description: "The role assigned to the user when adding (e.g., 'member', 'admin')."
-                  pattern: "^[a-zA-Z0-9 .,!?'-]+$"
-                  minLength: 3
-                  maxLength: 1000
       responses:
         '201':
-          description: User successfully managed in the group.
+          description: User successfully added in the group.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for a successful response.
+                required:
+                  - success
+                  - message
+                properties:
+                  success:
+                    type: boolean
+                    description: "Indicates the operation was successful."
+                  message:
+                    type: string
+                    description: "A confirmation message."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '400':
+          description: Invalid data (Group_id, User_id).
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for invalid data.
+                properties:
+                  error:
+                    type: string
+                    description: "Details of the error."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '404':
+          description: Group or user not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema for error caused by not found.
+                properties:
+                  error:
+                    type: string
+                    description: "Group or user not found."
+                    pattern: "^[a-zA-Z0-9 .,!?'-]+$"
+                    minLength: 3
+                    maxLength: 1000
+        '500':
+          description: Server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error500'
+
+    delete:
+      tags: ["groups"]
+      summary: Remove a user by a group
+      description: Removes a user in a specific group.
+      operationId: leaveGroup
+      parameters:
+        - name: Group_id
+          description: The integer that describes the Group_id.
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            description: "The ID of the group."
+        - name: User_id
+          description: The integer that describes the User_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            description: "The ID of the user."
+      responses:
+        '201':
+          description: User successfully removed by the group.
           content:
             application/json:
               schema:
@@ -1684,7 +1747,7 @@ paths:
     delete:
       tags: ["groups"]
       summary: Delete a group
-      description: Allows the deletion of a group. Only the creator or an admin can delete the group.
+      description: Allows the deletion of a group.
       operationId: deleteGroup
       responses:
         '200':
@@ -1756,7 +1819,7 @@ paths:
     put:
       tags: ["groups"]
       summary: Add or update a group photo
-      description: Allows an admin or the creator to upload or update a group's profile photo.
+      description: Allows a user to upload or update a group's profile photo.
       operationId: setGroupPhoto
       requestBody:
         description: The group photo to upload.

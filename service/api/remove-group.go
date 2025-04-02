@@ -21,31 +21,31 @@ func (rt *_router) deleteGroupHandler(w http.ResponseWriter, r *http.Request, ps
 	}
 
 	// Estrai l'utente loggato dal Bearer Token
-	adminIdStr, err := extractBearerToken(r, w)
+	userIdStr, err := extractBearerToken(r, w)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
 		ctx.Logger.WithError(err).Error("deleteGroup: unauthorized user")
 		return
 	}
 
-	adminId, err := strconv.Atoi(adminIdStr)
+	userId, err := strconv.Atoi(userIdStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		ctx.Logger.WithError(err).Error("deleteGroup: invalid admin ID")
+		ctx.Logger.WithError(err).Error("deleteGroup: invalid user ID")
 		return
 	}
 
-	// Verifica che l'utente loggato sia admin o creator del gruppo
-	isAdmin, err := rt.db.IsGroupAdmin(groupId, adminId)
+	isMember, err := rt.db.IsGroupMember(groupId, userId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		ctx.Logger.WithError(err).Error("deleteGroup: error checking admin permissions")
+		ctx.Logger.WithError(err).Error("addToGroup: error checking group membership")
 		return
 	}
 
-	if !isAdmin {
+	if !isMember {
+		// Se l'utente non è membro del gruppo, restituiamo un errore 403 Forbidden
 		w.WriteHeader(http.StatusForbidden)
-		ctx.Logger.WithError(errors.New("user not authorized to delete group")).Error("deleteGroup: permission denied")
+		ctx.Logger.WithError(errors.New("user is not a member of group")).Error("permission denied")
 		return
 	}
 

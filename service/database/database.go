@@ -68,14 +68,12 @@ type AppDatabase interface {
 
 	// Groups
 	CreateGroup(groupName string, creatorId int, createdAt time.Time) (int, error)
-	AddUserToGroup(groupId int, userId int, role string) error
+	AddUserToGroup(groupId int, userId int) error
 	RemoveUserFromGroup(groupId int, userId int) error
-	PromoteToAdmin(groupId int, userId int) error
 	DeleteGroupMessage(messageId int) error
 	GetGroupByMessageId(messageId int) (Group, error)
 	MarkIsForwardGroup(messageId int, isForward bool) error
 	GetGroupMembers(groupId int) ([]GroupMember, error)
-	IsGroupAdmin(groupId int, userId int) (bool, error)
 	IsGroupMember(groupId int, userId int) (bool, error)
 	DeleteGroup(groupId int) error
 	GetGroupMessage(groupId, messageId int) (GroupMessage, error)
@@ -184,7 +182,6 @@ func New(db *sql.DB) (AppDatabase, error) {
 								   (GroupMember_id INTEGER PRIMARY KEY AUTOINCREMENT,
 									Group_id INTEGER NOT NULL,
 									User_id INTEGER NOT NULL,
-									Role TEXT NOT NULL CHECK (Role IN ('member', 'admin')),
 									UNIQUE(Group_id, User_id),
 									FOREIGN KEY (Group_id) REFERENCES Groups (Group_id) ON DELETE CASCADE,
 									FOREIGN KEY (User_id) REFERENCES Users (User_id));`

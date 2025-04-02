@@ -4,7 +4,7 @@ import "fmt"
 
 func (db *appdbimpl) GetGroupMembers(groupId int) ([]GroupMember, error) {
 	query := `
-        SELECT gm.GroupMember_id, gm.Group_id, gm.User_id, gm.Role, u.Nickname
+        SELECT gm.GroupMember_id, gm.Group_id, gm.User_id, u.Nickname
         FROM GroupMembers gm
         INNER JOIN Users u ON gm.User_id = u.User_id
         WHERE gm.Group_id = ?`
@@ -18,7 +18,7 @@ func (db *appdbimpl) GetGroupMembers(groupId int) ([]GroupMember, error) {
 	var members []GroupMember
 	for rows.Next() {
 		var member GroupMember
-		err := rows.Scan(&member.GroupMember_id, &member.Group_id, &member.User_id, &member.Role, &member.Nickname)
+		err := rows.Scan(&member.GroupMember_id, &member.Group_id, &member.User_id, &member.Nickname)
 		if err != nil {
 			return nil, fmt.Errorf("GetGroupMembers scan: %w", err)
 		}
