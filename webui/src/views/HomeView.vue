@@ -1501,6 +1501,7 @@ export default {
     eventBus.on("userRemovedFromGroup", this.handleUserRemovedFromGroup);
   },
   beforeUnmount() {
+    clearInterval(this.refreshInterval);
     eventBus.off("conversationDeleted");
     eventBus.off("messageForwarded", this.handleMessageForwarded);
     eventBus.off("userRemovedFromGroup", this.handleUserRemovedFromGroup);
