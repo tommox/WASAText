@@ -98,6 +98,7 @@ func (db *appdbimpl) GetUserConversations(userId int) (map[string]interface{}, e
 		var lastMessageID sql.NullInt64
 		var lastMessageTimestamp sql.NullTime
 		var groupName string
+		var lastMessageSenderId sql.NullInt64
 
 		err := groupRows.Scan(
 			&groupConv.GroupConversation_id,
@@ -106,10 +107,16 @@ func (db *appdbimpl) GetUserConversations(userId int) (map[string]interface{}, e
 			&lastMessageID,
 			&lastMessageTimestamp,
 			&groupConv.LastMessageIsRead,
-			&groupConv.LastMessageSenderId,
+			&lastMessageSenderId,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("GetUserConversations: errore nella scansione delle conversazioni di gruppo: %w", err)
+		}
+
+		if lastMessageSenderId.Valid {
+			groupConv.LastMessageSenderId = int(lastMessageSenderId.Int64)
+		} else {
+			groupConv.LastMessageSenderId = 0
 		}
 
 		if lastMessageID.Valid {

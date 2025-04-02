@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -90,7 +89,6 @@ func (rt *_router) getMessageHandler(w http.ResponseWriter, r *http.Request, ps 
 
 		// Caso in cui il messaggio non ha un'immagine
 		w.WriteHeader(http.StatusOK)
-		fmt.Println("msg:", dbMsg)
 		if err := json.NewEncoder(w).Encode(toDatabaseMessage(dbMsg)); err != nil {
 			ctx.Logger.WithError(err).Error("getMessage: errore encoding JSON (text private)")
 		}
